@@ -11,7 +11,7 @@ const none = new URLSearchParams();
 const orgParams = new URLSearchParams({ doctype: "CRM Organization" });
 
 describe("classifyRequest", () => {
-  it("allows organization list, detail and writes", () => {
+  it("allows organization and deal list, detail and writes", () => {
     expect(classifyRequest("GET", "api/resource/CRM Organization", none)?.kind).toBe("org-read");
     expect(classifyRequest("GET", "api/resource/CRM Organization/Acme", none)?.kind).toBe(
       "org-read",
@@ -23,13 +23,32 @@ describe("classifyRequest", () => {
     expect(classifyRequest("DELETE", "api/resource/CRM Organization/Acme", none)?.kind).toBe(
       "org-write",
     );
+    // CRM Deal
+    expect(classifyRequest("GET", "api/resource/CRM Deal", none)?.kind).toBe("org-read");
+    expect(classifyRequest("GET", "api/resource/CRM Deal/CRM-DEAL-001", none)?.kind).toBe(
+      "org-read",
+    );
+    expect(classifyRequest("POST", "api/resource/CRM Deal", none)?.kind).toBe("org-write");
+    expect(classifyRequest("PUT", "api/resource/CRM Deal/CRM-DEAL-001", none)?.kind).toBe(
+      "org-write",
+    );
+    expect(classifyRequest("DELETE", "api/resource/CRM Deal/CRM-DEAL-001", none)?.kind).toBe(
+      "org-write",
+    );
   });
 
-  it("only allows metadata and count for the Organization doctype", () => {
+  it("only allows metadata and count for the allowed CRM doctypes", () => {
     expect(
       classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", orgParams)?.kind,
     ).toBe("meta");
     expect(classifyRequest("GET", "api/method/frappe.client.get_count", orgParams)?.kind).toBe(
+      "count",
+    );
+    const dealParams = new URLSearchParams({ doctype: "CRM Deal" });
+    expect(
+      classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", dealParams)?.kind,
+    ).toBe("meta");
+    expect(classifyRequest("GET", "api/method/frappe.client.get_count", dealParams)?.kind).toBe(
       "count",
     );
     const user = new URLSearchParams({ doctype: "User" });

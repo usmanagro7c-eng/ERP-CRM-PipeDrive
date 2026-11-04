@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
+  MAIN_DOCTYPES,
   MAX_UPLOAD_BYTES,
   ORG_DOCTYPE,
   buildLinkQuery,
@@ -15,7 +16,7 @@ import { isSameOrigin } from "@/lib/session";
  *
  * - Requires a signed-in session (cookie set by /api/auth/login).
  * - Holds FRAPPE_API_KEY / FRAPPE_API_SECRET server-side; the browser never sees them.
- * - Only CRM Organization can be read/written. Link-field DocTypes can be listed (names only).
+ * - Only CRM Organization and CRM Deal can be read/written. Link-field DocTypes can be listed (names only).
  *   See src/lib/frappe-proxy.ts for the exact rules.
  */
 
@@ -30,6 +31,16 @@ const DEFAULT_LINK_TARGETS = new Set([
   "Country",
   "User",
   "Contact",
+  "CRM Organization",
+  "CRM Deal",
+  "CRM Deal Status",
+  "CRM Lead",
+  "CRM Lead Source",
+  "Salutation",
+  "Gender",
+  "CRM Service Level Agreement",
+  "CRM Communication Status",
+  "CRM Lost Reason",
 ]);
 
 let linkTargetsCache: { targets: Set<string>; expires: number } | undefined;
@@ -112,8 +123,11 @@ async function forward(request: Request): Promise<Response> {
         return jsonResponse({ _proxy_error: "File too large (max 10 MB)" }, 413);
       }
       const form = await request.clone().formData();
-      if (form.get("doctype") !== ORG_DOCTYPE) {
-        return jsonResponse({ _proxy_error: "Uploads are only allowed for CRM Organization" }, 403);
+      if (!MAIN_DOCTYPES.has(String(form.get("doctype") ?? ""))) {
+        return jsonResponse(
+          { _proxy_error: "Uploads are only allowed for CRM Organization and CRM Deal" },
+          403,
+        );
       }
       const file = form.get("file");
       if (file instanceof File && file.size > MAX_UPLOAD_BYTES) {

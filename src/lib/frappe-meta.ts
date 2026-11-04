@@ -132,14 +132,25 @@ export function groupIntoSections(fields: FrappeDocField[], includeHidden = fals
 export function defaultListColumns(meta: FrappeDocTypeMeta, max = 7): string[] {
   const display = (meta.fields ?? []).filter(isDisplayField);
   const byName = new Map(display.map((field) => [field.fieldname, field]));
-  const preferred = [
-    "organization_name",
-    "website",
-    "industry",
-    "territory",
-    "no_of_employees",
-    "annual_revenue",
-  ];
+  const preferred =
+    meta.name === "CRM Deal"
+      ? [
+          "organization",
+          "status",
+          "deal_value",
+          "currency",
+          "expected_closure_date",
+          "deal_owner",
+          "probability",
+        ]
+      : [
+          "organization_name",
+          "website",
+          "industry",
+          "territory",
+          "no_of_employees",
+          "annual_revenue",
+        ];
   const picked: string[] = [];
   for (const name of preferred) {
     if (byName.has(name)) picked.push(name);

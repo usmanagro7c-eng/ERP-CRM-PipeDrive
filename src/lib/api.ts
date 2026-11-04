@@ -7,6 +7,8 @@
 
 export const PROXY_BASE = "/api/frappe";
 export const ORG_DOCTYPE = "CRM Organization";
+export const DEAL_DOCTYPE = "CRM Deal";
+export const DEAL_STATUS_DOCTYPE = "CRM Deal Status";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -115,13 +117,14 @@ function unwrapResourceData<T>(payload: unknown): T {
 
 export interface ListParams {
   search?: string | undefined;
+  searchField?: string | undefined;
   filters?: Array<[string, string, string]> | undefined;
   limit: number;
   start: number;
   orderBy?: string | undefined;
 }
 
-function buildListQuery(params: ListParams): string {
+function buildListQuery(params: ListParams, defaultSearchField = "organization_name"): string {
   const query = new URLSearchParams();
   query.set("fields", JSON.stringify(["*"]));
   query.set("limit_page_length", String(params.limit));
@@ -129,7 +132,7 @@ function buildListQuery(params: ListParams): string {
   query.set("order_by", params.orderBy ?? "modified desc");
   const filters = [...(params.filters ?? [])];
   if (params.search) {
-    filters.push(["organization_name", "like", `%${params.search}%`]);
+    filters.push([params.searchField ?? defaultSearchField, "like", `%${params.search}%`]);
   }
   if (filters.length > 0) {
     query.set("filters", JSON.stringify(filters));
@@ -202,6 +205,84 @@ export async function updateOrganization(
 
 export async function deleteOrganization(name: string): Promise<void> {
   await proxyRequest(`api/resource/${ORG_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export interface DealStatus {
+  name: string;
+  deal_status?: string;
+  type?: string;
+  probability?: number;
+  color?: string;
+  position?: number;
+}
+
+export async function getDealStatuses(): Promise<DealStatus[]> {
+  const query = new URLSearchParams({
+    fields: JSON.stringify(["name", "deal_status", "type", "probability", "color", "position"]),
+    limit_page_length: "0",
+    order_by: "position asc",
+  });
+  const payload = await proxyRequest(`api/resource/${DEAL_STATUS_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as DealStatus[]) : [];
+}
+
+export async function listDeals(params: ListParams): Promise<Record<string, unknown>[]> {
+  const query = buildListQuery(params, "organization_name");
+  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+}
+
+export async function countDeals(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: DEAL_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["organization_name", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getDeal(name: string): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`);
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for deal detail.");
+  }
+  return data as Record<string, unknown>;
+}
+
+export async function createDeal(
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}`, {
+    method: "POST",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function updateDeal(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function deleteDeal(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
   });
 }

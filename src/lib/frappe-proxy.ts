@@ -10,12 +10,14 @@
  */
 
 export const ORG_DOCTYPE = "CRM Organization";
+export const DEAL_DOCTYPE = "CRM Deal";
+export const MAIN_DOCTYPES = new Set([ORG_DOCTYPE, DEAL_DOCTYPE]);
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
 
 export type ProxyKind =
-  | "org-read" // GET api/resource/CRM Organization[/<name>]
-  | "org-write" // POST/PUT/DELETE api/resource/CRM Organization[/<name>]
+  | "org-read" // GET api/resource/CRM Organization|CRM Deal[/<name>]
+  | "org-write" // POST/PUT/DELETE api/resource/CRM Organization|CRM Deal[/<name>]
   | "link-read" // GET api/resource/<LinkedDocType>
   | "meta" // GET api/method/frappe.desk.form.load.getdoctype
   | "count" // GET api/method/frappe.client.get_count
@@ -33,12 +35,12 @@ export function hasUnsafeSegments(path: string): boolean {
   return path.split("/").some((segment) => segment === ".." || segment === ".");
 }
 
-const ORG_RESOURCE = /^api\/resource\/CRM Organization(?:\/([^/]+))?$/;
+const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
 
 /**
  * Decide what kind of request this is, or null if it must be blocked.
- * `searchParams` is used for the metadata/count endpoints, which must target the Organization DocType.
+ * `searchParams` is used for the metadata/count endpoints, which must target the allowed DocTypes.
  */
 export function classifyRequest(
   method: string,
@@ -48,12 +50,14 @@ export function classifyRequest(
   if (!path || hasUnsafeSegments(path)) return null;
 
   if (method === "GET") {
-    if (ORG_RESOURCE.test(path)) return { kind: "org-read" };
+    if (MAIN_RESOURCE.test(path)) return { kind: "org-read" };
     if (path === "api/method/frappe.desk.form.load.getdoctype") {
-      return searchParams.get("doctype") === ORG_DOCTYPE ? { kind: "meta" } : null;
+      const dt = searchParams.get("doctype") ?? "";
+      return MAIN_DOCTYPES.has(dt) ? { kind: "meta" } : null;
     }
     if (path === "api/method/frappe.client.get_count") {
-      return searchParams.get("doctype") === ORG_DOCTYPE ? { kind: "count" } : null;
+      const dt = searchParams.get("doctype") ?? "";
+      return MAIN_DOCTYPES.has(dt) ? { kind: "count" } : null;
     }
     const list = ANY_RESOURCE_LIST.exec(path);
     if (list?.[1]) return { kind: "link-read", doctype: list[1] };
@@ -62,13 +66,13 @@ export function classifyRequest(
 
   if (method === "POST") {
     if (path === "api/method/uploadfile") return { kind: "upload" };
-    if (/^api\/resource\/CRM Organization$/.test(path)) return { kind: "org-write" };
+    if (/^api\/resource\/(CRM Organization|CRM Deal)$/.test(path)) return { kind: "org-write" };
     return null;
   }
 
   if (method === "PUT" || method === "DELETE") {
-    const match = ORG_RESOURCE.exec(path);
-    return match?.[1] ? { kind: "org-write" } : null;
+    const match = MAIN_RESOURCE.exec(path);
+    return match?.[2] ? { kind: "org-write" } : null;
   }
 
   return null;

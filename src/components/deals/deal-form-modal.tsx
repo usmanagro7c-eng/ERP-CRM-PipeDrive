@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FieldInput } from "@/components/organizations/field-input";
@@ -47,10 +48,25 @@ function buildInitialValues(
       ? doc[field.fieldname]
       : presets?.[field.fieldname] !== undefined
         ? presets[field.fieldname]
-        : field.default;
+        : field.fieldname === "status"
+          ? "Qualification"
+          : field.default;
     values[field.fieldname] = toInputValue(field, raw);
   }
   return values;
+}
+
+function cnFieldSpan(field: FrappeDocField): string {
+  const wide = [
+    "Small Text",
+    "Text",
+    "Long Text",
+    "Text Editor",
+    "Code",
+    "Attach",
+    "Attach Image",
+  ].includes(field.fieldtype);
+  return wide ? "sm:col-span-2 space-y-1.5" : "space-y-1.5";
 }
 
 export function DealFormModal({
@@ -183,18 +199,33 @@ export function DealFormModal({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {section.fields.map((field) => {
                     const editable = isEditableField(field);
-                    const isWide =
-                      field.fieldtype === "Small Text" ||
-                      field.fieldtype === "Text" ||
-                      field.fieldtype === "Long Text" ||
-                      field.fieldtype === "Text Editor";
+                    const id = `deal-field-${field.fieldname}`;
 
                     return (
                       <div
                         key={field.fieldname}
-                        className={isWide ? "sm:col-span-2" : undefined}
+                        className={cnFieldSpan(field)}
                       >
+                        <Label
+                          htmlFor={id}
+                          className="text-xs font-medium text-foreground flex items-center justify-between"
+                        >
+                          <span className="flex items-center">
+                            {fieldLabel(field)}
+                            {Boolean(field.reqd) && (
+                              <span className="ml-1 text-destructive font-bold" title="Mandatory field">
+                                *
+                              </span>
+                            )}
+                          </span>
+                          {Boolean(field.reqd) && (
+                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
+                              Required
+                            </span>
+                          )}
+                        </Label>
                         <FieldInput
+                          id={id}
                           field={field}
                           value={values[field.fieldname]}
                           onValueChange={(val) => setValue(field.fieldname, val)}
@@ -210,6 +241,9 @@ export function DealFormModal({
                             })
                           }
                         />
+                        {field.description && (
+                          <p className="text-[11px] text-muted-foreground">{field.description}</p>
+                        )}
                       </div>
                     );
                   })}

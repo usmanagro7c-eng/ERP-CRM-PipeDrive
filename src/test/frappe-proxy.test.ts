@@ -47,6 +47,12 @@ describe("classifyRequest", () => {
     expect(classifyRequest("DELETE", "api/resource/CRM Lead/CRM-LEAD-001", none)?.kind).toBe(
       "org-write",
     );
+    // CRM Task
+    expect(classifyRequest("GET", "api/resource/CRM Task", none)?.kind).toBe("org-read");
+    expect(classifyRequest("GET", "api/resource/CRM Task/1", none)?.kind).toBe("org-read");
+    expect(classifyRequest("POST", "api/resource/CRM Task", none)?.kind).toBe("org-write");
+    expect(classifyRequest("PUT", "api/resource/CRM Task/1", none)?.kind).toBe("org-write");
+    expect(classifyRequest("DELETE", "api/resource/CRM Task/1", none)?.kind).toBe("org-write");
   });
 
   it("only allows metadata and count for the allowed CRM doctypes", () => {
@@ -68,6 +74,13 @@ describe("classifyRequest", () => {
       classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", leadParams)?.kind,
     ).toBe("meta");
     expect(classifyRequest("GET", "api/method/frappe.client.get_count", leadParams)?.kind).toBe(
+      "count",
+    );
+    const taskParams = new URLSearchParams({ doctype: "CRM Task" });
+    expect(
+      classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", taskParams)?.kind,
+    ).toBe("meta");
+    expect(classifyRequest("GET", "api/method/frappe.client.get_count", taskParams)?.kind).toBe(
       "count",
     );
     const user = new URLSearchParams({ doctype: "User" });

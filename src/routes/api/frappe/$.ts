@@ -37,6 +37,7 @@ const DEFAULT_LINK_TARGETS = new Set([
   "CRM Lead",
   "CRM Lead Status",
   "CRM Lead Source",
+  "CRM Task",
   "Salutation",
   "Gender",
   "CRM Service Level Agreement",
@@ -126,7 +127,7 @@ async function forward(request: Request): Promise<Response> {
       const form = await request.clone().formData();
       if (!MAIN_DOCTYPES.has(String(form.get("doctype") ?? ""))) {
         return jsonResponse(
-          { _proxy_error: "Uploads are only allowed for CRM Organization, CRM Deal and CRM Lead" },
+          { _proxy_error: "Uploads are only allowed for CRM Organization, CRM Deal, CRM Lead and CRM Task" },
           403,
         );
       }

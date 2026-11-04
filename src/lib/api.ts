@@ -11,6 +11,7 @@ export const DEAL_DOCTYPE = "CRM Deal";
 export const DEAL_STATUS_DOCTYPE = "CRM Deal Status";
 export const LEAD_DOCTYPE = "CRM Lead";
 export const LEAD_STATUS_DOCTYPE = "CRM Lead Status";
+export const TASK_DOCTYPE = "CRM Task";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -362,6 +363,64 @@ export async function updateLead(
 
 export async function deleteLead(name: string): Promise<void> {
   await proxyRequest(`api/resource/${LEAD_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listTasks(params: ListParams): Promise<Record<string, unknown>[]> {
+  const query = buildListQuery(params, "title");
+  const payload = await proxyRequest(`api/resource/${TASK_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+}
+
+export async function countTasks(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: TASK_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["title", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getTask(name: string): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${TASK_DOCTYPE}/${encodeURIComponent(name)}`);
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for task detail.");
+  }
+  return data as Record<string, unknown>;
+}
+
+export async function createTask(
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${TASK_DOCTYPE}`, {
+    method: "POST",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function updateTask(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${TASK_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function deleteTask(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${TASK_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
   });
 }

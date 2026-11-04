@@ -12,6 +12,7 @@ export const DEAL_STATUS_DOCTYPE = "CRM Deal Status";
 export const LEAD_DOCTYPE = "CRM Lead";
 export const LEAD_STATUS_DOCTYPE = "CRM Lead Status";
 export const TASK_DOCTYPE = "CRM Task";
+export const CONTACT_DOCTYPE = "Contact";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -421,6 +422,103 @@ export async function updateTask(
 
 export async function deleteTask(name: string): Promise<void> {
   await proxyRequest(`api/resource/${TASK_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export interface ContactStatus {
+  name: string;
+  label: string;
+}
+
+export const CONTACT_STATUSES: ContactStatus[] = [
+  { name: "Open", label: "Open" },
+  { name: "Passive", label: "Passive" },
+  { name: "Replied", label: "Replied" },
+];
+
+export async function getContactStatuses(): Promise<ContactStatus[]> {
+  return CONTACT_STATUSES;
+}
+
+export async function listContacts(params: ListParams): Promise<Record<string, unknown>[]> {
+  const query = buildListQuery(params, "first_name");
+  const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+}
+
+export async function countContacts(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: CONTACT_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["first_name", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getContact(name: string): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`);
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for contact detail.");
+  }
+  return data as Record<string, unknown>;
+}
+
+function normalizeContactPayload(values: Record<string, unknown>): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...values };
+
+  const email = typeof payload["email_id"] === "string" ? payload["email_id"].trim() : "";
+  if (email && (!Array.isArray(payload["email_ids"]) || (payload["email_ids"] as unknown[]).length === 0)) {
+    payload["email_ids"] = [{ email_id: email, is_primary: 1 }];
+  }
+
+  const phone =
+    (typeof payload["mobile_no"] === "string" && payload["mobile_no"].trim()) ||
+    (typeof payload["phone"] === "string" && payload["phone"].trim()) ||
+    "";
+  if (phone && (!Array.isArray(payload["phone_nos"]) || (payload["phone_nos"] as unknown[]).length === 0)) {
+    payload["phone_nos"] = [{ phone, is_primary_mobile_no: 1 }];
+  }
+
+  const company = typeof payload["company_name"] === "string" ? payload["company_name"].trim() : "";
+  if (company && (!Array.isArray(payload["links"]) || (payload["links"] as unknown[]).length === 0)) {
+    payload["links"] = [{ link_doctype: ORG_DOCTYPE, link_name: company }];
+  }
+
+  return payload;
+}
+
+export async function createContact(
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}`, {
+    method: "POST",
+    body: normalizeContactPayload(values),
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function updateContact(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: normalizeContactPayload(values),
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function deleteContact(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
   });
 }

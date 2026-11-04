@@ -16,7 +16,7 @@ import { isSameOrigin } from "@/lib/session";
  *
  * - Requires a signed-in session (cookie set by /api/auth/login).
  * - Holds FRAPPE_API_KEY / FRAPPE_API_SECRET server-side; the browser never sees them.
- * - Only CRM Organization and CRM Deal can be read/written. Link-field DocTypes can be listed (names only).
+ * - Only CRM Organization, CRM Deal, CRM Lead, CRM Task, and Contact can be read/written. Link-field DocTypes can be listed (names only).
  *   See src/lib/frappe-proxy.ts for the exact rules.
  */
 
@@ -127,7 +127,7 @@ async function forward(request: Request): Promise<Response> {
       const form = await request.clone().formData();
       if (!MAIN_DOCTYPES.has(String(form.get("doctype") ?? ""))) {
         return jsonResponse(
-          { _proxy_error: "Uploads are only allowed for CRM Organization, CRM Deal, CRM Lead and CRM Task" },
+          { _proxy_error: "Uploads are only allowed for CRM Organization, CRM Deal, CRM Lead, CRM Task, and Contact" },
           403,
         );
       }

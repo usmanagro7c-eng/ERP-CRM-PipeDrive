@@ -9,6 +9,8 @@ export const PROXY_BASE = "/api/frappe";
 export const ORG_DOCTYPE = "CRM Organization";
 export const DEAL_DOCTYPE = "CRM Deal";
 export const DEAL_STATUS_DOCTYPE = "CRM Deal Status";
+export const LEAD_DOCTYPE = "CRM Lead";
+export const LEAD_STATUS_DOCTYPE = "CRM Lead Status";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -283,6 +285,83 @@ export async function updateDeal(
 
 export async function deleteDeal(name: string): Promise<void> {
   await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export interface LeadStatus {
+  name: string;
+  lead_status?: string;
+  type?: string;
+  color?: string;
+  position?: number;
+}
+
+export async function getLeadStatuses(): Promise<LeadStatus[]> {
+  const query = new URLSearchParams({
+    fields: JSON.stringify(["name", "lead_status", "type", "color", "position"]),
+    limit_page_length: "0",
+    order_by: "position asc",
+  });
+  const payload = await proxyRequest(`api/resource/${LEAD_STATUS_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as LeadStatus[]) : [];
+}
+
+export async function listLeads(params: ListParams): Promise<Record<string, unknown>[]> {
+  const query = buildListQuery(params, "first_name");
+  const payload = await proxyRequest(`api/resource/${LEAD_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+}
+
+export async function countLeads(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: LEAD_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["first_name", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getLead(name: string): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${LEAD_DOCTYPE}/${encodeURIComponent(name)}`);
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for lead detail.");
+  }
+  return data as Record<string, unknown>;
+}
+
+export async function createLead(
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${LEAD_DOCTYPE}`, {
+    method: "POST",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function updateLead(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const payload = await proxyRequest(`api/resource/${LEAD_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function deleteLead(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${LEAD_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
   });
 }

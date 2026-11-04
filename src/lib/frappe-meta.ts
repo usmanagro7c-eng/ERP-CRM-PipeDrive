@@ -143,14 +143,25 @@ export function defaultListColumns(meta: FrappeDocTypeMeta, max = 7): string[] {
           "deal_owner",
           "probability",
         ]
-      : [
-          "organization_name",
-          "website",
-          "industry",
-          "territory",
-          "no_of_employees",
-          "annual_revenue",
-        ];
+      : meta.name === "CRM Lead"
+        ? [
+            "first_name",
+            "last_name",
+            "organization",
+            "status",
+            "email",
+            "mobile_no",
+            "lead_owner",
+            "source",
+          ]
+        : [
+            "organization_name",
+            "website",
+            "industry",
+            "territory",
+            "no_of_employees",
+            "annual_revenue",
+          ];
   const picked: string[] = [];
   for (const name of preferred) {
     if (byName.has(name)) picked.push(name);

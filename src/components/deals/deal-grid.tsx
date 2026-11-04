@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Building2,
   Calendar,
@@ -20,6 +20,7 @@ import {
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency } from "@/components/deals/deal-stage-badge";
+import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
 
 interface DealGridProps {
@@ -51,6 +52,18 @@ export function DealGrid({
       value: s.name,
     }));
   }, [stages]);
+
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    dealName: string;
+    dealTitle?: string;
+    targetStatus: string;
+  }>({ open: false, dealName: "", targetStatus: "Lost" });
+
+  function isLostStage(stageKey: string): boolean {
+    const stage = stages.find((s) => s.name === stageKey);
+    return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+  }
 
   if (loading && rows.length === 0) {
     return (
@@ -139,10 +152,19 @@ export function DealGrid({
                         currentValue={stage}
                         options={stageOptions}
                         onSelect={(newStage) => {
-                          void saveMutation.mutateAsync({
-                            name,
-                            values: { status: newStage },
-                          });
+                          if (isLostStage(newStage)) {
+                            setLostModalState({
+                              open: true,
+                              dealName: name,
+                              dealTitle: orgName,
+                              targetStatus: newStage,
+                            });
+                          } else {
+                            void saveMutation.mutateAsync({
+                              name,
+                              values: { status: newStage },
+                            });
+                          }
                         }}
                       />
                       <DropdownMenuSeparator />
@@ -224,6 +246,14 @@ export function DealGrid({
           </div>
         );
       })}
+
+      <DealLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((prev) => ({ ...prev, open }))}
+        dealNames={lostModalState.dealName ? [lostModalState.dealName] : []}
+        dealTitle={lostModalState.dealTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

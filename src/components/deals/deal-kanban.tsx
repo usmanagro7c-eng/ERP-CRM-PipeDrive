@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency, getStageStyle } from "@/components/deals/deal-stage-badge";
+import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
@@ -160,9 +161,34 @@ export function DealKanban({
     }));
   }, [stages]);
 
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    dealName: string;
+    dealTitle?: string;
+    targetStatus: string;
+  }>({ open: false, dealName: "", targetStatus: "Lost" });
+
+  function isLostStage(stageKey: string): boolean {
+    const stage = stages.find((s) => s.name === stageKey);
+    return (
+      stageKey.toLowerCase().includes("lost") ||
+      stage?.type?.toLowerCase() === "lost"
+    );
+  }
+
   // Move deal to new column
   async function handleMove(dealName: string, targetColKey: string) {
     if (targetColKey === UNASSIGNED_KEY) return;
+    if (groupBy === "status" && isLostStage(targetColKey)) {
+      const deal = rows.find((r) => r["name"] === dealName);
+      setLostModalState({
+        open: true,
+        dealName,
+        dealTitle: String(deal?.["organization_name"] || deal?.["organization"] || dealName),
+        targetStatus: targetColKey,
+      });
+      return;
+    }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
     await saveMutation.mutateAsync({ name: dealName, values: patch });
   }
@@ -359,10 +385,19 @@ export function DealKanban({
                                   currentValue={currentStage}
                                   options={stageOptions}
                                   onSelect={(newStage) => {
-                                    void saveMutation.mutateAsync({
-                                      name,
-                                      values: { status: newStage },
-                                    });
+                                    if (isLostStage(newStage)) {
+                                      setLostModalState({
+                                        open: true,
+                                        dealName: name,
+                                        dealTitle: orgName,
+                                        targetStatus: newStage,
+                                      });
+                                    } else {
+                                      void saveMutation.mutateAsync({
+                                        name,
+                                        values: { status: newStage },
+                                      });
+                                    }
                                   }}
                                 />
                                 <DropdownMenuSeparator />
@@ -431,6 +466,14 @@ export function DealKanban({
           );
         })}
       </div>
+
+      <DealLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((prev) => ({ ...prev, open }))}
+        dealNames={lostModalState.dealName ? [lostModalState.dealName] : []}
+        dealTitle={lostModalState.dealTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

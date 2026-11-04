@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StageBadge, formatCurrency } from "@/components/deals/deal-stage-badge";
+import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
 import {
   fieldsByNames,
@@ -182,6 +183,18 @@ export function DealTable({
     }));
   }, [stages]);
 
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    dealName: string;
+    dealTitle?: string;
+    targetStatus: string;
+  }>({ open: false, dealName: "", targetStatus: "Lost" });
+
+  function isLostStage(stageKey: string): boolean {
+    const stage = stages.find((s) => s.name === stageKey);
+    return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+  }
+
   if (loading && rows.length === 0) {
     return (
       <div className="space-y-2 p-4">
@@ -239,6 +252,7 @@ export function DealTable({
           {rows.map((row) => {
             const name = String(row["name"] ?? "");
             const currentStage = String(row["status"] ?? "");
+            const orgName = String(row["organization_name"] || row["organization"] || name);
 
             return (
               <TableRow
@@ -281,10 +295,19 @@ export function DealTable({
                         currentValue={currentStage}
                         options={stageOptions}
                         onSelect={(newStage) => {
-                          void saveMutation.mutateAsync({
-                            name,
-                            values: { status: newStage },
-                          });
+                          if (isLostStage(newStage)) {
+                            setLostModalState({
+                              open: true,
+                              dealName: name,
+                              dealTitle: orgName,
+                              targetStatus: newStage,
+                            });
+                          } else {
+                            void saveMutation.mutateAsync({
+                              name,
+                              values: { status: newStage },
+                            });
+                          }
                         }}
                       />
                       <DropdownMenuSeparator />
@@ -310,6 +333,14 @@ export function DealTable({
           })}
         </TableBody>
       </Table>
+
+      <DealLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((prev) => ({ ...prev, open }))}
+        dealNames={lostModalState.dealName ? [lostModalState.dealName] : []}
+        dealTitle={lostModalState.dealTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

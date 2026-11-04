@@ -107,10 +107,16 @@ export function DealFormModal({
   }
 
   async function handleSubmit() {
+    const isLost = String(values["status"] ?? "").toLowerCase() === "lost";
+    const isLostOther = isLost && values["lost_reason"] === "Other";
+
     const missing = fields
       .filter(
         (field) =>
-          (field.reqd || field.fieldname === "organization") &&
+          (field.reqd ||
+            field.fieldname === "organization" ||
+            (isLost && field.fieldname === "lost_reason") ||
+            (isLostOther && field.fieldname === "lost_notes")) &&
           isEditableField(field),
       )
       .filter((field) => {
@@ -209,8 +215,13 @@ export function DealFormModal({
                   {section.fields.map((field) => {
                     const editable = isEditableField(field);
                     const id = `deal-field-${field.fieldname}`;
+                    const isLost = String(values["status"] ?? "").toLowerCase() === "lost";
+                    const isLostOther = isLost && values["lost_reason"] === "Other";
                     const isRequired =
-                      Boolean(field.reqd) || field.fieldname === "organization";
+                      Boolean(field.reqd) ||
+                      field.fieldname === "organization" ||
+                      (isLost && field.fieldname === "lost_reason") ||
+                      (isLostOther && field.fieldname === "lost_notes");
 
                     return (
                       <div

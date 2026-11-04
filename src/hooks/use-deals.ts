@@ -26,6 +26,14 @@ export function dealStatusesOptions() {
   });
 }
 
+export function lostReasonsOptions() {
+  return queryOptions({
+    queryKey: [DEAL_QUERY_ROOT, "lost-reasons"],
+    queryFn: () => api.getLinkOptions("CRM Lost Reason"),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
 export interface DealListVariables {
   search: string;
   filters: Array<[string, string, string]>;

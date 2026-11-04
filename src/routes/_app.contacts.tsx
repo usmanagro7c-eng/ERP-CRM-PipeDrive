@@ -22,6 +22,7 @@ import { ContactGrid } from "@/components/contacts/contact-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -489,7 +490,12 @@ function ContactsPage() {
               )}
             </div>
           )
-        ) : null}
+        ) : (
+          <LoadingState
+            title="Loading Contacts..."
+            description="Fetching contacts directory and configuration from Frappe CRM..."
+          />
+        )}
       </div>
 
       {/* Create / Edit Contact Modal */}

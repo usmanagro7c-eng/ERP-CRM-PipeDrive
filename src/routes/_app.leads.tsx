@@ -22,6 +22,7 @@ import { LeadGrid } from "@/components/leads/lead-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -490,7 +491,12 @@ function LeadsPage() {
               )}
             </div>
           )
-        ) : null}
+        ) : (
+          <LoadingState
+            title="Loading Leads..."
+            description="Fetching leads pipeline and qualification records from Frappe CRM..."
+          />
+        )}
       </div>
 
       {/* Create / Edit Lead Modal */}

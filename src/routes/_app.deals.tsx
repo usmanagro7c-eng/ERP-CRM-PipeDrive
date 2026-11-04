@@ -22,6 +22,7 @@ import { DealGrid } from "@/components/deals/deal-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -490,7 +491,12 @@ function DealsPage() {
               )}
             </div>
           )
-        ) : null}
+        ) : (
+          <LoadingState
+            title="Loading Deals..."
+            description="Fetching sales deals and stage pipelines from Frappe CRM..."
+          />
+        )}
       </div>
 
       {/* Create / Edit Deal Modal */}

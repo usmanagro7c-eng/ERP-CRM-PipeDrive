@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { AppLoadingScreen } from "@/components/ui/loading";
 import { sessionQueryOptions } from "@/lib/auth-client";
 
 /**
@@ -23,11 +23,7 @@ function AppLayout() {
   }, [isPending, session, navigate]);
 
   if (isPending || (!session && !isError)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-        <Loader2 className="size-6 animate-spin" aria-label="Loading" />
-      </div>
-    );
+    return <AppLoadingScreen message="Checking authorization & workspace session..." />;
   }
   if (!session) {
     return (

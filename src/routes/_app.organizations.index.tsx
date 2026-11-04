@@ -22,6 +22,7 @@ import { OrgKanban } from "@/components/organizations/org-kanban";
 import { OrgGrid } from "@/components/organizations/org-grid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -440,7 +441,12 @@ function OrganizationsPage() {
         </>
       )}
 
-      {!meta && !error && <p className="text-sm text-muted-foreground">Loading fields…</p>}
+      {!meta && !error && (
+        <LoadingState
+          title="Loading Organizations..."
+          description="Fetching companies, territories, and industries from Frappe CRM..."
+        />
+      )}
 
       {/* Pagination (Table View only) */}
       {meta && activeView === "table" && total > 0 && (

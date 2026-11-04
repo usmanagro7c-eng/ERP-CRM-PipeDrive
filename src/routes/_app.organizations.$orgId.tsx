@@ -17,6 +17,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/ui/loading";
 import {
   errorMessage,
   orgDetailOptions,
@@ -103,10 +104,10 @@ function OrganizationDetailPage() {
       )}
 
       {!error && (!meta || !org) && (
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-1/2" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+        <LoadingState
+          title="Loading Organization Details..."
+          description={`Fetching record details for ${orgId} from Frappe CRM...`}
+        />
       )}
 
       {meta && org && (

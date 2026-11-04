@@ -22,6 +22,7 @@ import { ActivityGrid } from "@/components/activities/activity-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -483,7 +484,12 @@ function ActivitiesPage() {
               )}
             </div>
           )
-        ) : null}
+        ) : (
+          <LoadingState
+            title="Loading Activities..."
+            description="Fetching scheduled tasks, calls, and follow-ups from Frappe CRM..."
+          />
+        )}
       </div>
 
       {/* Create / Edit Activity Modal */}

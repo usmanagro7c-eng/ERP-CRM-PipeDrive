@@ -76,10 +76,19 @@ export function OrgFormModal({ open, onOpenChange, meta, organization }: OrgForm
 
   async function handleSubmit() {
     const missing = fields
-      .filter((field) => field.reqd && isEditableField(field))
+      .filter(
+        (field) =>
+          (field.reqd || field.fieldname === "organization_name") &&
+          isEditableField(field),
+      )
       .filter((field) => {
         const value = values[field.fieldname];
-        return value === "" || value === null || value === undefined;
+        return (
+          value === "" ||
+          value === null ||
+          value === undefined ||
+          (typeof value === "string" && !value.trim())
+        );
       })
       .map((field) => fieldLabel(field));
     if (missing.length > 0) {
@@ -168,11 +177,30 @@ export function OrgFormModal({ open, onOpenChange, meta, organization }: OrgForm
                   {section.fields.map((field) => {
                     const editable = isEditableField(field);
                     const id = `org-field-${field.fieldname}`;
+                    const isRequired =
+                      Boolean(field.reqd) || field.fieldname === "organization_name";
                     return (
                       <div key={field.fieldname} className={cnFieldSpan(field)}>
-                        <Label htmlFor={id} className="text-sm">
-                          {fieldLabel(field)}
-                          {field.reqd ? <span className="ml-1 text-destructive">*</span> : null}
+                        <Label
+                          htmlFor={id}
+                          className="text-xs font-medium text-foreground flex items-center justify-between"
+                        >
+                          <span className="flex items-center">
+                            {fieldLabel(field)}
+                            {isRequired && (
+                              <span
+                                className="ml-1 text-destructive font-bold"
+                                title="Mandatory field"
+                              >
+                                *
+                              </span>
+                            )}
+                          </span>
+                          {isRequired && (
+                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
+                              Required
+                            </span>
+                          )}
                         </Label>
                         <FieldInput
                           field={field}

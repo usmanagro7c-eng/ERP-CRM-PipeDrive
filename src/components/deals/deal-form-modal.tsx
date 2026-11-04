@@ -108,10 +108,19 @@ export function DealFormModal({
 
   async function handleSubmit() {
     const missing = fields
-      .filter((field) => field.reqd && isEditableField(field))
+      .filter(
+        (field) =>
+          (field.reqd || field.fieldname === "organization") &&
+          isEditableField(field),
+      )
       .filter((field) => {
         const value = values[field.fieldname];
-        return value === "" || value === null || value === undefined;
+        return (
+          value === "" ||
+          value === null ||
+          value === undefined ||
+          (typeof value === "string" && !value.trim())
+        );
       })
       .map((field) => fieldLabel(field));
     if (missing.length > 0) {
@@ -200,6 +209,8 @@ export function DealFormModal({
                   {section.fields.map((field) => {
                     const editable = isEditableField(field);
                     const id = `deal-field-${field.fieldname}`;
+                    const isRequired =
+                      Boolean(field.reqd) || field.fieldname === "organization";
 
                     return (
                       <div
@@ -212,13 +223,13 @@ export function DealFormModal({
                         >
                           <span className="flex items-center">
                             {fieldLabel(field)}
-                            {Boolean(field.reqd) && (
+                            {isRequired && (
                               <span className="ml-1 text-destructive font-bold" title="Mandatory field">
                                 *
                               </span>
                             )}
                           </span>
-                          {Boolean(field.reqd) && (
+                          {isRequired && (
                             <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
                               Required
                             </span>

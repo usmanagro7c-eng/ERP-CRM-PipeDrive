@@ -164,8 +164,8 @@ export function OrgTable({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-      <Table>
+    <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
+      <Table className="min-w-[650px]">
         <TableHeader>
           <TableRow className="bg-secondary/60 hover:bg-secondary/60">
             {columnFields.map((field) => (
@@ -264,7 +264,7 @@ export function OrgTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7 opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-accent"
+                        className="size-7 opacity-90 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-accent"
                       >
                         <MoreVertical className="size-3.5" />
                       </Button>

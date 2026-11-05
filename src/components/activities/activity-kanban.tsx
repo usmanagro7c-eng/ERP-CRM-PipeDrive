@@ -223,7 +223,7 @@ export function ActivityKanban({
                 setDraggedActivityName(null);
               }}
               className={cn(
-                "flex w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
+                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
               )}
             >
@@ -344,7 +344,7 @@ export function ActivityKanban({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-6 text-muted-foreground opacity-60 group-hover:opacity-100"
+                                  className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
                                 >
                                   <MoreVertical className="size-3.5" />
                                 </Button>

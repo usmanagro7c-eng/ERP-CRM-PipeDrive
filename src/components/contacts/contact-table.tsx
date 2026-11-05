@@ -221,8 +221,8 @@ export function ContactTable({
         </div>
       )}
 
-      <div className="rounded-md border bg-card overflow-hidden">
-        <Table>
+      <div className="rounded-md border bg-card overflow-x-auto">
+        <Table className="min-w-[700px]">
           <TableHeader className="bg-muted/30">
             <TableRow>
               <TableHead className="w-10 px-3">

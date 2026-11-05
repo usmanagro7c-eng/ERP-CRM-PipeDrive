@@ -25,82 +25,89 @@ export function FormSectionNav({
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 overflow-x-auto border-b bg-muted/30 px-6 py-2.5 scrollbar-none",
+        "border-b bg-muted/30 p-2 sm:px-6 sm:py-2.5",
         className,
       )}
     >
-      {pages.map((page, idx) => {
-        const isActive = activePageIndex === idx;
-        const requiredFields = page.fields.filter(isFieldRequired);
-        const hasRequired = requiredFields.length > 0;
+      <div
+        className={cn(
+          "grid w-full gap-1.5 sm:gap-2",
+          pages.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
+        )}
+      >
+        {pages.map((page, idx) => {
+          const isActive = activePageIndex === idx;
+          const requiredFields = page.fields.filter(isFieldRequired);
+          const hasRequired = requiredFields.length > 0;
 
-        // Check if all required fields in this page are fulfilled
-        const isCompleted =
-          hasRequired &&
-          requiredFields.every((f) => {
+          // Check if all required fields in this page are fulfilled
+          const isCompleted =
+            hasRequired &&
+            requiredFields.every((f) => {
+              const v = values[f.fieldname];
+              return (
+                v !== "" &&
+                v !== null &&
+                v !== undefined &&
+                (typeof v !== "string" || v.trim() !== "")
+              );
+            });
+
+          const missingRequiredCount = requiredFields.filter((f) => {
             const v = values[f.fieldname];
             return (
-              v !== "" &&
-              v !== null &&
-              v !== undefined &&
-              (typeof v !== "string" || v.trim() !== "")
+              v === "" ||
+              v === null ||
+              v === undefined ||
+              (typeof v === "string" && v.trim() === "")
             );
-          });
+          }).length;
 
-        const missingRequiredCount = requiredFields.filter((f) => {
-          const v = values[f.fieldname];
           return (
-            v === "" ||
-            v === null ||
-            v === undefined ||
-            (typeof v === "string" && v.trim() === "")
-          );
-        }).length;
-
-        return (
-          <button
-            key={page.id}
-            type="button"
-            onClick={() => onSelectPage(idx)}
-            className={cn(
-              "group inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all",
-              isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-background/70 text-muted-foreground hover:bg-background hover:text-foreground border border-border/50",
-            )}
-          >
-            <span
+            <button
+              key={page.id}
+              type="button"
+              onClick={() => onSelectPage(idx)}
               className={cn(
-                "flex size-4 items-center justify-center rounded-full text-[10px] font-bold shrink-0 transition-colors",
+                "group flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-2 text-xs font-medium transition-all text-center",
                 isActive
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : isCompleted
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                    : "bg-muted text-muted-foreground",
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground border border-border/60",
               )}
             >
-              {isCompleted ? <Check className="size-2.5 stroke-[3]" /> : idx + 1}
-            </span>
-
-            <span className="truncate">{page.label}</span>
-
-            {hasRequired && missingRequiredCount > 0 && (
-              <Badge
-                variant="outline"
+              <span
                 className={cn(
-                  "px-1 py-0 text-[10px] h-4 font-mono leading-none shrink-0",
+                  "flex size-4 items-center justify-center rounded-full text-[10px] font-bold shrink-0 transition-colors",
                   isActive
-                    ? "border-primary-foreground/40 bg-primary-foreground/20 text-primary-foreground"
-                    : "border-destructive/40 bg-destructive/10 text-destructive",
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : isCompleted
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      : "bg-muted text-muted-foreground",
                 )}
-                title={`${missingRequiredCount} required field(s)`}
               >
-                {missingRequiredCount} req
-              </Badge>
-            )}
-          </button>
-        );
-      })}
+                {isCompleted ? <Check className="size-2.5 stroke-[3]" /> : idx + 1}
+              </span>
+
+              <span className="truncate">{page.label}</span>
+
+              {hasRequired && missingRequiredCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "px-1 py-0 text-[10px] h-4 font-mono leading-none shrink-0",
+                    isActive
+                      ? "border-primary-foreground/40 bg-primary-foreground/20 text-primary-foreground"
+                      : "border-destructive/40 bg-destructive/10 text-destructive",
+                  )}
+                  title={`${missingRequiredCount} required field(s)`}
+                >
+                  {missingRequiredCount} req
+                </Badge>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

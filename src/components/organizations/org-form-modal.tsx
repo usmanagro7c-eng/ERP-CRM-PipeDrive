@@ -179,8 +179,8 @@ export function OrgFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-3">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[92vh] flex flex-col p-0">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
@@ -276,7 +276,7 @@ export function OrgFormModal({
           </form>
         </ScrollArea>
 
-        <DialogFooter className="border-t p-4 sm:p-5 flex flex-row items-center justify-between sm:justify-between bg-muted/20">
+        <DialogFooter className="border-t p-3 sm:p-5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-muted/20">
           <Button
             type="button"
             variant="outline"

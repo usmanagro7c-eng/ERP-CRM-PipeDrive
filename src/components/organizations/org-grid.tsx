@@ -200,7 +200,7 @@ export function OrgGrid({
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="size-8 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <MoreVertical className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>

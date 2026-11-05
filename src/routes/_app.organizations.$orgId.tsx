@@ -112,32 +112,37 @@ function OrganizationDetailPage() {
 
       {meta && org && (
         <>
-          <div className="flex flex-wrap items-center gap-4">
-            {typeof imageUrl === "string" && imageUrl ? (
-              <img src={imageUrl} alt="" className="size-14 rounded-xl border object-cover" />
-            ) : (
-              <span className="flex size-14 items-center justify-center rounded-xl bg-accent text-lg font-semibold text-accent-foreground">
-                {title.slice(0, 2).toUpperCase()}
-              </span>
-            )}
-            <div className="mr-auto min-w-0">
-              <h1 className="truncate font-display text-2xl font-semibold tracking-tight">
-                {title}
-              </h1>
-              <p className="text-sm text-muted-foreground">{String(org["name"])}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 mr-auto min-w-0">
+              {typeof imageUrl === "string" && imageUrl ? (
+                <img src={imageUrl} alt="" className="size-12 sm:size-14 rounded-xl border object-cover shrink-0" />
+              ) : (
+                <span className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-accent text-lg font-semibold text-accent-foreground shrink-0">
+                  {title.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-xl sm:text-2xl font-semibold tracking-tight">
+                  {title}
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground font-mono">{String(org["name"])}</p>
+              </div>
             </div>
-            <Button variant="outline" onClick={() => setEditOpen(true)} className="gap-2">
-              <Pencil className="size-4" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteOpen(true)}
-              className="gap-2 text-destructive"
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </Button>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => setEditOpen(true)} className="gap-2 flex-1 sm:flex-initial">
+                <Pencil className="size-4" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteOpen(true)}
+                className="gap-2 text-destructive flex-1 sm:flex-initial"
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-6 rounded-xl border bg-card p-5 shadow-card">

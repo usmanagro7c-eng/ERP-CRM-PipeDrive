@@ -260,29 +260,30 @@ function OrganizationsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 md:px-6">
+    <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-5 px-3 sm:px-6 py-4 sm:py-6">
       {/* Top Header & Actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="mr-auto">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Organizations</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Organizations</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {countQuery.isSuccess
               ? `${total} ${total === 1 ? "organization" : "organizations"}`
               : "Loading…"}
           </p>
         </div>
 
-        {/* Search Input */}
-        <form onSubmit={submitSearch} className="relative w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Filter by name…"
-            className="pl-9"
-            aria-label="Filter organizations by name"
-          />
-        </form>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Search Input */}
+          <form onSubmit={submitSearch} className="relative w-full sm:w-60 md:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Filter by name…"
+              className="pl-9 h-9 text-xs"
+              aria-label="Filter organizations by name"
+            />
+          </form>
 
         {/* View Switcher Dropdown */}
         <DropdownMenu>
@@ -349,6 +350,7 @@ function OrganizationsPage() {
           Organization
         </Button>
       </div>
+    </div>
 
       {/* Error Alert */}
       {error && (

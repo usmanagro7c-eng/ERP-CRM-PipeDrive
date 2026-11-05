@@ -128,7 +128,7 @@ export function ContactGrid({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-7 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition cursor-pointer shrink-0"
+                    className="size-7 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer shrink-0"
                   >
                     <MoreVertical className="size-4" />
                   </Button>

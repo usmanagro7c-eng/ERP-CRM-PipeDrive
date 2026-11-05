@@ -115,28 +115,22 @@ export interface SectionPage {
 
 /**
  * Group raw metadata fields into logical section pages.
- * Handles both "Section Break" and "Tab Break" from Frappe DocTypes.
- * If raw fields do not contain breaks, splits large field lists into balanced pages.
+ * Handles "Section Break" and "Tab Break" from Frappe DocTypes.
+ * Consolidates all secondary/additional fields into a single "Additional Details" page
+ * so there are at most 2 clean, responsive pages ("General Details" and "Additional Details").
  */
 export function groupIntoSectionPages(
   fields: FrappeDocField[],
   includeHidden = false,
 ): SectionPage[] {
-  const pages: SectionPage[] = [];
+  const rawSections: { label?: string | undefined; fields: FrappeDocField[] }[] = [];
   let currentLabel: string | undefined = undefined;
   let currentFields: FrappeDocField[] = [];
 
   for (const field of fields) {
     if (field.fieldtype === "Section Break" || field.fieldtype === "Tab Break") {
       if (currentFields.length > 0) {
-        const label =
-          currentLabel ||
-          (pages.length === 0 ? "General Information" : `Additional Details ${pages.length}`);
-        pages.push({
-          id: `page-${pages.length}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-          label,
-          fields: currentFields,
-        });
+        rawSections.push({ label: currentLabel, fields: currentFields });
         currentFields = [];
       }
       currentLabel = field.label ?? undefined;
@@ -148,36 +142,65 @@ export function groupIntoSectionPages(
   }
 
   if (currentFields.length > 0) {
-    const label =
-      currentLabel ||
-      (pages.length === 0 ? "General Information" : `Additional Details ${pages.length}`);
-    pages.push({
-      id: `page-${pages.length}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      label,
-      fields: currentFields,
-    });
+    rawSections.push({ label: currentLabel, fields: currentFields });
   }
 
-  // If after parsing there is only 1 page and it has more than 10 fields,
-  // split into balanced pages so the user is never overwhelmed by a huge list.
-  if (pages.length === 1 && pages[0] && pages[0].fields.length > 10) {
-    const all = pages[0].fields;
-    const half = Math.ceil(all.length / 2);
+  // If no sections or only 1 section
+  if (rawSections.length <= 1) {
+    const all = rawSections[0]?.fields ?? [];
+    if (all.length > 8) {
+      const required = all.filter((f) => f.reqd);
+      const half = Math.max(required.length, Math.ceil(all.length / 2));
+      return [
+        {
+          id: "page-primary",
+          label: rawSections[0]?.label || "General Details",
+          fields: all.slice(0, half),
+        },
+        {
+          id: "page-additional",
+          label: "Additional Details",
+          fields: all.slice(half),
+        },
+      ];
+    }
     return [
       {
-        id: "page-0-primary-details",
-        label: "Primary Information",
-        fields: all.slice(0, half),
-      },
-      {
-        id: "page-1-additional-details",
-        label: "Additional Information",
-        fields: all.slice(half),
+        id: "page-general",
+        label: rawSections[0]?.label || "General Details",
+        fields: all,
       },
     ];
   }
 
-  return pages;
+  // If there are 2 or more sections:
+  // First section is Page 1 ("General Details" or its label)
+  // ALL subsequent sections are merged into ONE single Page 2 ("Additional Details")
+  const primaryFields = rawSections[0]?.fields ?? [];
+  const additionalFields = rawSections.slice(1).flatMap((s) => s.fields);
+
+  if (additionalFields.length === 0) {
+    return [
+      {
+        id: "page-primary",
+        label: rawSections[0]?.label || "General Details",
+        fields: primaryFields,
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "page-primary",
+      label: rawSections[0]?.label || "General Details",
+      fields: primaryFields,
+    },
+    {
+      id: "page-additional",
+      label: "Additional Details",
+      fields: additionalFields,
+    },
+  ];
 }
 
 /**

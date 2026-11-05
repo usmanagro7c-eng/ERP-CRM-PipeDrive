@@ -283,16 +283,16 @@ function LeadsPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Top action bar */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-b bg-background px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Leads</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Leads</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Prospecting pipeline, lead qualification, and conversion tracking.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Search Input */}
             <form onSubmit={submitSearch} className="relative w-full sm:w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

@@ -277,7 +277,7 @@ export function OrgKanban({
                   void handleCardDrop(col.key);
                 }}
                 className={cn(
-                  "flex w-80 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150",
+                  "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150",
                   colorClass,
                   isOver && "border-primary/60 bg-accent/40 ring-2 ring-primary/20",
                 )}
@@ -383,7 +383,7 @@ export function OrgKanban({
                             <div className="flex items-center">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="size-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button variant="ghost" size="icon" className="size-6 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                     <MoreVertical className="size-3.5" />
                                   </Button>
                                 </DropdownMenuTrigger>

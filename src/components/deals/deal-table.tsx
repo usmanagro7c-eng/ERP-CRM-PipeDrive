@@ -252,7 +252,7 @@ export function DealTable({
 
   return (
     <div className="relative overflow-x-auto">
-      <Table>
+      <Table className="min-w-[650px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[140px]">
@@ -310,7 +310,7 @@ export function DealTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="size-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
                       >
                         <MoreVertical className="size-4" />
                         <span className="sr-only">Open menu</span>

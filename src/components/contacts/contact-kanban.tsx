@@ -212,7 +212,7 @@ export function ContactKanban({
                 handleDrop(col.key);
               }}
               className={cn(
-                "flex flex-col w-72 shrink-0 rounded-lg border bg-muted/30 transition-colors",
+                "flex flex-col w-[82vw] sm:w-72 shrink-0 rounded-lg border bg-muted/30 transition-colors",
                 isOver && "border-primary bg-primary/5",
               )}
             >
@@ -295,7 +295,7 @@ export function ContactKanban({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-6 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                className="size-6 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer"
                               >
                                 <MoreVertical className="size-3.5" />
                               </Button>

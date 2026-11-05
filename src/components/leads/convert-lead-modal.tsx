@@ -238,7 +238,7 @@ export function ConvertLeadModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
             <Briefcase className="size-5" />

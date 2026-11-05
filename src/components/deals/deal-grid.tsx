@@ -168,7 +168,7 @@ export function DealGrid({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground opacity-60 group-hover:opacity-100"
+                        className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
                       >
                         <MoreVertical className="size-4" />
                       </Button>

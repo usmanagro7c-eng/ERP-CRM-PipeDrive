@@ -56,7 +56,7 @@ function GlobalSearch() {
   const [term, setTerm] = useState("");
   return (
     <form
-      className="relative w-full max-w-md"
+      className="relative w-full max-w-[180px] sm:max-w-md"
       onSubmit={(event) => {
         event.preventDefault();
         void navigate({ to: "/organizations", search: term ? { q: term } : {} });
@@ -67,7 +67,7 @@ function GlobalSearch() {
         value={term}
         onChange={(event) => setTerm(event.target.value)}
         placeholder="Search organizations…"
-        className="pl-9 rounded-full bg-card"
+        className="pl-9 h-9 text-xs rounded-full bg-card"
         aria-label="Search organizations"
       />
     </form>
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <UserMenu />
           </header>
           <nav
-            className="flex gap-1 overflow-x-auto border-b bg-background px-4 py-2 md:hidden"
+            className="flex gap-1 overflow-x-auto border-b bg-background px-4 py-2 md:hidden scrollbar-none"
             aria-label="Main mobile"
           >
             <NavLinks />

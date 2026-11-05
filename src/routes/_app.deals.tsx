@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { DealFormModal } from "@/components/deals/deal-form-modal";
+import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
 import { DealTable, type SortState } from "@/components/deals/deal-table";
 import { DealKanban } from "@/components/deals/deal-kanban";
 import { DealGrid } from "@/components/deals/deal-grid";
@@ -138,6 +139,22 @@ function DealsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Record<string, unknown> | null>(null);
   const [modalInitialDoc, setModalInitialDoc] = useState<Record<string, unknown> | null>(null);
+
+  const [quotationModalOpen, setQuotationModalOpen] = useState(false);
+  const [quotationInitialValues, setQuotationInitialValues] = useState<{
+    party_name?: string;
+    crm_deal?: string;
+  } | null>(null);
+
+  function handleCreateQuotation(deal: Record<string, unknown>) {
+    const dealName = String(deal["name"] ?? "");
+    const party = String(deal["organization_name"] ?? deal["organization"] ?? "");
+    setQuotationInitialValues({
+      crm_deal: dealName,
+      party_name: party,
+    });
+    setQuotationModalOpen(true);
+  }
 
   const [savedColumns, setSavedColumns] = useState<string[] | null>(null);
   const [searchText, setSearchText] = useState(search.q ?? "");
@@ -394,6 +411,7 @@ function DealsPage() {
                 if (deal) handleEditDeal(deal);
               }}
               onEdit={handleEditDeal}
+              onCreateQuotation={handleCreateQuotation}
               onAddInStage={handleAddInStage}
             />
           ) : activeView === "grid" ? (
@@ -437,6 +455,7 @@ function DealsPage() {
                     if (deal) handleEditDeal(deal);
                   }}
                   onEdit={handleEditDeal}
+                  onCreateQuotation={handleCreateQuotation}
                   loading={loading}
                   emptyAction={
                     <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5">
@@ -509,6 +528,13 @@ function DealsPage() {
           initialValues={modalInitialDoc}
         />
       )}
+
+      {/* Convert Deal to Quotation Modal */}
+      <QuotationFormModal
+        open={quotationModalOpen}
+        onOpenChange={setQuotationModalOpen}
+        initialValues={quotationInitialValues}
+      />
     </div>
   );
 }

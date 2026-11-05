@@ -16,6 +16,8 @@ import { Route as AppActivitiesRouteImport } from './routes/_app.activities'
 import { Route as AppContactsRouteImport } from './routes/_app.contacts'
 import { Route as AppDealsRouteImport } from './routes/_app.deals'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppQuotationsRouteImport } from './routes/_app.quotations'
+import { Route as AppSalesOrdersRouteImport } from './routes/_app.sales-orders'
 import { Route as AppOrganizationsIndexRouteImport } from './routes/_app.organizations.index'
 import { Route as AppOrganizationsOrgIdRouteImport } from './routes/_app.organizations.$orgId'
 import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
@@ -57,6 +59,16 @@ const AppLeadsRoute = AppLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AppRoute,
 } as any)
+const AppQuotationsRoute = AppQuotationsRouteImport.update({
+  id: '/quotations',
+  path: '/quotations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalesOrdersRoute = AppSalesOrdersRouteImport.update({
+  id: '/sales-orders',
+  path: '/sales-orders',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOrganizationsIndexRoute = AppOrganizationsIndexRouteImport.update({
   id: '/organizations/',
   path: '/organizations/',
@@ -95,6 +107,8 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AppContactsRoute
   '/deals': typeof AppDealsRoute
   '/leads': typeof AppLeadsRoute
+  '/quotations': typeof AppQuotationsRoute
+  '/sales-orders': typeof AppSalesOrdersRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -109,6 +123,8 @@ export interface FileRoutesByTo {
   '/contacts': typeof AppContactsRoute
   '/deals': typeof AppDealsRoute
   '/leads': typeof AppLeadsRoute
+  '/quotations': typeof AppQuotationsRoute
+  '/sales-orders': typeof AppSalesOrdersRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -125,6 +141,8 @@ export interface FileRoutesById {
   '/_app/contacts': typeof AppContactsRoute
   '/_app/deals': typeof AppDealsRoute
   '/_app/leads': typeof AppLeadsRoute
+  '/_app/quotations': typeof AppQuotationsRoute
+  '/_app/sales-orders': typeof AppSalesOrdersRoute
   '/_app/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -141,6 +159,8 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/deals'
     | '/leads'
+    | '/quotations'
+    | '/sales-orders'
     | '/organizations/$orgId'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -155,6 +175,8 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/deals'
     | '/leads'
+    | '/quotations'
+    | '/sales-orders'
     | '/organizations/$orgId'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -170,6 +192,8 @@ export interface FileRouteTypes {
     | '/_app/contacts'
     | '/_app/deals'
     | '/_app/leads'
+    | '/_app/quotations'
+    | '/_app/sales-orders'
     | '/_app/organizations/$orgId'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -239,6 +263,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/quotations': {
+      id: '/_app/quotations'
+      path: '/quotations'
+      fullPath: '/quotations'
+      preLoaderRoute: typeof AppQuotationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales-orders': {
+      id: '/_app/sales-orders'
+      path: '/sales-orders'
+      fullPath: '/sales-orders'
+      preLoaderRoute: typeof AppSalesOrdersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/organizations/': {
       id: '/_app/organizations/'
       path: '/organizations'
@@ -289,6 +327,8 @@ interface AppRouteChildren {
   AppContactsRoute: typeof AppContactsRoute
   AppDealsRoute: typeof AppDealsRoute
   AppLeadsRoute: typeof AppLeadsRoute
+  AppQuotationsRoute: typeof AppQuotationsRoute
+  AppSalesOrdersRoute: typeof AppSalesOrdersRoute
   AppOrganizationsOrgIdRoute: typeof AppOrganizationsOrgIdRoute
   AppOrganizationsIndexRoute: typeof AppOrganizationsIndexRoute
 }
@@ -298,6 +338,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppContactsRoute: AppContactsRoute,
   AppDealsRoute: AppDealsRoute,
   AppLeadsRoute: AppLeadsRoute,
+  AppQuotationsRoute: AppQuotationsRoute,
+  AppSalesOrdersRoute: AppSalesOrdersRoute,
   AppOrganizationsOrgIdRoute: AppOrganizationsOrgIdRoute,
   AppOrganizationsIndexRoute: AppOrganizationsIndexRoute,
 }

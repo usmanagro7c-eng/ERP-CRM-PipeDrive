@@ -11,6 +11,7 @@ import {
   ArrowRight,
   TrendingUp,
   Loader2,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ interface DealKanbanProps {
   }>;
   onRowClick?: (name: string) => void;
   onEdit?: (deal: Record<string, unknown>) => void;
+  onCreateQuotation?: (deal: Record<string, unknown>) => void;
   onAddInStage?: (stageName: string) => void;
   loading: boolean;
   groupBy: string;
@@ -64,6 +66,7 @@ export function DealKanban({
   stages,
   onRowClick,
   onEdit,
+  onCreateQuotation,
   onAddInStage,
   loading,
   groupBy,
@@ -398,6 +401,15 @@ export function DealKanban({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48 text-xs">
                                 <DropdownMenuLabel>Deal Actions</DropdownMenuLabel>
+                                {onCreateQuotation && (
+                                  <DropdownMenuItem
+                                    onClick={() => onCreateQuotation(deal)}
+                                    className="gap-2 cursor-pointer font-medium text-primary"
+                                  >
+                                    <FileText className="size-3.5" />
+                                    <span>Create Quotation</span>
+                                  </DropdownMenuItem>
+                                )}
                                 {onEdit && (
                                   <DropdownMenuItem onClick={() => onEdit(deal)}>
                                     Edit Deal

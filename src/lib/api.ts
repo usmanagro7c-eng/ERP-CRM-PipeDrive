@@ -13,6 +13,9 @@ export const LEAD_DOCTYPE = "CRM Lead";
 export const LEAD_STATUS_DOCTYPE = "CRM Lead Status";
 export const TASK_DOCTYPE = "CRM Task";
 export const CONTACT_DOCTYPE = "Contact";
+export const QUOTATION_DOCTYPE = "Quotation";
+export const SALES_ORDER_DOCTYPE = "Sales Order";
+export const ITEM_DOCTYPE = "Item";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -614,6 +617,291 @@ export async function uploadAttachment(args: {
   const fileUrl = value?.file_url;
   if (!fileUrl) throw new FrappeApiError(500, "Upload succeeded but no file URL was returned.");
   return fileUrl;
+}
+
+export interface Item {
+  name: string;
+  item_code?: string;
+  item_name?: string;
+  item_group?: string;
+  stock_uom?: string;
+  standard_rate?: number;
+  image?: string;
+  [key: string]: unknown;
+}
+
+export interface QuotationItem {
+  name?: string;
+  item_code: string;
+  item_name?: string;
+  qty: number;
+  rate: number;
+  amount?: number;
+  discount_percentage?: number;
+  discount_amount?: number;
+  uom?: string;
+  stock_uom?: string;
+  [key: string]: unknown;
+}
+
+export interface Quotation {
+  name: string;
+  party_name: string;
+  customer_name?: string;
+  quotation_to: string;
+  transaction_date: string;
+  valid_till?: string;
+  order_type?: string;
+  company: string;
+  currency: string;
+  selling_price_list: string;
+  status: string;
+  docstatus: number;
+  grand_total: number;
+  net_total?: number;
+  total_qty?: number;
+  crm_deal?: string;
+  items?: QuotationItem[];
+  creation?: string;
+  modified?: string;
+  [key: string]: unknown;
+}
+
+export interface SalesOrderItem {
+  name?: string;
+  item_code: string;
+  item_name?: string;
+  qty: number;
+  rate: number;
+  amount?: number;
+  delivery_date?: string;
+  prevdoc_docname?: string;
+  [key: string]: unknown;
+}
+
+export interface SalesOrder {
+  name: string;
+  customer: string;
+  customer_name?: string;
+  company: string;
+  transaction_date: string;
+  delivery_date?: string;
+  order_type?: string;
+  currency: string;
+  selling_price_list: string;
+  status: string;
+  docstatus: number;
+  grand_total: number;
+  net_total?: number;
+  total_qty?: number;
+  items?: SalesOrderItem[];
+  creation?: string;
+  modified?: string;
+  [key: string]: unknown;
+}
+
+export async function listItems(search?: string): Promise<Item[]> {
+  const query = new URLSearchParams();
+  query.set(
+    "fields",
+    JSON.stringify(["name", "item_name", "item_group", "stock_uom", "standard_rate", "image"]),
+  );
+  query.set("limit_page_length", "50");
+  query.set("order_by", "name asc");
+  if (search) {
+    query.set("filters", JSON.stringify([["item_name", "like", `%${search}%`]]));
+  }
+  const payload = await proxyRequest(`api/resource/${ITEM_DOCTYPE}?${query.toString()}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Item[]) : [];
+}
+
+export async function listQuotations(params: ListParams): Promise<Quotation[]> {
+  const query = buildListQuery(params, "party_name");
+  const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as Quotation[]) : [];
+}
+
+export async function countQuotations(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: QUOTATION_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["party_name", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getQuotation(name: string): Promise<Quotation> {
+  const payload = await proxyRequest(
+    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for quotation detail.");
+  }
+  return data as Quotation;
+}
+
+export async function createQuotation(
+  values: Record<string, unknown>,
+): Promise<Quotation> {
+  const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}`, {
+    method: "POST",
+    body: {
+      quotation_to: "Customer",
+      company: "Usman",
+      order_type: "Sales",
+      currency: "PKR",
+      selling_price_list: "Standard Selling",
+      conversion_rate: 1.0,
+      plc_conversion_rate: 1.0,
+      transaction_date: new Date().toISOString().split("T")[0],
+      ...values,
+    },
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Quotation;
+}
+
+export async function updateQuotation(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<Quotation> {
+  const payload = await proxyRequest(
+    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: values,
+    },
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Quotation;
+}
+
+export async function submitQuotation(name: string): Promise<Quotation> {
+  const payload = await proxyRequest(
+    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: { docstatus: 1 },
+    },
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Quotation;
+}
+
+export async function deleteQuotation(name: string): Promise<void> {
+  await proxyRequest(
+    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+export async function listSalesOrders(params: ListParams): Promise<SalesOrder[]> {
+  const query = buildListQuery(params, "customer");
+  const payload = await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}?${query}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as SalesOrder[]) : [];
+}
+
+export async function countSalesOrders(
+  search = "",
+  filters: Array<[string, string, string]> = [],
+): Promise<number> {
+  const query = new URLSearchParams({ doctype: SALES_ORDER_DOCTYPE });
+  const all = [...filters];
+  if (search) all.push(["customer", "like", `%${search}%`]);
+  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
+  const value = message(payload);
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+export async function getSalesOrder(name: string): Promise<SalesOrder> {
+  const payload = await proxyRequest(
+    `api/resource/${SALES_ORDER_DOCTYPE}/${encodeURIComponent(name)}`,
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  if (!data || typeof data !== "object") {
+    throw new FrappeApiError(500, "Unexpected response for sales order detail.");
+  }
+  return data as SalesOrder;
+}
+
+export async function createSalesOrder(
+  values: Record<string, unknown>,
+): Promise<SalesOrder> {
+  const today = new Date().toISOString().split("T")[0];
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+  const payload = await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}`, {
+    method: "POST",
+    body: {
+      company: "Usman",
+      order_type: "Sales",
+      currency: "PKR",
+      selling_price_list: "Standard Selling",
+      transaction_date: today,
+      delivery_date: nextWeek,
+      ...values,
+    },
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as SalesOrder;
+}
+
+export async function submitSalesOrder(name: string): Promise<SalesOrder> {
+  const payload = await proxyRequest(
+    `api/resource/${SALES_ORDER_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: { docstatus: 1 },
+    },
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as SalesOrder;
+}
+
+export async function createSalesOrderFromQuotation(
+  quotation: Quotation,
+  deliveryDate?: string,
+): Promise<SalesOrder> {
+  const fullQuotation =
+    quotation.items && quotation.items.length > 0
+      ? quotation
+      : await getQuotation(quotation.name);
+
+  const today = new Date().toISOString().split("T")[0];
+  const delDate = deliveryDate || new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+
+  const items = (fullQuotation.items ?? []).map((item) => ({
+    item_code: item.item_code,
+    item_name: item.item_name,
+    qty: item.qty,
+    rate: item.rate,
+    amount: item.amount || item.qty * item.rate,
+    delivery_date: delDate,
+    prevdoc_docname: fullQuotation.name,
+  }));
+
+  const payload = await createSalesOrder({
+    customer: fullQuotation.party_name,
+    company: fullQuotation.company || "Usman",
+    transaction_date: today,
+    delivery_date: delDate,
+    order_type: "Sales",
+    currency: fullQuotation.currency || "PKR",
+    selling_price_list: fullQuotation.selling_price_list || "Standard Selling",
+    items,
+  });
+
+  return payload;
 }
 
 // Local type import to avoid a circular-looking import in editors.

@@ -43,6 +43,19 @@ const DEFAULT_LINK_TARGETS = new Set([
   "CRM Service Level Agreement",
   "CRM Communication Status",
   "CRM Lost Reason",
+  "Quotation",
+  "Sales Order",
+  "Item",
+  "Item Group",
+  "UOM",
+  "Price List",
+  "Company",
+  "Customer",
+  "Sales Taxes and Charges Template",
+  "Quotation Item",
+  "Sales Order Item",
+  "Tax Category",
+  "Payment Terms Template",
 ]);
 
 let linkTargetsCache: { targets: Set<string>; expires: number } | undefined;
@@ -127,7 +140,7 @@ async function forward(request: Request): Promise<Response> {
       const form = await request.clone().formData();
       if (!MAIN_DOCTYPES.has(String(form.get("doctype") ?? ""))) {
         return jsonResponse(
-          { _proxy_error: "Uploads are only allowed for CRM Organization, CRM Deal, CRM Lead, CRM Task, and Contact" },
+          { _proxy_error: "Uploads are only allowed for CRM and Sales DocTypes" },
           403,
         );
       }

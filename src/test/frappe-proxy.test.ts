@@ -59,6 +59,22 @@ describe("classifyRequest", () => {
     expect(classifyRequest("POST", "api/resource/Contact", none)?.kind).toBe("org-write");
     expect(classifyRequest("PUT", "api/resource/Contact/Usman", none)?.kind).toBe("org-write");
     expect(classifyRequest("DELETE", "api/resource/Contact/Usman", none)?.kind).toBe("org-write");
+    // Quotation
+    expect(classifyRequest("GET", "api/resource/Quotation", none)?.kind).toBe("org-read");
+    expect(classifyRequest("GET", "api/resource/Quotation/SAL-QTN-2026-00001", none)?.kind).toBe("org-read");
+    expect(classifyRequest("POST", "api/resource/Quotation", none)?.kind).toBe("org-write");
+    expect(classifyRequest("PUT", "api/resource/Quotation/SAL-QTN-2026-00001", none)?.kind).toBe("org-write");
+    expect(classifyRequest("DELETE", "api/resource/Quotation/SAL-QTN-2026-00001", none)?.kind).toBe("org-write");
+    // Sales Order
+    expect(classifyRequest("GET", "api/resource/Sales Order", none)?.kind).toBe("org-read");
+    expect(classifyRequest("GET", "api/resource/Sales Order/SAL-ORD-2026-00001", none)?.kind).toBe("org-read");
+    expect(classifyRequest("POST", "api/resource/Sales Order", none)?.kind).toBe("org-write");
+    expect(classifyRequest("PUT", "api/resource/Sales Order/SAL-ORD-2026-00001", none)?.kind).toBe("org-write");
+    expect(classifyRequest("DELETE", "api/resource/Sales Order/SAL-ORD-2026-00001", none)?.kind).toBe("org-write");
+    // Item
+    expect(classifyRequest("GET", "api/resource/Item", none)?.kind).toBe("org-read");
+    expect(classifyRequest("GET", "api/resource/Item/SKU001", none)?.kind).toBe("org-read");
+    expect(classifyRequest("POST", "api/resource/Item", none)?.kind).toBe("org-write");
   });
 
   it("only allows metadata and count for the allowed CRM doctypes", () => {
@@ -94,6 +110,27 @@ describe("classifyRequest", () => {
       classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", contactParams)?.kind,
     ).toBe("meta");
     expect(classifyRequest("GET", "api/method/frappe.client.get_count", contactParams)?.kind).toBe(
+      "count",
+    );
+    const quotationParams = new URLSearchParams({ doctype: "Quotation" });
+    expect(
+      classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", quotationParams)?.kind,
+    ).toBe("meta");
+    expect(classifyRequest("GET", "api/method/frappe.client.get_count", quotationParams)?.kind).toBe(
+      "count",
+    );
+    const salesOrderParams = new URLSearchParams({ doctype: "Sales Order" });
+    expect(
+      classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", salesOrderParams)?.kind,
+    ).toBe("meta");
+    expect(classifyRequest("GET", "api/method/frappe.client.get_count", salesOrderParams)?.kind).toBe(
+      "count",
+    );
+    const itemParams = new URLSearchParams({ doctype: "Item" });
+    expect(
+      classifyRequest("GET", "api/method/frappe.desk.form.load.getdoctype", itemParams)?.kind,
+    ).toBe("meta");
+    expect(classifyRequest("GET", "api/method/frappe.client.get_count", itemParams)?.kind).toBe(
       "count",
     );
     const user = new URLSearchParams({ doctype: "User" });

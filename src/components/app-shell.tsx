@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, CalendarClock, Columns3, Leaf, Search, Target, Users } from "lucide-react";
+import { Building2, CalendarClock, Columns3, FileText, Leaf, Search, ShoppingCart, Target, Users } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Leads", to: "/leads", icon: Target },
   { label: "Deals", to: "/deals", icon: Columns3 },
+  { label: "Quotations", to: "/quotations", icon: FileText },
+  { label: "Sales Orders", to: "/sales-orders", icon: ShoppingCart },
   { label: "Organizations", to: "/organizations", icon: Building2, functional: true },
   { label: "Contacts", to: "/contacts", icon: Users },
   { label: "Activities", to: "/activities", icon: CalendarClock },

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar, Loader2, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
@@ -46,6 +46,7 @@ interface DealTableProps {
   onSortChange: (sort: SortState) => void;
   onRowClick?: (name: string) => void;
   onEdit?: (deal: Record<string, unknown>) => void;
+  onCreateQuotation?: (deal: Record<string, unknown>) => void;
   loading: boolean;
   emptyAction?: React.ReactNode;
 }
@@ -177,6 +178,7 @@ export function DealTable({
   onSortChange,
   onRowClick,
   onEdit,
+  onCreateQuotation,
   loading,
   emptyAction,
 }: DealTableProps) {
@@ -318,6 +320,15 @@ export function DealTable({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      {onCreateQuotation && (
+                        <DropdownMenuItem
+                          onClick={() => onCreateQuotation(row)}
+                          className="gap-2 cursor-pointer font-medium text-primary"
+                        >
+                          <FileText className="size-3.5" />
+                          <span>Create Quotation</span>
+                        </DropdownMenuItem>
+                      )}
                       {onEdit && (
                         <DropdownMenuItem onClick={() => onEdit(row)}>
                           Edit Deal

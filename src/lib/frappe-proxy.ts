@@ -14,19 +14,25 @@ export const DEAL_DOCTYPE = "CRM Deal";
 export const LEAD_DOCTYPE = "CRM Lead";
 export const TASK_DOCTYPE = "CRM Task";
 export const CONTACT_DOCTYPE = "Contact";
+export const QUOTATION_DOCTYPE = "Quotation";
+export const SALES_ORDER_DOCTYPE = "Sales Order";
+export const ITEM_DOCTYPE = "Item";
 export const MAIN_DOCTYPES = new Set([
   ORG_DOCTYPE,
   DEAL_DOCTYPE,
   LEAD_DOCTYPE,
   TASK_DOCTYPE,
   CONTACT_DOCTYPE,
+  QUOTATION_DOCTYPE,
+  SALES_ORDER_DOCTYPE,
+  ITEM_DOCTYPE,
 ]);
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
 
 export type ProxyKind =
-  | "org-read" // GET api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact[/<name>]
-  | "org-write" // POST/PUT/DELETE api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact[/<name>]
+  | "org-read" // GET api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item[/<name>]
+  | "org-write" // POST/PUT/DELETE api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item[/<name>]
   | "link-read" // GET api/resource/<LinkedDocType>
   | "meta" // GET api/method/frappe.desk.form.load.getdoctype
   | "count" // GET api/method/frappe.client.get_count
@@ -44,7 +50,7 @@ export function hasUnsafeSegments(path: string): boolean {
   return path.split("/").some((segment) => segment === ".." || segment === ".");
 }
 
-const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact)(?:\/([^/]+))?$/;
+const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
 
 /**
@@ -75,7 +81,7 @@ export function classifyRequest(
 
   if (method === "POST") {
     if (path === "api/method/uploadfile") return { kind: "upload" };
-    if (/^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact)$/.test(path)) return { kind: "org-write" };
+    if (/^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item)$/.test(path)) return { kind: "org-write" };
     return null;
   }
 

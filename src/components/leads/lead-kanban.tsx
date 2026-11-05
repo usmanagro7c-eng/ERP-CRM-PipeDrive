@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import {
+  Briefcase,
   Building2,
   Calendar,
   GripVertical,
@@ -49,6 +50,7 @@ interface LeadKanbanProps {
   }>;
   onRowClick?: (name: string) => void;
   onEdit?: (lead: Record<string, unknown>) => void;
+  onConvert?: (lead: Record<string, unknown>) => void;
   onAddInStatus?: (statusName: string) => void;
   loading: boolean;
   groupBy: string;
@@ -72,6 +74,7 @@ export function LeadKanban({
   statuses,
   onRowClick,
   onEdit,
+  onConvert,
   onAddInStatus,
   loading,
   groupBy,
@@ -344,6 +347,17 @@ export function LeadKanban({
                                 {onEdit && (
                                   <DropdownMenuItem onClick={() => onEdit(lead)}>
                                     Edit Lead
+                                  </DropdownMenuItem>
+                                )}
+                                {onConvert && (
+                                  <DropdownMenuItem
+                                    onClick={() => onConvert(lead)}
+                                    disabled={Boolean(lead["converted"]) || currentStatus === "Converted"}
+                                  >
+                                    <Briefcase className="mr-2 size-3.5 text-primary" />
+                                    {Boolean(lead["converted"]) || currentStatus === "Converted"
+                                      ? "Already Converted"
+                                      : "Convert to Deal"}
                                   </DropdownMenuItem>
                                 )}
                                 <MoveToSubmenu

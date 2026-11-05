@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import {
+  Briefcase,
   Building2,
   Mail,
   MoreVertical,
@@ -30,6 +31,7 @@ interface LeadGridProps {
   statuses: Array<{ name: string; label?: string }>;
   onRowClick?: (name: string) => void;
   onEdit?: (lead: Record<string, unknown>) => void;
+  onConvert?: (lead: Record<string, unknown>) => void;
   loading: boolean;
   emptyAction?: React.ReactNode;
 }
@@ -49,6 +51,7 @@ export function LeadGrid({
   statuses,
   onRowClick,
   onEdit,
+  onConvert,
   loading,
   emptyAction,
 }: LeadGridProps) {
@@ -147,6 +150,17 @@ export function LeadGrid({
                       {onEdit && (
                         <DropdownMenuItem onClick={() => onEdit(row)}>
                           Edit Lead
+                        </DropdownMenuItem>
+                      )}
+                      {onConvert && (
+                        <DropdownMenuItem
+                          onClick={() => onConvert(row)}
+                          disabled={Boolean(row["converted"]) || status === "Converted"}
+                        >
+                          <Briefcase className="mr-2 size-3.5 text-primary" />
+                          {Boolean(row["converted"]) || status === "Converted"
+                            ? "Already Converted"
+                            : "Convert to Deal"}
                         </DropdownMenuItem>
                       )}
                       <MoveToSubmenu

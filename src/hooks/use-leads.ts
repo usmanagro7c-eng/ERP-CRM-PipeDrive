@@ -103,6 +103,19 @@ export function useDeleteLead() {
   });
 }
 
+export function useConvertLeadToDeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: api.ConvertLeadToDealParams) => api.convertLeadToDeal(params),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_ROOT] }),
+        queryClient.invalidateQueries({ queryKey: ["deals"] }),
+      ]);
+    },
+  });
+}
+
 export async function uploadLeadFile(docname: string, fieldname: string, file: File) {
   return api.uploadAttachment({ doctype: api.LEAD_DOCTYPE, docname, fieldname, file });
 }

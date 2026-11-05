@@ -368,6 +368,41 @@ export async function deleteLead(name: string): Promise<void> {
   });
 }
 
+export interface ConvertLeadToDealParams {
+  leadName: string;
+  dealValues: Record<string, unknown>;
+}
+
+export async function convertLeadToDeal(
+  params: ConvertLeadToDealParams,
+): Promise<{ deal: Record<string, unknown>; lead: Record<string, unknown> }> {
+  // 1. Create the deal linked to the lead
+  const deal = await createDeal({
+    ...params.dealValues,
+    lead: params.leadName,
+  });
+
+  // 2. Mark the lead as converted
+  let updatedLead: Record<string, unknown> = {};
+  try {
+    updatedLead = await updateLead(params.leadName, {
+      status: "Converted",
+      converted: 1,
+    });
+  } catch (err) {
+    console.warn("Could not set lead status to Converted, setting converted flag:", err);
+    try {
+      updatedLead = await updateLead(params.leadName, {
+        converted: 1,
+      });
+    } catch {
+      // ignore secondary error if status is locked
+    }
+  }
+
+  return { deal, lead: updatedLead };
+}
+
 export async function listTasks(params: ListParams): Promise<Record<string, unknown>[]> {
   const query = buildListQuery(params, "title");
   const payload = await proxyRequest(`api/resource/${TASK_DOCTYPE}?${query}`);

@@ -1,6 +1,7 @@
 import {
   ArrowDown,
   ArrowUp,
+  Briefcase,
   ChevronsUpDown,
   CircleSlash,
   MoreVertical,
@@ -55,6 +56,7 @@ interface LeadTableProps {
   onSortChange: (sort: SortState) => void;
   onRowClick?: (name: string) => void;
   onEdit?: (lead: Record<string, unknown>) => void;
+  onConvert?: (lead: Record<string, unknown>) => void;
   loading: boolean;
   emptyAction?: React.ReactNode;
 }
@@ -208,6 +210,7 @@ export function LeadTable({
   onSortChange,
   onRowClick,
   onEdit,
+  onConvert,
   loading,
   emptyAction,
 }: LeadTableProps) {
@@ -316,6 +319,17 @@ export function LeadTable({
                       {onEdit && (
                         <DropdownMenuItem onClick={() => onEdit(row)}>
                           Edit Lead
+                        </DropdownMenuItem>
+                      )}
+                      {onConvert && (
+                        <DropdownMenuItem
+                          onClick={() => onConvert(row)}
+                          disabled={Boolean(row["converted"]) || currentStatus === "Converted"}
+                        >
+                          <Briefcase className="mr-2 size-4 text-primary" />
+                          {Boolean(row["converted"]) || currentStatus === "Converted"
+                            ? "Already Converted"
+                            : "Convert to Deal"}
                         </DropdownMenuItem>
                       )}
                       <MoveToSubmenu

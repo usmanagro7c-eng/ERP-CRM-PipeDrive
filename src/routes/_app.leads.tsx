@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { LeadFormModal } from "@/components/leads/lead-form-modal";
+import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import { LeadTable, type SortState } from "@/components/leads/lead-table";
 import { LeadKanban } from "@/components/leads/lead-kanban";
 import { LeadGrid } from "@/components/leads/lead-grid";
@@ -138,6 +139,8 @@ function LeadsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Record<string, unknown> | null>(null);
   const [modalInitialDoc, setModalInitialDoc] = useState<Record<string, unknown> | null>(null);
+  const [convertingLead, setConvertingLead] = useState<Record<string, unknown> | null>(null);
+  const [convertModalOpen, setConvertModalOpen] = useState(false);
 
   const [savedColumns, setSavedColumns] = useState<string[] | null>(null);
   const [searchText, setSearchText] = useState(search.q ?? "");
@@ -261,6 +264,11 @@ function LeadsPage() {
     setEditingLead(null);
     setModalInitialDoc(null);
     setCreateOpen(true);
+  };
+
+  const handleOpenConvertModal = (lead: Record<string, unknown>) => {
+    setConvertingLead(lead);
+    setConvertModalOpen(true);
   };
 
   const viewOptions = [
@@ -394,6 +402,7 @@ function LeadsPage() {
                 if (lead) handleEditLead(lead);
               }}
               onEdit={handleEditLead}
+              onConvert={handleOpenConvertModal}
               onAddInStatus={handleAddInStatus}
             />
           ) : activeView === "grid" ? (
@@ -407,6 +416,7 @@ function LeadsPage() {
                 if (lead) handleEditLead(lead);
               }}
               onEdit={handleEditLead}
+              onConvert={handleOpenConvertModal}
               emptyAction={
                 <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5">
                   <Plus className="size-4" />
@@ -437,6 +447,7 @@ function LeadsPage() {
                     if (lead) handleEditLead(lead);
                   }}
                   onEdit={handleEditLead}
+                  onConvert={handleOpenConvertModal}
                   loading={loading}
                   emptyAction={
                     <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5">
@@ -507,8 +518,16 @@ function LeadsPage() {
           meta={meta}
           lead={editingLead}
           initialValues={modalInitialDoc}
+          onConvert={handleOpenConvertModal}
         />
       )}
+
+      {/* Convert Lead to Deal Modal */}
+      <ConvertLeadModal
+        open={convertModalOpen}
+        onOpenChange={setConvertModalOpen}
+        lead={convertingLead}
+      />
     </div>
   );
 }

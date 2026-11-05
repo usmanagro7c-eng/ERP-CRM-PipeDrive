@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Briefcase, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,8 @@ interface LeadFormModalProps {
   lead?: Record<string, unknown> | null;
   /** Optional initial field values (e.g. preset status when adding from a Kanban column) */
   initialValues?: Record<string, unknown> | null;
+  /** Optional callback to convert lead to deal */
+  onConvert?: (lead: Record<string, unknown>) => void;
 }
 
 function buildInitialValues(
@@ -75,6 +77,7 @@ export function LeadFormModal({
   meta,
   lead,
   initialValues,
+  onConvert,
 }: LeadFormModalProps) {
   const isEdit = Boolean(lead);
   const docName = lead ? String(lead["name"]) : undefined;
@@ -258,25 +261,44 @@ export function LeadFormModal({
           </form>
         </ScrollArea>
 
-        <DialogFooter className="border-t p-4 sm:p-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saveMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="lead-form"
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending && (
-              <Loader2 className="mr-2 size-4 animate-spin" />
+        <DialogFooter className="border-t p-4 sm:p-6 flex flex-row items-center justify-between sm:justify-between">
+          <div>
+            {isEdit && onConvert && (
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-1.5"
+                disabled={saveMutation.isPending || Boolean(lead?.["converted"]) || lead?.["status"] === "Converted"}
+                onClick={() => {
+                  onOpenChange(false);
+                  onConvert(lead!);
+                }}
+              >
+                <Briefcase className="size-4 text-primary" />
+                {Boolean(lead?.["converted"]) || lead?.["status"] === "Converted" ? "Converted" : "Convert to Deal"}
+              </Button>
             )}
-            {isEdit ? "Save Changes" : "Create Lead"}
-          </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saveMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="lead-form"
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending && (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              )}
+              {isEdit ? "Save Changes" : "Create Lead"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

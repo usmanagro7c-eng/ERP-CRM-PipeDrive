@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  AlertCircle,
   Briefcase,
   Building2,
   Calendar,
@@ -33,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
@@ -48,9 +50,21 @@ import {
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { useConvertLeadToDeal, errorMessage } from "@/hooks/use-leads";
-import { dealStatusesOptions } from "@/hooks/use-deals";
+import { dealStatusesOptions, lostReasonsOptions } from "@/hooks/use-deals";
 import { useLinkOptions } from "@/hooks/use-organizations";
 import { cn } from "@/lib/utils";
+
+const FALLBACK_REASONS = [
+  "Pricing",
+  "Competition",
+  "Budget Constraints",
+  "Missing Features",
+  "Long Sales Cycle",
+  "No Decision-Maker",
+  "Unresponsive Prospect",
+  "Poor Fit",
+  "Other",
+];
 
 interface ConvertLeadModalProps {
   open: boolean;
@@ -97,7 +111,20 @@ export function ConvertLeadModal({
   const [dealValue, setDealValue] = useState<string>("");
   const [stage, setStage] = useState("Qualification");
   const [expectedCloseDate, setExpectedCloseDate] = useState(getDefaultCloseDate);
+  const [lostReason, setLostReason] = useState("");
+  const [lostNotes, setLostNotes] = useState("");
   const [orgComboboxOpen, setOrgComboboxOpen] = useState(false);
+
+  const lostReasonsQuery = useQuery(lostReasonsOptions());
+  const lostReasons = useMemo(() => {
+    if (lostReasonsQuery.data && lostReasonsQuery.data.length > 0) {
+      return lostReasonsQuery.data.map((r) => r.name);
+    }
+    return FALLBACK_REASONS;
+  }, [lostReasonsQuery.data]);
+
+  const isLost = stage.toLowerCase() === "lost";
+  const isLostOther = isLost && lostReason === "Other";
 
   // Re-seed form when modal opens with a lead
   useEffect(() => {
@@ -122,6 +149,8 @@ export function ConvertLeadModal({
       setStage(firstStage);
 
       setExpectedCloseDate(getDefaultCloseDate());
+      setLostReason("");
+      setLostNotes("");
     }
   }, [open, lead, leadName, leadOrg, dealStatuses]);
 
@@ -153,6 +182,24 @@ export function ConvertLeadModal({
         organization: trimmedOrg,
         status: stage,
       };
+
+      if (isLost) {
+        const trimmedReason = lostReason.trim();
+        if (!trimmedReason) {
+          toast.error("Please specify a reason for losing the deal.");
+          return;
+        }
+        dealValues["lost_reason"] = trimmedReason;
+
+        if (isLostOther) {
+          const trimmedNotes = lostNotes.trim();
+          if (!trimmedNotes) {
+            toast.error("Please provide additional notes for reason 'Other'.");
+            return;
+          }
+          dealValues["lost_notes"] = trimmedNotes;
+        }
+      }
 
       if (dealValue && !Number.isNaN(Number(dealValue))) {
         dealValues["deal_value"] = Number(dealValue);
@@ -373,6 +420,54 @@ export function ConvertLeadModal({
               </div>
             </div>
           </div>
+
+          {/* Lost Reason if stage is Lost */}
+          {isLost && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+                <AlertCircle className="size-4" />
+                <span>Deal Loss Details (Required by Frappe CRM)</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="lost-reason" className="text-xs font-semibold">
+                  Reason for losing deal <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={lostReason}
+                  onValueChange={setLostReason}
+                  disabled={convertMutation.isPending}
+                >
+                  <SelectTrigger id="lost-reason" className="h-9 text-sm bg-background">
+                    <SelectValue placeholder="Select a reason..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {lostReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isLostOther && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="lost-notes" className="text-xs font-semibold">
+                    Lost Notes <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="lost-notes"
+                    value={lostNotes}
+                    onChange={(e) => setLostNotes(e.target.value)}
+                    placeholder="Please explain why the deal was lost..."
+                    className="text-xs min-h-[60px] bg-background"
+                    disabled={convertMutation.isPending}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Expected Close Date */}
           <div className="space-y-1.5">

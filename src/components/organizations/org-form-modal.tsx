@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,22 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FieldInput } from "@/components/organizations/field-input";
-import { ORG_DOCTYPE } from "@/lib/api";
+import { FormSectionNav } from "@/components/ui/form-section-nav";
 import {
   fieldLabel,
   fromInputValue,
-  groupIntoSections,
+  groupIntoSectionPages,
   isEditableField,
-  isDisplayField,
   toInputValue,
   type FrappeDocField,
   type FrappeDocTypeMeta,
 } from "@/lib/frappe-meta";
+import { ORG_DOCTYPE } from "@/lib/frappe-proxy";
 import { useSaveOrganization, uploadOrgFile, errorMessage } from "@/hooks/use-organizations";
 
 interface OrgFormModalProps {
@@ -40,210 +39,9 @@ interface OrgFormModalProps {
 function buildInitialValues(fields: FrappeDocField[], doc?: Record<string, unknown> | null) {
   const values: Record<string, unknown> = {};
   for (const field of fields) {
-    const raw = doc ? doc[field.fieldname] : field.default;
-    values[field.fieldname] = toInputValue(field, raw);
+    values[field.fieldname] = toInputValue(field, doc ? doc[field.fieldname] : field.default);
   }
   return values;
-}
-
-export function OrgFormModal({ open, onOpenChange, meta, organization }: OrgFormModalProps) {
-  const isEdit = Boolean(organization);
-  const docName = organization ? String(organization["name"]) : undefined;
-  const saveMutation = useSaveOrganization();
-
-  const fields = useMemo(() => (meta.fields ?? []).filter(isDisplayField), [meta]);
-  const sections = useMemo(() => groupIntoSections(fields), [fields]);
-  const [values, setValues] = useState(() => buildInitialValues(fields, organization));
-  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
-
-  // Re-seed the form when the modal opens for a different doc.
-  const [seedKey, setSeedKey] = useState<string | null>(
-    organization ? String(organization["name"]) : null,
-  );
-  const wantedKey = organization ? String(organization["name"]) : "__create__";
-  if (open && seedKey !== wantedKey) {
-    setSeedKey(wantedKey);
-    setValues(buildInitialValues(fields, organization));
-    setPendingFiles({});
-  } else if (!open && seedKey !== null) {
-    // Closed: forget the seed so the next open starts from fresh values.
-    setSeedKey(null);
-  }
-
-  function setValue(fieldname: string, value: unknown) {
-    setValues((previous) => ({ ...previous, [fieldname]: value }));
-  }
-
-  async function handleSubmit() {
-    const missing = fields
-      .filter(
-        (field) =>
-          (field.reqd || field.fieldname === "organization_name") &&
-          isEditableField(field),
-      )
-      .filter((field) => {
-        const value = values[field.fieldname];
-        return (
-          value === "" ||
-          value === null ||
-          value === undefined ||
-          (typeof value === "string" && !value.trim())
-        );
-      })
-      .map((field) => fieldLabel(field));
-    if (missing.length > 0) {
-      toast.error(`Please fill the required fields: ${missing.join(", ")}`);
-      return;
-    }
-
-    // Convert values back to Frappe storage format.
-    const payload: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (!isEditableField(field)) continue;
-      payload[field.fieldname] = fromInputValue(field, values[field.fieldname]);
-    }
-
-    // For updates with new pending files, upload first so the file URL is saved.
-    if (isEdit && docName) {
-      for (const [fieldname, file] of Object.entries(pendingFiles)) {
-        try {
-          payload[fieldname] = await uploadOrgFile(docName, fieldname, file);
-        } catch (error) {
-          toast.error(
-            `${fieldLabel(fields.find((f) => f.fieldname === fieldname)!)}: ${errorMessage(error)}`,
-          );
-          return;
-        }
-      }
-    }
-
-    try {
-      const saved = await saveMutation.mutateAsync({ name: docName, values: payload });
-      const newName = !isEdit ? String(saved["name"] ?? "") : docName;
-      // Create flow: upload pending files after the doc exists, then patch.
-      if (!isEdit && newName && Object.keys(pendingFiles).length > 0) {
-        const patch: Record<string, unknown> = {};
-        for (const [fieldname, file] of Object.entries(pendingFiles)) {
-          try {
-            patch[fieldname] = await uploadOrgFile(newName, fieldname, file);
-          } catch (error) {
-            toast.error(
-              `${fieldLabel(fields.find((f) => f.fieldname === fieldname)!)}: ${errorMessage(error)}`,
-            );
-          }
-        }
-        if (Object.keys(patch).length > 0) {
-          await saveMutation.mutateAsync({ name: newName, values: patch });
-        }
-      }
-      onOpenChange(false);
-    } catch {
-      // Error toast already shown by the mutation.
-    }
-  }
-
-  const pending = saveMutation.isPending;
-
-  return (
-    <Dialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
-      <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="px-6 pb-2 pt-5 text-left">
-          <DialogTitle className="font-display text-xl">
-            {isEdit ? "Edit Organization" : "New Organization"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update the fields and save your changes."
-              : "Fields follow your Frappe CRM configuration."}
-          </DialogDescription>
-        </DialogHeader>
-        <Separator />
-        <ScrollArea className="max-h-[60vh] flex-1">
-          <form
-            className="space-y-6 px-6 py-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleSubmit();
-            }}
-          >
-            {sections.map((section, sectionIndex) => (
-              <section key={section.label ?? sectionIndex} className="space-y-4">
-                {section.label && (
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {section.label}
-                  </h3>
-                )}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {section.fields.map((field) => {
-                    const editable = isEditableField(field);
-                    const id = `org-field-${field.fieldname}`;
-                    const isRequired =
-                      Boolean(field.reqd) || field.fieldname === "organization_name";
-                    return (
-                      <div key={field.fieldname} className={cnFieldSpan(field)}>
-                        <Label
-                          htmlFor={id}
-                          className="text-xs font-medium text-foreground flex items-center justify-between"
-                        >
-                          <span className="flex items-center">
-                            {fieldLabel(field)}
-                            {isRequired && (
-                              <span
-                                className="ml-1 text-destructive font-bold"
-                                title="Mandatory field"
-                              >
-                                *
-                              </span>
-                            )}
-                          </span>
-                          {isRequired && (
-                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
-                              Required
-                            </span>
-                          )}
-                        </Label>
-                        <FieldInput
-                          field={field}
-                          id={id}
-                          value={values[field.fieldname]}
-                          onValueChange={(value) => setValue(field.fieldname, value)}
-                          disabled={!editable || pending}
-                          docName={isEdit ? docName : undefined}
-                          pendingFile={pendingFiles[field.fieldname] ?? null}
-                          onPendingFileChange={(file) =>
-                            setPendingFiles((previous) => {
-                              const next = { ...previous };
-                              if (file) next[field.fieldname] = file;
-                              else delete next[field.fieldname];
-                              return next;
-                            })
-                          }
-                        />
-                        {field.description && (
-                          <p className="text-xs text-muted-foreground">{field.description}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-            <button type="submit" className="hidden" aria-hidden tabIndex={-1} />
-          </form>
-        </ScrollArea>
-        <Separator />
-        <DialogFooter className="gap-2 px-6 py-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
-          </Button>
-          <Button onClick={() => void handleSubmit()} disabled={pending}>
-            {pending && <Loader2 className="size-4 animate-spin" />}
-            {isEdit ? "Save changes" : `Create ${ORG_DOCTYPE.replace("CRM ", "")}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 function cnFieldSpan(field: FrappeDocField): string {
@@ -257,4 +55,281 @@ function cnFieldSpan(field: FrappeDocField): string {
     "Attach Image",
   ].includes(field.fieldtype);
   return wide ? "sm:col-span-2 space-y-1.5" : "space-y-1.5";
+}
+
+export function OrgFormModal({
+  open,
+  onOpenChange,
+  meta,
+  organization,
+}: OrgFormModalProps) {
+  const isEdit = Boolean(organization);
+  const docName = organization ? String(organization["name"]) : undefined;
+  const saveMutation = useSaveOrganization();
+
+  const pages = useMemo(() => groupIntoSectionPages(meta.fields ?? []), [meta]);
+  const fields = useMemo(() => pages.flatMap((p) => p.fields), [pages]);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+
+  const [values, setValues] = useState(() => buildInitialValues(fields, organization));
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
+
+  // Re-seed the form when the modal opens for a different doc
+  const [seedKey, setSeedKey] = useState<string | null>(
+    organization ? String(organization["name"]) : null,
+  );
+  const wantedKey = organization ? String(organization["name"]) : "__create__";
+  if (open && seedKey !== wantedKey) {
+    setSeedKey(wantedKey);
+    setValues(buildInitialValues(fields, organization));
+    setPendingFiles({});
+    setActivePageIndex(0);
+  } else if (!open && seedKey !== null) {
+    setSeedKey(null);
+    setActivePageIndex(0);
+  }
+
+  function setValue(fieldname: string, value: unknown) {
+    setValues((previous) => ({ ...previous, [fieldname]: value }));
+  }
+
+  function isFieldRequired(field: FrappeDocField): boolean {
+    return Boolean(field.reqd || field.fieldname === "organization_name");
+  }
+
+  async function handleSubmit() {
+    const missing = fields
+      .filter((field) => isFieldRequired(field) && isEditableField(field))
+      .filter((field) => {
+        const value = values[field.fieldname];
+        return (
+          value === "" ||
+          value === null ||
+          value === undefined ||
+          (typeof value === "string" && !value.trim())
+        );
+      });
+
+    if (missing.length > 0) {
+      const firstMissing = missing[0];
+      if (firstMissing) {
+        const targetIdx = pages.findIndex((p) =>
+          p.fields.some((f) => f.fieldname === firstMissing.fieldname),
+        );
+        if (targetIdx !== -1 && targetIdx !== activePageIndex) {
+          setActivePageIndex(targetIdx);
+        }
+      }
+      const missingLabels = missing.map((f) => fieldLabel(f)).join(", ");
+      toast.error(`Please fill required fields: ${missingLabels}`);
+      return;
+    }
+
+    const payload: Record<string, unknown> = {};
+    for (const field of fields) {
+      if (!isEditableField(field)) continue;
+      payload[field.fieldname] = fromInputValue(field, values[field.fieldname]);
+    }
+
+    // For updates with new pending files, upload first
+    if (isEdit && docName) {
+      for (const [fieldname, file] of Object.entries(pendingFiles)) {
+        try {
+          const fileUrl = await uploadOrgFile(docName, fieldname, file);
+          payload[fieldname] = fileUrl;
+        } catch (error) {
+          toast.error(`Could not upload ${fieldname}: ${errorMessage(error)}`);
+          return;
+        }
+      }
+    }
+
+    try {
+      const savedDoc = await saveMutation.mutateAsync({
+        name: docName,
+        values: payload,
+      });
+
+      // For creates with pending files, upload now that we have a docname
+      if (!isEdit && savedDoc && typeof savedDoc === "object" && "name" in savedDoc) {
+        const newName = String((savedDoc as Record<string, unknown>)["name"]);
+        for (const [fieldname, file] of Object.entries(pendingFiles)) {
+          try {
+            await uploadOrgFile(newName, fieldname, file);
+          } catch (error) {
+            toast.error(`Attached ${fieldname} failed to upload: ${errorMessage(error)}`);
+          }
+        }
+      }
+
+      onOpenChange(false);
+    } catch {
+      // toast shown by hook
+    }
+  }
+
+  const title = isEdit
+    ? `Edit · ${String(organization?.["organization_name"] ?? docName)}`
+    : `New ${ORG_DOCTYPE.replace("CRM ", "")}`;
+  const subtitle = isEdit
+    ? "Update company information, contacts, and industry classification."
+    : "Fill in the details across section pages to create an organization.";
+
+  const activePage = pages[activePageIndex] ?? pages[0];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-3">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{subtitle}</DialogDescription>
+        </DialogHeader>
+
+        {/* Section Navigation Tabs */}
+        <FormSectionNav
+          pages={pages}
+          activePageIndex={activePageIndex}
+          onSelectPage={setActivePageIndex}
+          values={values}
+          isFieldRequired={isFieldRequired}
+        />
+
+        {/* Active Page Content */}
+        <ScrollArea className="flex-1 px-6 py-4">
+          <form
+            id="org-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSubmit();
+            }}
+            className="space-y-4 pb-4"
+          >
+            {activePage && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {activePage.label}
+                  </h4>
+                  {pages.length > 1 && (
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      Step {activePageIndex + 1} of {pages.length}
+                    </span>
+                  )}
+                </div>
+                <Separator />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {activePage.fields.map((field) => {
+                    const editable = isEditableField(field);
+                    const id = `org-field-${field.fieldname}`;
+                    const isRequired = isFieldRequired(field);
+
+                    return (
+                      <div
+                        key={field.fieldname}
+                        className={cnFieldSpan(field)}
+                      >
+                        <Label
+                          htmlFor={id}
+                          className="text-xs font-medium text-foreground flex items-center justify-between"
+                        >
+                          <span className="flex items-center">
+                            {fieldLabel(field)}
+                            {isRequired && (
+                              <span className="ml-1 text-destructive font-bold" title="Mandatory field">
+                                *
+                              </span>
+                            )}
+                          </span>
+                          {isRequired && (
+                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
+                              Required
+                            </span>
+                          )}
+                        </Label>
+                        <FieldInput
+                          id={id}
+                          field={field}
+                          value={values[field.fieldname]}
+                          onValueChange={(val) => setValue(field.fieldname, val)}
+                          disabled={!editable || saveMutation.isPending}
+                          docName={docName}
+                          pendingFile={pendingFiles[field.fieldname]}
+                          onPendingFileChange={(file) =>
+                            setPendingFiles((prev) => {
+                              const copy = { ...prev };
+                              if (file) copy[field.fieldname] = file;
+                              else delete copy[field.fieldname];
+                              return copy;
+                            })
+                          }
+                        />
+                        {field.description && (
+                          <p className="text-[11px] text-muted-foreground">{field.description}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </form>
+        </ScrollArea>
+
+        <DialogFooter className="border-t p-4 sm:p-5 flex flex-row items-center justify-between sm:justify-between bg-muted/20">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            disabled={saveMutation.isPending}
+          >
+            Cancel
+          </Button>
+
+          <div className="flex items-center gap-2">
+            {pages.length > 1 && activePageIndex > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
+                disabled={saveMutation.isPending}
+              >
+                <ChevronLeft className="size-3.5" />
+                Previous
+              </Button>
+            )}
+
+            {pages.length > 1 && activePageIndex < pages.length - 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setActivePageIndex((prev) => Math.min(pages.length - 1, prev + 1))}
+                disabled={saveMutation.isPending}
+              >
+                Next
+                <ChevronRight className="size-3.5" />
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              form="org-form"
+              size="sm"
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending && (
+                <Loader2 className="mr-2 size-3.5 animate-spin" />
+              )}
+              {isEdit ? "Save Changes" : `Create ${ORG_DOCTYPE.replace("CRM ", "")}`}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

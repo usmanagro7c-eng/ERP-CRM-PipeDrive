@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,11 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FieldInput } from "@/components/organizations/field-input";
+import { FormSectionNav } from "@/components/ui/form-section-nav";
 import {
   fieldLabel,
   fromInputValue,
-  groupIntoSections,
-  isDisplayField,
+  groupIntoSectionPages,
   isEditableField,
   toInputValue,
   type FrappeDocField,
@@ -80,8 +80,10 @@ export function ActivityFormModal({
   const docName = activity ? String(activity["name"]) : undefined;
   const saveMutation = useSaveActivity();
 
-  const fields = useMemo(() => (meta.fields ?? []).filter(isDisplayField), [meta]);
-  const sections = useMemo(() => groupIntoSections(fields), [fields]);
+  const pages = useMemo(() => groupIntoSectionPages(meta.fields ?? []), [meta]);
+  const fields = useMemo(() => pages.flatMap((p) => p.fields), [pages]);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+
   const [values, setValues] = useState(() =>
     buildInitialValues(fields, activity, initialValues),
   );
@@ -98,24 +100,45 @@ export function ActivityFormModal({
     setSeedKey(wantedKey);
     setValues(buildInitialValues(fields, activity, initialValues));
     setPendingFiles({});
+    setActivePageIndex(0);
   } else if (!open && seedKey !== null) {
     setSeedKey(null);
+    setActivePageIndex(0);
   }
 
   function setValue(fieldname: string, value: unknown) {
     setValues((previous) => ({ ...previous, [fieldname]: value }));
   }
 
+  function isFieldRequired(field: FrappeDocField): boolean {
+    return Boolean(field.reqd || field.fieldname === "title");
+  }
+
   async function handleSubmit() {
     const missing = fields
-      .filter((field) => field.reqd && isEditableField(field))
+      .filter((field) => isFieldRequired(field) && isEditableField(field))
       .filter((field) => {
         const value = values[field.fieldname];
-        return value === "" || value === null || value === undefined;
-      })
-      .map((field) => fieldLabel(field));
+        return (
+          value === "" ||
+          value === null ||
+          value === undefined ||
+          (typeof value === "string" && !value.trim())
+        );
+      });
+
     if (missing.length > 0) {
-      toast.error(`Please fill the required fields: ${missing.join(", ")}`);
+      const firstMissing = missing[0];
+      if (firstMissing) {
+        const targetIdx = pages.findIndex((p) =>
+          p.fields.some((f) => f.fieldname === firstMissing.fieldname),
+        );
+        if (targetIdx !== -1 && targetIdx !== activePageIndex) {
+          setActivePageIndex(targetIdx);
+        }
+      }
+      const missingLabels = missing.map((f) => fieldLabel(f)).join(", ");
+      toast.error(`Please fill required fields: ${missingLabels}`);
       return;
     }
 
@@ -163,43 +186,60 @@ export function ActivityFormModal({
   }
 
   const title = isEdit
-    ? `Edit Activity #${String(activity?.["name"] ?? "")}`
-    : "New Activity";
-  const description = isEdit
-    ? "Update activity details, due date, priority, or assignee."
-    : "Schedule a task, call, meeting, or deadline.";
+    ? `Edit Activity · ${String(activity?.["title"] ?? docName)}`
+    : "Create Activity";
+  const subtitle = isEdit
+    ? "Update task details, schedule, priority, and assignments."
+    : "Fill in the details across section pages to schedule a new activity.";
+
+  const activePage = pages[activePageIndex] ?? pages[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl p-0 gap-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-3">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-140px)] px-6">
+        {/* Section Navigation Tabs */}
+        <FormSectionNav
+          pages={pages}
+          activePageIndex={activePageIndex}
+          onSelectPage={setActivePageIndex}
+          values={values}
+          isFieldRequired={isFieldRequired}
+        />
+
+        {/* Active Page Content */}
+        <ScrollArea className="flex-1 px-6 py-4">
           <form
             id="activity-form"
             onSubmit={(e) => {
               e.preventDefault();
               void handleSubmit();
             }}
-            className="space-y-6 pb-6"
+            className="space-y-4 pb-4"
           >
-            {sections.map((section, idx) => (
-              <div key={section.label ?? idx} className="space-y-4">
-                {section.label && (
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {section.label}
-                    </h4>
-                    <Separator className="mt-2" />
-                  </div>
-                )}
+            {activePage && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {activePage.label}
+                  </h4>
+                  {pages.length > 1 && (
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      Step {activePageIndex + 1} of {pages.length}
+                    </span>
+                  )}
+                </div>
+                <Separator />
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {section.fields.map((field) => {
+                  {activePage.fields.map((field) => {
                     const editable = isEditableField(field);
-                    const id = `act-field-${field.fieldname}`;
+                    const id = `activity-field-${field.fieldname}`;
+                    const isRequired = isFieldRequired(field);
 
                     return (
                       <div
@@ -212,13 +252,13 @@ export function ActivityFormModal({
                         >
                           <span className="flex items-center">
                             {fieldLabel(field)}
-                            {Boolean(field.reqd) && (
+                            {isRequired && (
                               <span className="ml-1 text-destructive font-bold" title="Mandatory field">
                                 *
                               </span>
                             )}
                           </span>
-                          {Boolean(field.reqd) && (
+                          {isRequired && (
                             <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
                               Required
                             </span>
@@ -249,29 +289,62 @@ export function ActivityFormModal({
                   })}
                 </div>
               </div>
-            ))}
+            )}
           </form>
         </ScrollArea>
 
-        <DialogFooter className="border-t p-4 sm:p-6">
+        <DialogFooter className="border-t p-4 sm:p-5 flex flex-row items-center justify-between sm:justify-between bg-muted/20">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={saveMutation.isPending}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            form="activity-form"
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending && (
-              <Loader2 className="mr-2 size-4 animate-spin" />
+
+          <div className="flex items-center gap-2">
+            {pages.length > 1 && activePageIndex > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
+                disabled={saveMutation.isPending}
+              >
+                <ChevronLeft className="size-3.5" />
+                Previous
+              </Button>
             )}
-            {isEdit ? "Save Changes" : "Create Activity"}
-          </Button>
+
+            {pages.length > 1 && activePageIndex < pages.length - 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setActivePageIndex((prev) => Math.min(pages.length - 1, prev + 1))}
+                disabled={saveMutation.isPending}
+              >
+                Next
+                <ChevronRight className="size-3.5" />
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              form="activity-form"
+              size="sm"
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending && (
+                <Loader2 className="mr-2 size-3.5 animate-spin" />
+              )}
+              {isEdit ? "Save Changes" : "Create Activity"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

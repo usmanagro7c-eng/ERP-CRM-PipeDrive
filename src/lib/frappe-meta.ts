@@ -107,6 +107,79 @@ export interface FieldSection {
   fields: FrappeDocField[];
 }
 
+export interface SectionPage {
+  id: string;
+  label: string;
+  fields: FrappeDocField[];
+}
+
+/**
+ * Group raw metadata fields into logical section pages.
+ * Handles both "Section Break" and "Tab Break" from Frappe DocTypes.
+ * If raw fields do not contain breaks, splits large field lists into balanced pages.
+ */
+export function groupIntoSectionPages(
+  fields: FrappeDocField[],
+  includeHidden = false,
+): SectionPage[] {
+  const pages: SectionPage[] = [];
+  let currentLabel: string | undefined = undefined;
+  let currentFields: FrappeDocField[] = [];
+
+  for (const field of fields) {
+    if (field.fieldtype === "Section Break" || field.fieldtype === "Tab Break") {
+      if (currentFields.length > 0) {
+        const label =
+          currentLabel ||
+          (pages.length === 0 ? "General Information" : `Additional Details ${pages.length}`);
+        pages.push({
+          id: `page-${pages.length}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          label,
+          fields: currentFields,
+        });
+        currentFields = [];
+      }
+      currentLabel = field.label ?? undefined;
+      continue;
+    }
+    if (!isDataField(field)) continue;
+    if (!includeHidden && field.hidden) continue;
+    currentFields.push(field);
+  }
+
+  if (currentFields.length > 0) {
+    const label =
+      currentLabel ||
+      (pages.length === 0 ? "General Information" : `Additional Details ${pages.length}`);
+    pages.push({
+      id: `page-${pages.length}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      label,
+      fields: currentFields,
+    });
+  }
+
+  // If after parsing there is only 1 page and it has more than 10 fields,
+  // split into balanced pages so the user is never overwhelmed by a huge list.
+  if (pages.length === 1 && pages[0] && pages[0].fields.length > 10) {
+    const all = pages[0].fields;
+    const half = Math.ceil(all.length / 2);
+    return [
+      {
+        id: "page-0-primary-details",
+        label: "Primary Information",
+        fields: all.slice(0, half),
+      },
+      {
+        id: "page-1-additional-details",
+        label: "Additional Information",
+        fields: all.slice(half),
+      },
+    ];
+  }
+
+  return pages;
+}
+
 /**
  * Walk the raw field list and group fields into sections using Section Breaks.
  * Column Breaks are layout-only on two-column forms and are flattened.

@@ -1209,5 +1209,113 @@ export async function sendEmail(args: {
   }
 }
 
+export interface DashboardFilter {
+  from_date: string;
+  to_date: string;
+  user?: string | null;
+}
+
+export interface DashboardWidgetLayout {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  i: string;
+}
+
+export interface DashboardNumberChartData {
+  title: string;
+  tooltip?: string;
+  value: number;
+  delta?: number;
+  deltaSuffix?: string;
+  prefix?: string;
+  suffix?: string;
+  negativeIsBetter?: boolean;
+}
+
+export interface DashboardAxisChartData {
+  title: string;
+  subtitle?: string;
+  xAxis?: {
+    title?: string;
+    key: string;
+    type?: string;
+    timeGrain?: string;
+  };
+  yAxis?: {
+    title?: string;
+  };
+  y2Axis?: {
+    title?: string;
+  };
+  swapXY?: boolean;
+  series?: Array<{
+    name: string;
+    type?: string;
+    showDataPoints?: boolean;
+    axis?: string;
+    echartOptions?: Record<string, unknown>;
+  }>;
+  data: Array<Record<string, unknown>>;
+}
+
+export interface DashboardDonutChartData {
+  title: string;
+  subtitle?: string;
+  categoryColumn: string;
+  valueColumn: string;
+  data: Array<Record<string, unknown>>;
+}
+
+export interface DashboardWidget {
+  name: string;
+  type: "number_chart" | "axis_chart" | "donut_chart" | "spacer";
+  tooltip?: string;
+  layout: DashboardWidgetLayout;
+  data?: DashboardNumberChartData | DashboardAxisChartData | DashboardDonutChartData | null;
+}
+
+export interface CrmUser {
+  name: string;
+  email: string;
+  full_name: string;
+  first_name?: string;
+  last_name?: string | null;
+  user_image?: string | null;
+  role?: string;
+  roles?: string[];
+  session_user?: boolean;
+}
+
+export async function getCrmDashboard(filter: DashboardFilter): Promise<DashboardWidget[]> {
+  const payload = await proxyRequest("api/method/crm.api.dashboard.get_dashboard", {
+    method: "POST",
+    body: {
+      from_date: filter.from_date,
+      to_date: filter.to_date,
+      user: filter.user ?? null,
+    },
+  });
+  const res = message(payload);
+  return Array.isArray(res) ? (res as DashboardWidget[]) : [];
+}
+
+export async function getCrmUsers(): Promise<CrmUser[]> {
+  try {
+    const payload = await proxyRequest("api/method/crm.api.session.get_users", {
+      method: "POST",
+      body: { include_all: 1 },
+    });
+    const res = message(payload);
+    if (Array.isArray(res) && Array.isArray(res[0])) {
+      return res[0] as CrmUser[];
+    }
+  } catch {
+    // handled
+  }
+  return [];
+}
+
 // Local type import to avoid a circular-looking import in editors.
 type FrappeMetaResponse = import("./frappe-meta").FrappeDocTypeMeta;

@@ -1,359 +1,379 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import {
-  TrendingUp,
-  Target,
-  Columns3,
-  FileText,
-  ShoppingCart,
-  Users,
-  Building2,
-  CheckCircle2,
-  ArrowRight,
-  Plus,
-  ArrowUpRight,
-  DollarSign,
-  Activity,
+  RotateCw,
+  Edit,
+  Calendar,
+  User as UserIcon,
+  ChevronDown,
   Layers,
-  PhoneCall,
+  Target,
+  ShoppingCart,
+  FileText,
+  Building2,
+  Users,
   StickyNote,
+  PhoneCall,
+  Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { dealListOptions, dealStatusesOptions } from "@/hooks/use-deals";
-import { leadListOptions } from "@/hooks/use-leads";
-import { quotationListOptions } from "@/hooks/use-quotations";
-import { salesOrderListOptions } from "@/hooks/use-sales-orders";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  useDashboard,
+  useCrmUsers,
+  getDateRangeFromPreset,
+  type DateRangePreset,
+} from "@/hooks/use-dashboard";
+import {
+  type DashboardNumberChartData,
+  type DashboardAxisChartData,
+  type DashboardDonutChartData,
+} from "@/lib/api";
+import { DashboardKpiCard } from "@/components/dashboard/dashboard-kpi-card";
+import { DashboardTrendChart } from "@/components/dashboard/dashboard-trend-chart";
+import { DashboardFunnelChart } from "@/components/dashboard/dashboard-funnel-chart";
+import { DashboardDonutChart } from "@/components/dashboard/dashboard-donut-chart";
+import { DashboardDualAxisChart } from "@/components/dashboard/dashboard-dual-axis-chart";
+import { DashboardBarChart } from "@/components/dashboard/dashboard-bar-chart";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "CRM Dashboard · AgroCRM" }] }),
   component: DashboardPage,
 });
 
+const PRESETS: DateRangePreset[] = [
+  "Today",
+  "Yesterday",
+  "Last 7 Days",
+  "Last 30 Days",
+  "This Month",
+  "Last Month",
+  "This Quarter",
+  "This Year",
+];
+
 function DashboardPage() {
-  const { data: deals = [] } = useQuery(
-    dealListOptions({ search: "", filters: [], limit: 100, start: 0 }),
-  );
-  const { data: stages = [] } = useQuery(dealStatusesOptions());
-  const { data: leads = [] } = useQuery(
-    leadListOptions({ search: "", filters: [], limit: 100, start: 0 }),
-  );
-  const { data: quotations = [] } = useQuery(
-    quotationListOptions({ search: "", filters: [], limit: 100, start: 0 }),
-  );
-  const { data: salesOrders = [] } = useQuery(
-    salesOrderListOptions({ search: "", filters: [], limit: 100, start: 0 }),
-  );
+  const [preset, setPreset] = useState<DateRangePreset>("Last 30 Days");
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
-  // Compute KPI metrics
-  const pipelineMetrics = useMemo(() => {
-    let activePipelineValue = 0;
-    let wonValue = 0;
-    let wonCount = 0;
-    let lostCount = 0;
+  const dateRange = useMemo(() => getDateRangeFromPreset(preset), [preset]);
 
-    for (const d of deals) {
-      const val = Number(d["deal_value"]) || 0;
-      const status = String(d["status"] || "").toLowerCase();
-      if (status === "won") {
-        wonValue += val;
-        wonCount++;
-      } else if (status === "lost") {
-        lostCount++;
-      } else {
-        activePipelineValue += val;
+  const {
+    data: widgets = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = useDashboard({
+    from_date: dateRange.from_date,
+    to_date: dateRange.to_date,
+    user: selectedUser,
+  });
+
+  const { data: users = [] } = useCrmUsers();
+
+  // Find user label
+  const selectedUserLabel = useMemo(() => {
+    if (!selectedUser) return "Sales User";
+    const found = users.find((u) => u.name === selectedUser || u.email === selectedUser);
+    return found ? found.full_name || found.first_name || found.name : selectedUser;
+  }, [selectedUser, users]);
+
+  // Separate KPI number widgets and chart widgets
+  const numberWidgets = useMemo(() => {
+    return widgets.filter((w) => w.type === "number_chart" && w.data);
+  }, [widgets]);
+
+  // Map of chart widgets by name
+  const chartMap = useMemo(() => {
+    const map = new Map<string, (typeof widgets)[number]>();
+    for (const w of widgets) {
+      if (w.type !== "number_chart" && w.type !== "spacer") {
+        map.set(w.name, w);
       }
     }
+    return map;
+  }, [widgets]);
 
-    const totalClosed = wonCount + lostCount;
-    const winRate = totalClosed > 0 ? Math.round((wonCount / totalClosed) * 100) : 0;
-
-    const quotationsValue = quotations.reduce(
-      (sum, q) => sum + (Number(q.grand_total) || 0),
-      0,
-    );
-    const ordersValue = salesOrders.reduce(
-      (sum, o) => sum + (Number(o.grand_total) || 0),
-      0,
-    );
-
-    return {
-      activePipelineValue,
-      wonValue,
-      wonCount,
-      winRate,
-      quotationsValue,
-      ordersValue,
-    };
-  }, [deals, quotations, salesOrders]);
-
-  // Stage distribution
-  const stageStats = useMemo(() => {
-    return stages.map((st) => {
-      const stageDeals = deals.filter((d) => d["status"] === st.name);
-      const totalAmount = stageDeals.reduce(
-        (sum, d) => sum + (Number(d["deal_value"]) || 0),
-        0,
-      );
-      return {
-        name: st.name,
-        count: stageDeals.length,
-        totalAmount,
-      };
-    });
-  }, [deals, stages]);
+  const salesTrendWidget = chartMap.get("sales_trend");
+  const forecastedRevenueWidget = chartMap.get("forecasted_revenue");
+  const funnelWidget = chartMap.get("funnel_conversion");
+  const dealsByStageWidget = chartMap.get("deals_by_stage_donut");
+  const lostDealReasonsWidget = chartMap.get("lost_deal_reasons");
+  const leadsBySourceWidget = chartMap.get("leads_by_source");
+  const dealsBySourceWidget = chartMap.get("deals_by_source");
+  const dealsByTerritoryWidget = chartMap.get("deals_by_territory");
+  const dealsBySalespersonWidget = chartMap.get("deals_by_salesperson");
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Sales Dashboard</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Real-time pipeline overview, revenue targets, conversion metrics, and key transactions.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="outline" className="h-9 gap-1.5 text-xs font-semibold">
-            <Link to="/leads">
-              <Plus className="size-3.5" />
-              <span>New Lead</span>
-            </Link>
-          </Button>
-          <Button asChild size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-            <Link to="/deals">
-              <Columns3 className="size-3.5" />
-              <span>Pipeline Kanban</span>
-            </Link>
-          </Button>
+    <div className="flex flex-1 flex-col overflow-y-auto bg-background text-foreground">
+      {/* Top Banner & Control Bar */}
+      <div className="border-b border-border bg-card/40 px-6 py-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">Dashboard</h1>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Refresh Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+            >
+              <RotateCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+              <span>Refresh</span>
+            </Button>
+
+            {/* Edit Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+            >
+              <Edit className="h-3.5 w-3.5" />
+              <span>Edit</span>
+            </Button>
+
+            {/* Date Range Preset Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{preset}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {PRESETS.map((p) => (
+                  <DropdownMenuItem
+                    key={p}
+                    onClick={() => setPreset(p)}
+                    className="text-xs cursor-pointer"
+                  >
+                    {p}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Sales User Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+                >
+                  <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{selectedUserLabel}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 max-h-64 overflow-y-auto">
+                <DropdownMenuItem
+                  onClick={() => setSelectedUser(null)}
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  All Sales Users
+                </DropdownMenuItem>
+                {users
+                  .filter((u) => u.name && u.full_name)
+                  .map((u) => (
+                    <DropdownMenuItem
+                      key={u.name}
+                      onClick={() => setSelectedUser(u.name)}
+                      className="text-xs cursor-pointer"
+                    >
+                      {u.full_name || u.first_name || u.name}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
-      {/* Top Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Pipeline */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Active Pipeline
-            </CardTitle>
-            <div className="flex size-7 items-center justify-center rounded-md bg-blue-500/10 text-blue-600">
-              <TrendingUp className="size-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              PKR {pipelineMetrics.activePipelineValue.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-              <span>{deals.length - pipelineMetrics.wonCount} active deals in sales stages</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Won Revenue */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Won Revenue
-            </CardTitle>
-            <div className="flex size-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
-              <CheckCircle2 className="size-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-emerald-600">
-              PKR {pipelineMetrics.wonValue.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-              <span>{pipelineMetrics.wonCount} won deals • {pipelineMetrics.winRate}% win rate</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Active Quotations */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Quotations Total
-            </CardTitle>
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <FileText className="size-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              PKR {pipelineMetrics.quotationsValue.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              <span>{quotations.length} total client quotations generated</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Confirmed Orders */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Sales Orders
-            </CardTitle>
-            <div className="flex size-7 items-center justify-center rounded-md bg-purple-500/10 text-purple-600">
-              <ShoppingCart className="size-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              PKR {pipelineMetrics.ordersValue.toLocaleString()}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              <span>{salesOrders.length} confirmed orders in ERPNext</span>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pipeline Stage Breakdown & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Stage Funnel / Distribution */}
-        <Card className="lg:col-span-2 shadow-xs">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold">Deal Pipeline by Stage</CardTitle>
-                <CardDescription className="text-xs">
-                  Distribution of opportunities across active sales pipeline stages
-                </CardDescription>
+      {/* Main Content Area */}
+      <div className="flex-1 space-y-6 p-6">
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7 animate-pulse">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-lg bg-card/40 border border-border" />
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Top 7 KPI Cards */}
+            {numberWidgets.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                {numberWidgets.map((w) => (
+                  <DashboardKpiCard
+                    key={w.name}
+                    data={w.data as unknown as DashboardNumberChartData}
+                  />
+                ))}
               </div>
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1">
-                <Link to="/deals">
-                  <span>View Board</span>
-                  <ArrowRight className="size-3" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stageStats.map((st) => {
-              const maxCount = Math.max(1, ...stageStats.map((s) => s.count));
-              const pct = Math.round((st.count / maxCount) * 100);
+            )}
 
-              return (
-                <div key={st.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold">{st.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground font-mono">
-                        PKR {st.totalAmount.toLocaleString()}
-                      </span>
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                        {st.count} {st.count === 1 ? "deal" : "deals"}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(5, pct)}%` }}
-                    />
-                  </div>
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Row 1: Sales Trend & Forecasted Revenue */}
+              {salesTrendWidget?.data && (
+                <div className="h-full">
+                  <DashboardTrendChart
+                    data={salesTrendWidget.data as unknown as DashboardAxisChartData}
+                  />
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+              )}
 
-        {/* Quick Launch & CRM Summary */}
-        <div className="flex flex-col gap-4">
-          <Card className="shadow-xs flex-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Quick Launch</CardTitle>
-              <CardDescription className="text-xs">
-                Jump directly to core CRM operations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/leads">
-                  <div className="flex items-center gap-2">
-                    <Target className="size-4 text-primary" />
-                    <span>Manage Leads</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {leads.length}
-                  </Badge>
-                </Link>
-              </Button>
+              {forecastedRevenueWidget?.data && (
+                <div className="h-full">
+                  <DashboardTrendChart
+                    data={forecastedRevenueWidget.data as unknown as DashboardAxisChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/deals">
-                  <div className="flex items-center gap-2">
-                    <Columns3 className="size-4 text-primary" />
-                    <span>Sales Pipeline</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {deals.length}
-                  </Badge>
-                </Link>
-              </Button>
+              {/* Row 2: Funnel Conversion & Deals by Stage */}
+              {funnelWidget?.data && (
+                <div className="h-full">
+                  <DashboardFunnelChart
+                    data={funnelWidget.data as unknown as DashboardAxisChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/quotations">
-                  <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-primary" />
-                    <span>Price Quotations</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {quotations.length}
-                  </Badge>
-                </Link>
-              </Button>
+              {dealsByStageWidget?.data && (
+                <div className="h-full">
+                  <DashboardDonutChart
+                    data={dealsByStageWidget.data as unknown as DashboardDonutChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/sales-orders">
-                  <div className="flex items-center gap-2">
-                    <ShoppingCart className="size-4 text-primary" />
-                    <span>Sales Orders</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {salesOrders.length}
-                  </Badge>
-                </Link>
-              </Button>
+              {/* Row 3: Leads by Source & Deals by Source */}
+              {leadsBySourceWidget?.data && (
+                <div className="h-full">
+                  <DashboardDonutChart
+                    data={leadsBySourceWidget.data as unknown as DashboardDonutChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/activities">
-                  <div className="flex items-center gap-2">
-                    <Activity className="size-4 text-primary" />
-                    <span>Tasks & Activities</span>
-                  </div>
-                  <ArrowUpRight className="size-3.5 text-muted-foreground" />
-                </Link>
-              </Button>
+              {dealsBySourceWidget?.data && (
+                <div className="h-full">
+                  <DashboardDonutChart
+                    data={dealsBySourceWidget.data as unknown as DashboardDonutChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/notes">
-                  <div className="flex items-center gap-2">
-                    <StickyNote className="size-4 text-primary" />
-                    <span>Team Notes</span>
-                  </div>
-                  <ArrowUpRight className="size-3.5 text-muted-foreground" />
-                </Link>
-              </Button>
+              {/* Row 4: Deals by Territory & Deals by Salesperson */}
+              {dealsByTerritoryWidget?.data && (
+                <div className="h-full">
+                  <DashboardDualAxisChart
+                    data={dealsByTerritoryWidget.data as unknown as DashboardAxisChartData}
+                  />
+                </div>
+              )}
 
-              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
-                <Link to="/calls">
-                  <div className="flex items-center gap-2">
-                    <PhoneCall className="size-4 text-primary" />
-                    <span>Call Logs</span>
-                  </div>
-                  <ArrowUpRight className="size-3.5 text-muted-foreground" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+              {dealsBySalespersonWidget?.data && (
+                <div className="h-full">
+                  <DashboardDualAxisChart
+                    data={dealsBySalespersonWidget.data as unknown as DashboardAxisChartData}
+                  />
+                </div>
+              )}
+
+              {/* Row 5: Lost Deal Reasons */}
+              {lostDealReasonsWidget?.data && (
+                <div className="lg:col-span-2">
+                  <DashboardBarChart
+                    data={lostDealReasonsWidget.data as unknown as DashboardAxisChartData}
+                  />
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Quick Hub Navigation Strip */}
+        <div className="pt-6 border-t border-border">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Quick CRM Modules
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+            <Link
+              to="/leads"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <Target className="h-4 w-4 text-indigo-400" />
+              <span>Leads</span>
+            </Link>
+            <Link
+              to="/deals"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <Layers className="h-4 w-4 text-orange-400" />
+              <span>Deals</span>
+            </Link>
+            <Link
+              to="/contacts"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <Users className="h-4 w-4 text-blue-400" />
+              <span>Contacts</span>
+            </Link>
+            <Link
+              to="/organizations"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <Building2 className="h-4 w-4 text-emerald-400" />
+              <span>Organizations</span>
+            </Link>
+            <Link
+              to="/quotations"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <FileText className="h-4 w-4 text-cyan-400" />
+              <span>Quotations</span>
+            </Link>
+            <Link
+              to="/sales-orders"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <ShoppingCart className="h-4 w-4 text-violet-400" />
+              <span>Sales Orders</span>
+            </Link>
+            <Link
+              to="/notes"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <StickyNote className="h-4 w-4 text-amber-400" />
+              <span>Notes</span>
+            </Link>
+            <Link
+              to="/calls"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-card"
+            >
+              <PhoneCall className="h-4 w-4 text-rose-400" />
+              <span>Call Logs</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -159,8 +159,17 @@ describe("classifyRequest", () => {
     expect(classifyRequest("PATCH", "api/resource/CRM Organization/Acme", none)).toBeNull();
   });
 
-  it("allows uploads (further validated by the proxy)", () => {
+  it("allows uploads and whitelisted methods (further validated by the proxy)", () => {
     expect(classifyRequest("POST", "api/method/uploadfile", none)?.kind).toBe("upload");
+    expect(
+      classifyRequest("POST", "api/method/frappe.desk.form.utils.add_comment", none)?.kind,
+    ).toBe("org-write");
+    expect(
+      classifyRequest("POST", "api/method/crm.api.dashboard.get_dashboard", none)?.kind,
+    ).toBe("org-write");
+    expect(
+      classifyRequest("POST", "api/method/crm.api.session.get_users", none)?.kind,
+    ).toBe("org-write");
   });
 
   it("rejects path traversal", () => {

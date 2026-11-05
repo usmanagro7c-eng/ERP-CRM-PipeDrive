@@ -93,7 +93,9 @@ export function classifyRequest(
     if (path === "api/method/uploadfile") return { kind: "upload" };
     if (
       path === "api/method/frappe.desk.form.utils.add_comment" ||
-      path === "api/method/frappe.core.doctype.communication.email.make"
+      path === "api/method/frappe.core.doctype.communication.email.make" ||
+      path === "api/method/crm.api.dashboard.get_dashboard" ||
+      path === "api/method/crm.api.session.get_users"
     ) {
       return { kind: "org-write" };
     }

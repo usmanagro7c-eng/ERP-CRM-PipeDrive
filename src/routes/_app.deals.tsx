@@ -407,8 +407,7 @@ function DealsPage() {
               groupBy={activeGroupBy}
               onGroupByChange={handleGroupByChange}
               onRowClick={(name) => {
-                const deal = (listQuery.data ?? []).find((d) => d["name"] === name);
-                if (deal) handleEditDeal(deal);
+                void navigate({ to: "/deals/$dealId", params: { dealId: name } });
               }}
               onEdit={handleEditDeal}
               onCreateQuotation={handleCreateQuotation}
@@ -421,8 +420,7 @@ function DealsPage() {
               stages={stages}
               loading={loading}
               onRowClick={(name) => {
-                const deal = (listQuery.data ?? []).find((d) => d["name"] === name);
-                if (deal) handleEditDeal(deal);
+                void navigate({ to: "/deals/$dealId", params: { dealId: name } });
               }}
               onEdit={handleEditDeal}
               emptyAction={
@@ -451,8 +449,7 @@ function DealsPage() {
                     })
                   }
                   onRowClick={(name) => {
-                    const deal = (listQuery.data ?? []).find((d) => d["name"] === name);
-                    if (deal) handleEditDeal(deal);
+                    void navigate({ to: "/deals/$dealId", params: { dealId: name } });
                   }}
                   onEdit={handleEditDeal}
                   onCreateQuotation={handleCreateQuotation}

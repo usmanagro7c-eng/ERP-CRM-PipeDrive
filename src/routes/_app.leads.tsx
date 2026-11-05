@@ -398,8 +398,7 @@ function LeadsPage() {
               groupBy={activeGroupBy}
               onGroupByChange={handleGroupByChange}
               onRowClick={(name) => {
-                const lead = (listQuery.data ?? []).find((l) => l["name"] === name);
-                if (lead) handleEditLead(lead);
+                void navigate({ to: "/leads/$leadId", params: { leadId: name } });
               }}
               onEdit={handleEditLead}
               onConvert={handleOpenConvertModal}
@@ -412,8 +411,7 @@ function LeadsPage() {
               statuses={statuses}
               loading={loading}
               onRowClick={(name) => {
-                const lead = (listQuery.data ?? []).find((l) => l["name"] === name);
-                if (lead) handleEditLead(lead);
+                void navigate({ to: "/leads/$leadId", params: { leadId: name } });
               }}
               onEdit={handleEditLead}
               onConvert={handleOpenConvertModal}
@@ -443,8 +441,7 @@ function LeadsPage() {
                     })
                   }
                   onRowClick={(name) => {
-                    const lead = (listQuery.data ?? []).find((l) => l["name"] === name);
-                    if (lead) handleEditLead(lead);
+                    void navigate({ to: "/leads/$leadId", params: { leadId: name } });
                   }}
                   onEdit={handleEditLead}
                   onConvert={handleOpenConvertModal}

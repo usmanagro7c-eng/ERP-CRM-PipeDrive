@@ -16,6 +16,11 @@ export const CONTACT_DOCTYPE = "Contact";
 export const QUOTATION_DOCTYPE = "Quotation";
 export const SALES_ORDER_DOCTYPE = "Sales Order";
 export const ITEM_DOCTYPE = "Item";
+export const NOTE_DOCTYPE = "Note";
+export const CALL_LOG_DOCTYPE = "CRM Call Log";
+export const FILE_DOCTYPE = "File";
+export const COMMENT_DOCTYPE = "Comment";
+export const COMMUNICATION_DOCTYPE = "Communication";
 
 export class FrappeApiError extends Error {
   status: number;
@@ -902,6 +907,306 @@ export async function createSalesOrderFromQuotation(
   });
 
   return payload;
+}
+
+// ---------------------------------------------------------------------------
+// Comments API
+// ---------------------------------------------------------------------------
+export interface CrmComment {
+  name: string;
+  comment_by?: string;
+  comment_email?: string;
+  content: string;
+  creation: string;
+  reference_doctype?: string;
+  reference_name?: string;
+}
+
+export async function listComments(referenceDoctype: string, referenceName: string): Promise<CrmComment[]> {
+  try {
+    const filters = JSON.stringify([
+      ["reference_doctype", "=", referenceDoctype],
+      ["reference_name", "=", referenceName],
+      ["comment_type", "=", "Comment"],
+    ]);
+    const fields = JSON.stringify(["name", "comment_by", "comment_email", "content", "creation"]);
+    const query = new URLSearchParams({
+      filters,
+      fields,
+      order_by: "creation desc",
+      limit: "50",
+    });
+    const payload = await proxyRequest(`api/resource/${COMMENT_DOCTYPE}?${query.toString()}`);
+    const data = unwrapResourceData<unknown>(payload);
+    return Array.isArray(data) ? (data as CrmComment[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function addComment(args: {
+  referenceDoctype: string;
+  referenceName: string;
+  content: string;
+  commentBy?: string;
+}): Promise<CrmComment> {
+  const payload = await proxyRequest("api/method/frappe.desk.form.utils.add_comment", {
+    method: "POST",
+    body: {
+      reference_doctype: args.referenceDoctype,
+      reference_name: args.referenceName,
+      content: args.content,
+      comment_by: args.commentBy || "User",
+      comment_email: "user@example.com",
+    },
+  });
+  const data = (message(payload) ?? {}) as CrmComment;
+  return data;
+}
+
+export async function deleteComment(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${COMMENT_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Attachments API
+// ---------------------------------------------------------------------------
+export interface CrmAttachment {
+  name: string;
+  file_name: string;
+  file_url: string;
+  file_size?: number;
+  creation?: string;
+  attached_to_doctype?: string;
+  attached_to_name?: string;
+}
+
+export async function listAttachments(attachedToDocType: string, attachedToName: string): Promise<CrmAttachment[]> {
+  try {
+    const filters = JSON.stringify([
+      ["attached_to_doctype", "=", attachedToDocType],
+      ["attached_to_name", "=", attachedToName],
+    ]);
+    const fields = JSON.stringify(["name", "file_name", "file_url", "file_size", "creation"]);
+    const query = new URLSearchParams({
+      filters,
+      fields,
+      order_by: "creation desc",
+      limit: "50",
+    });
+    const payload = await proxyRequest(`api/resource/${FILE_DOCTYPE}?${query.toString()}`);
+    const data = unwrapResourceData<unknown>(payload);
+    return Array.isArray(data) ? (data as CrmAttachment[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteAttachment(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// CRM Task API
+// ---------------------------------------------------------------------------
+export interface CrmTask {
+  name: string;
+  title: string;
+  status: "Open" | "In Progress" | "Completed" | "Cancelled" | string;
+  priority: "Low" | "Medium" | "High" | "Urgent" | string;
+  due_date?: string | undefined;
+  assigned_to?: string | undefined;
+  reference_doctype?: string | undefined;
+  reference_docname?: string | undefined;
+  description?: string | undefined;
+  creation?: string | undefined;
+  modified?: string | undefined;
+  [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// CRM Note API
+// ---------------------------------------------------------------------------
+export interface CrmNote {
+  name: string;
+  title: string;
+  content?: string;
+  reference_doctype?: string;
+  reference_docname?: string;
+  is_pinned?: number | boolean;
+  creation?: string;
+  modified?: string;
+}
+
+export async function listNotes(params: {
+  search?: string | undefined;
+  reference_doctype?: string | undefined;
+  reference_docname?: string | undefined;
+} = {}): Promise<CrmNote[]> {
+  try {
+    const filters: Array<[string, string, string]> = [];
+    if (params.search) {
+      filters.push(["title", "like", `%${params.search}%`]);
+    }
+    const query = new URLSearchParams({
+      fields: JSON.stringify(["name", "title", "content", "creation", "modified"]),
+      order_by: "modified desc",
+      limit_page_length: "50",
+    });
+    if (filters.length > 0) query.set("filters", JSON.stringify(filters));
+
+    const payload = await proxyRequest(`api/resource/${NOTE_DOCTYPE}?${query.toString()}`);
+    const data = unwrapResourceData<unknown>(payload);
+    return Array.isArray(data) ? (data as CrmNote[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createNote(values: Record<string, unknown>): Promise<CrmNote> {
+  const payload = await proxyRequest(`api/resource/${NOTE_DOCTYPE}`, {
+    method: "POST",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as CrmNote;
+}
+
+export async function updateNote(name: string, values: Record<string, unknown>): Promise<CrmNote> {
+  const payload = await proxyRequest(`api/resource/${NOTE_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: values,
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as CrmNote;
+}
+
+export async function deleteNote(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${NOTE_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// CRM Call Log API
+// ---------------------------------------------------------------------------
+export interface CrmCallLog {
+  name: string;
+  type?: "Inbound" | "Outbound" | string;
+  status?: "Connected" | "No Answer" | "Busy" | "Failed" | string;
+  duration?: number;
+  from?: string;
+  to?: string;
+  note?: string;
+  summary?: string;
+  reference_doctype?: string;
+  reference_docname?: string;
+  creation?: string;
+}
+
+export async function listCallLogs(params: {
+  search?: string | undefined;
+  reference_doctype?: string | undefined;
+  reference_docname?: string | undefined;
+} = {}): Promise<CrmCallLog[]> {
+  try {
+    const filters: Array<[string, string, string]> = [];
+    if (params.reference_doctype && params.reference_docname) {
+      filters.push(["reference_doctype", "=", params.reference_doctype]);
+      filters.push(["reference_docname", "=", params.reference_docname]);
+    }
+    const query = new URLSearchParams({
+      fields: JSON.stringify(["name", "type", "status", "duration", "from", "to", "note", "reference_doctype", "reference_docname", "creation"]),
+      order_by: "creation desc",
+      limit_page_length: "50",
+    });
+    if (filters.length > 0) query.set("filters", JSON.stringify(filters));
+
+    const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}?${query.toString()}`);
+    const data = unwrapResourceData<unknown>(payload);
+    if (!Array.isArray(data)) return [];
+    return data.map((r) => {
+      const rec = r as Record<string, unknown>;
+      return {
+        ...rec,
+        summary: String(rec["note"] || rec["summary"] || ""),
+      } as unknown as CrmCallLog;
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCallLog> {
+  const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}`, {
+    method: "POST",
+    body: {
+      type: "Outbound",
+      status: "Connected",
+      duration: values.duration || 60,
+      to: values.to,
+      from: values.from || "Agent",
+      note: values.summary || values.note || "",
+      reference_doctype: values.reference_doctype,
+      reference_docname: values.reference_docname,
+    },
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as CrmCallLog;
+}
+
+export async function deleteCallLog(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Email / Communication API
+// ---------------------------------------------------------------------------
+export async function sendEmail(args: {
+  recipients: string;
+  subject: string;
+  content: string;
+  doctype?: string;
+  docname?: string;
+}): Promise<void> {
+  try {
+    await proxyRequest("api/method/frappe.core.doctype.communication.email.make", {
+      method: "POST",
+      body: {
+        recipients: args.recipients,
+        subject: args.subject,
+        content: args.content,
+        doctype: args.doctype,
+        name: args.docname,
+        send_email: 1,
+      },
+    });
+  } catch {
+    // If outgoing email is not configured on Frappe bench, fallback to creating Communication entry
+    try {
+      await proxyRequest(`api/resource/${COMMUNICATION_DOCTYPE}`, {
+        method: "POST",
+        body: {
+          communication_type: "Communication",
+          communication_medium: "Email",
+          recipients: args.recipients,
+          subject: args.subject,
+          content: args.content,
+          reference_doctype: args.doctype,
+          reference_name: args.docname,
+          sent_or_received: "Sent",
+        },
+      });
+    } catch {
+      // handled
+    }
+  }
 }
 
 // Local type import to avoid a circular-looking import in editors.

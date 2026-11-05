@@ -21,6 +21,7 @@ import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
 import { Route as AppQuotationsRouteImport } from './routes/_app.quotations'
 import { Route as AppSalesOrdersRouteImport } from './routes/_app.sales-orders'
+import { Route as AppContactsContactIdRouteImport } from './routes/_app.contacts_.$contactId'
 import { Route as AppDealsDealIdRouteImport } from './routes/_app.deals_.$dealId'
 import { Route as AppLeadsLeadIdRouteImport } from './routes/_app.leads_.$leadId'
 import { Route as AppOrganizationsIndexRouteImport } from './routes/_app.organizations.index'
@@ -89,6 +90,11 @@ const AppSalesOrdersRoute = AppSalesOrdersRouteImport.update({
   path: '/sales-orders',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContactsContactIdRoute = AppContactsContactIdRouteImport.update({
+  id: '/contacts_/$contactId',
+  path: '/contacts/$contactId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDealsDealIdRoute = AppDealsDealIdRouteImport.update({
   id: '/deals_/$dealId',
   path: '/deals/$dealId',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/quotations': typeof AppQuotationsRoute
   '/_app/sales-orders': typeof AppSalesOrdersRoute
+  '/_app/contacts_/$contactId': typeof AppContactsContactIdRoute
   '/_app/deals_/$dealId': typeof AppDealsDealIdRoute
   '/_app/leads_/$leadId': typeof AppLeadsLeadIdRoute
   '/_app/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/contacts/$contactId'
     | '/deals/$dealId'
     | '/leads/$leadId'
     | '/organizations/$orgId'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/contacts/$contactId'
     | '/deals/$dealId'
     | '/leads/$leadId'
     | '/organizations/$orgId'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/quotations'
     | '/_app/sales-orders'
+    | '/_app/contacts_/$contactId'
     | '/_app/deals_/$dealId'
     | '/_app/leads_/$leadId'
     | '/_app/organizations/$orgId'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSalesOrdersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contacts_/$contactId': {
+      id: '/_app/contacts_/$contactId'
+      path: '/contacts/$contactId'
+      fullPath: '/contacts/$contactId'
+      preLoaderRoute: typeof AppContactsContactIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/deals_/$dealId': {
       id: '/_app/deals_/$dealId'
       path: '/deals/$dealId'
@@ -427,6 +446,7 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppQuotationsRoute: typeof AppQuotationsRoute
   AppSalesOrdersRoute: typeof AppSalesOrdersRoute
+  AppContactsContactIdRoute: typeof AppContactsContactIdRoute
   AppDealsDealIdRoute: typeof AppDealsDealIdRoute
   AppLeadsLeadIdRoute: typeof AppLeadsLeadIdRoute
   AppOrganizationsOrgIdRoute: typeof AppOrganizationsOrgIdRoute
@@ -443,6 +463,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppQuotationsRoute: AppQuotationsRoute,
   AppSalesOrdersRoute: AppSalesOrdersRoute,
+  AppContactsContactIdRoute: AppContactsContactIdRoute,
   AppDealsDealIdRoute: AppDealsDealIdRoute,
   AppLeadsLeadIdRoute: AppLeadsLeadIdRoute,
   AppOrganizationsOrgIdRoute: AppOrganizationsOrgIdRoute,

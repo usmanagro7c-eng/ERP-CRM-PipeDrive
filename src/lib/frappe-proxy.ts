@@ -17,6 +17,11 @@ export const CONTACT_DOCTYPE = "Contact";
 export const QUOTATION_DOCTYPE = "Quotation";
 export const SALES_ORDER_DOCTYPE = "Sales Order";
 export const ITEM_DOCTYPE = "Item";
+export const NOTE_DOCTYPE = "Note";
+export const CALL_LOG_DOCTYPE = "CRM Call Log";
+export const FILE_DOCTYPE = "File";
+export const COMMENT_DOCTYPE = "Comment";
+export const COMMUNICATION_DOCTYPE = "Communication";
 export const MAIN_DOCTYPES = new Set([
   ORG_DOCTYPE,
   DEAL_DOCTYPE,
@@ -26,6 +31,11 @@ export const MAIN_DOCTYPES = new Set([
   QUOTATION_DOCTYPE,
   SALES_ORDER_DOCTYPE,
   ITEM_DOCTYPE,
+  NOTE_DOCTYPE,
+  CALL_LOG_DOCTYPE,
+  FILE_DOCTYPE,
+  COMMENT_DOCTYPE,
+  COMMUNICATION_DOCTYPE,
 ]);
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
@@ -50,7 +60,7 @@ export function hasUnsafeSegments(path: string): boolean {
   return path.split("/").some((segment) => segment === ".." || segment === ".");
 }
 
-const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item)(?:\/([^/]+))?$/;
+const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
 
 /**
@@ -81,7 +91,13 @@ export function classifyRequest(
 
   if (method === "POST") {
     if (path === "api/method/uploadfile") return { kind: "upload" };
-    if (/^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item)$/.test(path)) return { kind: "org-write" };
+    if (
+      path === "api/method/frappe.desk.form.utils.add_comment" ||
+      path === "api/method/frappe.core.doctype.communication.email.make"
+    ) {
+      return { kind: "org-write" };
+    }
+    if (/^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication)$/.test(path)) return { kind: "org-write" };
     return null;
   }
 

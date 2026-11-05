@@ -56,6 +56,12 @@ const DEFAULT_LINK_TARGETS = new Set([
   "Sales Order Item",
   "Tax Category",
   "Payment Terms Template",
+  "Note",
+  "CRM Note",
+  "CRM Call Log",
+  "File",
+  "Comment",
+  "Communication",
 ]);
 
 let linkTargetsCache: { targets: Set<string>; expires: number } | undefined;

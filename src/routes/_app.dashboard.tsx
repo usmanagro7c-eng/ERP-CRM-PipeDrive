@@ -16,6 +16,8 @@ import {
   DollarSign,
   Activity,
   Layers,
+  PhoneCall,
+  StickyNote,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -326,6 +328,26 @@ function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <Activity className="size-4 text-primary" />
                     <span>Tasks & Activities</span>
+                  </div>
+                  <ArrowUpRight className="size-3.5 text-muted-foreground" />
+                </Link>
+              </Button>
+
+              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
+                <Link to="/notes">
+                  <div className="flex items-center gap-2">
+                    <StickyNote className="size-4 text-primary" />
+                    <span>Team Notes</span>
+                  </div>
+                  <ArrowUpRight className="size-3.5 text-muted-foreground" />
+                </Link>
+              </Button>
+
+              <Button asChild variant="outline" className="w-full justify-between h-9 text-xs">
+                <Link to="/calls">
+                  <div className="flex items-center gap-2">
+                    <PhoneCall className="size-4 text-primary" />
+                    <span>Call Logs</span>
                   </div>
                   <ArrowUpRight className="size-3.5 text-muted-foreground" />
                 </Link>

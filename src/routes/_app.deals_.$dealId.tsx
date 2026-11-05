@@ -2,35 +2,26 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
-  Calendar,
-  CheckCircle2,
   ChevronDown,
   Copy,
-  DollarSign,
   ExternalLink,
   FileText,
-  Globe,
   List,
   Loader2,
   Mail,
   MessageSquare,
   Paperclip,
-  Phone,
-  PhoneCall,
-  Plus,
-  Send,
   Sparkles,
-  StickyNote,
   Trash2,
-  TrendingUp,
   UserPlus,
+  Activity,
+  CheckCircle2,
+  PhoneCall,
+  StickyNote,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -56,6 +47,15 @@ import {
   useSaveDeal,
   useDeleteDeal,
 } from "@/hooks/use-deals";
+import { RecordCommentsThread } from "@/components/record-view/record-comments-thread";
+import { RecordAttachmentsTab } from "@/components/record-view/record-attachments-tab";
+import { RecordTasksTab } from "@/components/record-view/record-tasks-tab";
+import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
+import { RecordCallsTab } from "@/components/record-view/record-calls-tab";
+import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
+import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
+import { RecordDataTab } from "@/components/record-view/record-data-tab";
+import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/deals_/$dealId")({
@@ -73,13 +73,6 @@ type TabKey =
   | "notes"
   | "attachments";
 
-interface CommentItem {
-  id: string;
-  author: string;
-  time: string;
-  text: string;
-}
-
 function DealDetailPage() {
   const { dealId } = Route.useParams();
   const navigate = useNavigate();
@@ -92,12 +85,6 @@ function DealDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("comments");
   const [quotationModalOpen, setQuotationModalOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
-  const [dealInfoOpen, setDealInfoOpen] = useState(true);
-
-  // Comments state
-  const [comments, setComments] = useState<CommentItem[]>([]);
-  const [commentText, setCommentText] = useState("");
-  const [showCommentEditor, setShowCommentEditor] = useState(false);
 
   const dealName = useMemo(() => {
     if (!deal) return dealId;
@@ -138,20 +125,6 @@ function DealDetailPage() {
     } catch {
       // toast handled
     }
-  }
-
-  function handleAddComment() {
-    if (!commentText.trim()) return;
-    const newComment: CommentItem = {
-      id: String(Date.now()),
-      author: "Usman (You)",
-      time: "Just now",
-      text: commentText.trim(),
-    };
-    setComments((prev) => [newComment, ...prev]);
-    setCommentText("");
-    setShowCommentEditor(false);
-    toast.success("Comment added");
   }
 
   function handleCopyLink() {
@@ -243,14 +216,17 @@ function DealDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs">
-              <DropdownMenuItem onClick={() => { setActiveTab("tasks"); toast.info("New task modal"); }}>
+              <DropdownMenuItem onClick={() => setActiveTab("tasks")}>
                 Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("calls"); toast.info("Log call modal"); }}>
+              <DropdownMenuItem onClick={() => setActiveTab("calls")}>
                 Call Log
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("notes"); toast.info("New note modal"); }}>
+              <DropdownMenuItem onClick={() => setActiveTab("notes")}>
                 Note
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("emails")}>
+                Email
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -297,129 +273,59 @@ function DealDetailPage() {
             {/* Tab Content Panel */}
             <div className="p-4 sm:p-6 overflow-y-auto">
               {activeTab === "comments" && (
-                <div className="space-y-4 max-w-2xl">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Comments</h3>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowCommentEditor(true)}
-                      className="h-7 text-xs gap-1"
-                    >
-                      <Plus className="size-3" />
-                      <span>New Comment</span>
-                    </Button>
-                  </div>
-
-                  {/* Add Comment Input */}
-                  {showCommentEditor && (
-                    <div className="space-y-2 rounded-lg border bg-card p-3 shadow-2xs">
-                      <Textarea
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Write a comment, note, or @mention a teammate..."
-                        className="min-h-[80px] text-xs resize-none border-none focus-visible:ring-0 p-0 shadow-none"
-                        autoFocus
-                      />
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowCommentEditor(false)}
-                          className="h-7 text-xs text-muted-foreground"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={handleAddComment}
-                          disabled={!commentText.trim()}
-                          className="h-7 text-xs gap-1"
-                        >
-                          <Send className="size-3" />
-                          <span>Submit</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Comments Thread or Empty State */}
-                  {comments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
-                      <MessageSquare className="size-10 stroke-[1.25] text-muted-foreground/40 mb-2" />
-                      <p className="text-sm font-medium text-foreground/80">No Comments Found</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Be the first to add one.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {comments.map((c) => (
-                        <div key={c.id} className="flex gap-2.5 rounded-lg border bg-card p-3 text-xs">
-                          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-                            {c.author.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-foreground">{c.author}</span>
-                              <span className="text-[10px] text-muted-foreground">{c.time}</span>
-                            </div>
-                            <p className="mt-1 text-xs text-foreground/90 whitespace-pre-wrap">{c.text}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <RecordCommentsThread
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
               )}
 
               {activeTab === "activity" && (
-                <div className="space-y-3 max-w-2xl">
-                  <h3 className="text-sm font-semibold">Timeline & Activity</h3>
-                  <div className="relative pl-6 space-y-4 border-l-2 border-muted ml-2">
-                    <div className="relative">
-                      <div className="absolute -left-[31px] top-1 size-3 rounded-full bg-primary" />
-                      <div className="text-xs">
-                        <span className="font-semibold">Deal Created</span>
-                        <p className="text-muted-foreground text-[11px]">
-                          Created by {String(deal["owner"] || "system")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute -left-[31px] top-1 size-3 rounded-full bg-blue-500" />
-                      <div className="text-xs">
-                        <span className="font-semibold">Pipeline Stage</span>
-                        <p className="text-muted-foreground text-[11px]">
-                          Current Stage: &ldquo;{currentStage}&rdquo;
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <RecordActivityFeed
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                  owner={String(deal["owner"] || "system")}
+                  status={currentStage}
+                  creation={String(deal["creation"] || "")}
+                />
+              )}
+
+              {activeTab === "emails" && (
+                <RecordEmailsTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
+              )}
+
+              {activeTab === "tasks" && (
+                <RecordTasksTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
+              )}
+
+              {activeTab === "notes" && (
+                <RecordNotesTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
+              )}
+
+              {activeTab === "calls" && (
+                <RecordCallsTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
+              )}
+
+              {activeTab === "attachments" && (
+                <RecordAttachmentsTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                />
               )}
 
               {activeTab === "data" && (
-                <div className="max-w-3xl space-y-3">
-                  <h3 className="text-sm font-semibold">Raw Field Attributes</h3>
-                  <div className="rounded-lg border bg-card overflow-hidden text-xs">
-                    <div className="divide-y divide-border">
-                      {Object.entries(deal)
-                        .filter(([key]) => !key.startsWith("_") && typeof deal[key] !== "object")
-                        .map(([key, val]) => (
-                          <div key={key} className="flex py-2 px-3 justify-between items-center">
-                            <span className="font-mono text-muted-foreground">{key}</span>
-                            <span className="font-medium text-foreground">{String(val ?? "—")}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab !== "comments" && activeTab !== "activity" && activeTab !== "data" && (
-                <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
-                  <p className="text-xs font-semibold capitalize text-foreground/80">{activeTab} Section</p>
-                  <p className="text-[11px] opacity-75 mt-1">No records or communications logged yet.</p>
-                </div>
+                <RecordDataTab data={deal} />
               )}
             </div>
           </div>
@@ -427,20 +333,14 @@ function DealDetailPage() {
           {/* Bottom Bar: Reply & Comment Actions */}
           <div className="border-t px-4 py-2.5 bg-card/40 flex items-center gap-3">
             <button
-              onClick={() => {
-                setActiveTab("emails");
-                toast.info("Compose email modal");
-              }}
+              onClick={() => setActiveTab("emails")}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <Mail className="size-3.5" />
               <span>Reply</span>
             </button>
             <button
-              onClick={() => {
-                setActiveTab("comments");
-                setShowCommentEditor(true);
-              }}
+              onClick={() => setActiveTab("comments")}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <MessageSquare className="size-3.5" />
@@ -480,10 +380,7 @@ function DealDetailPage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => {
-                  setActiveTab("attachments");
-                  toast.info("Attachments tab opened");
-                }}
+                onClick={() => setActiveTab("attachments")}
                 className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30"
                 title="View Attachments"
               >

@@ -1,7 +1,20 @@
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Pencil, Trash2, TriangleAlert } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Paperclip,
+  Pencil,
+  PhoneCall,
+  StickyNote,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 
 import { OrgFormModal } from "@/components/organizations/org-form-modal";
 import {
@@ -30,11 +43,20 @@ import {
   groupIntoSections,
   type FrappeDocField,
 } from "@/lib/frappe-meta";
+import { RecordCommentsThread } from "@/components/record-view/record-comments-thread";
+import { RecordAttachmentsTab } from "@/components/record-view/record-attachments-tab";
+import { RecordTasksTab } from "@/components/record-view/record-tasks-tab";
+import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
+import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
+import * as api from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/organizations/$orgId")({
   head: () => ({ meta: [{ title: "Organization · AgroCRM" }] }),
   component: OrganizationDetailPage,
 });
+
+type TabKey = "overview" | "comments" | "tasks" | "notes" | "attachments" | "activity";
 
 function FieldValue({ field, value }: { field: FrappeDocField; value: unknown }) {
   const empty = value === null || value === undefined || value === "";
@@ -76,6 +98,7 @@ function OrganizationDetailPage() {
   const deleteMutation = useDeleteOrganization();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
   const meta = metaQuery.data;
   const org = orgQuery.data;
@@ -86,8 +109,18 @@ function OrganizationDetailPage() {
   const imageUrl = meta?.image_field && org ? org[meta.image_field] : undefined;
   const sections = meta ? groupIntoSections(meta.fields ?? []) : [];
 
+  const tabs: Array<{ key: TabKey; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+    { key: "overview", label: "Overview & Fields", icon: FileText },
+    { key: "comments", label: "Comments", icon: MessageSquare },
+    { key: "tasks", label: "Tasks", icon: CheckCircle2 },
+    { key: "notes", label: "Notes", icon: StickyNote },
+    { key: "attachments", label: "Attachments", icon: Paperclip },
+    { key: "activity", label: "Activity", icon: Activity },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 md:px-6">
+    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 md:px-6">
+      {/* Top Breadcrumb */}
       <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1 text-muted-foreground">
         <Link to="/organizations" search={{}}>
           <ArrowLeft className="size-4" />
@@ -98,73 +131,139 @@ function OrganizationDetailPage() {
       {error && (
         <Alert variant="destructive">
           <TriangleAlert className="size-4" />
-          <AlertTitle>Could not load this organization</AlertTitle>
+          <AlertTitle>Could not load organization</AlertTitle>
           <AlertDescription>{errorMessage(error)}</AlertDescription>
         </Alert>
       )}
 
-      {!error && (!meta || !org) && (
+      {(metaQuery.isLoading || orgQuery.isLoading) && (
         <LoadingState
-          title="Loading Organization Details..."
-          description={`Fetching record details for ${orgId} from Frappe CRM...`}
+          title="Loading organization..."
+          description="Fetching organization record and attributes."
         />
       )}
 
       {meta && org && (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-3 mr-auto min-w-0">
+          {/* Header Card */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-xl border bg-card shadow-2xs">
+            <div className="flex items-center gap-3 min-w-0">
               {typeof imageUrl === "string" && imageUrl ? (
                 <img src={imageUrl} alt="" className="size-12 sm:size-14 rounded-xl border object-cover shrink-0" />
               ) : (
-                <span className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-accent text-lg font-semibold text-accent-foreground shrink-0">
+                <span className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-accent text-lg font-bold text-accent-foreground shrink-0">
                   {title.slice(0, 2).toUpperCase()}
                 </span>
               )}
               <div className="min-w-0">
-                <h1 className="truncate font-display text-xl sm:text-2xl font-semibold tracking-tight">
+                <h1 className="truncate font-display text-xl sm:text-2xl font-bold tracking-tight">
                   {title}
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground font-mono">{String(org["name"])}</p>
+                <p className="text-xs text-muted-foreground font-mono">{String(org["name"])}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button variant="outline" onClick={() => setEditOpen(true)} className="gap-2 flex-1 sm:flex-initial">
-                <Pencil className="size-4" />
-                Edit
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1.5 h-8 text-xs">
+                <Pencil className="size-3.5" />
+                <span>Edit</span>
               </Button>
               <Button
+                size="sm"
                 variant="outline"
                 onClick={() => setDeleteOpen(true)}
-                className="gap-2 text-destructive flex-1 sm:flex-initial"
+                className="gap-1.5 h-8 text-xs text-destructive hover:bg-destructive/10"
               >
-                <Trash2 className="size-4" />
-                Delete
+                <Trash2 className="size-3.5" />
+                <span>Delete</span>
               </Button>
             </div>
           </div>
 
-          <div className="space-y-6 rounded-xl border bg-card p-5 shadow-card">
-            {sections.map((section, index) => (
-              <section key={section.label ?? index} className="space-y-3">
-                {section.label && (
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {section.label}
-                  </h2>
-                )}
-                <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                  {section.fields.map((field) => (
-                    <div key={field.fieldname} className="min-w-0">
-                      <dt className="text-xs text-muted-foreground">{fieldLabel(field)}</dt>
-                      <dd className="mt-0.5 text-sm">
-                        <FieldValue field={field} value={org[field.fieldname]} />
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))}
+          {/* Horizontal Tabs */}
+          <div className="flex items-center gap-1 border-b overflow-x-auto scrollbar-none bg-card/30">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer shrink-0",
+                    isActive
+                      ? "border-primary text-foreground font-semibold"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="size-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Content */}
+          <div className="pt-2">
+            {activeTab === "overview" && (
+              <div className="space-y-6 rounded-xl border bg-card p-5 shadow-2xs">
+                {sections.map((section, index) => (
+                  <section key={section.label ?? index} className="space-y-3">
+                    {section.label && (
+                      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b pb-1">
+                        {section.label}
+                      </h2>
+                    )}
+                    <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                      {section.fields.map((field) => (
+                        <div key={field.fieldname} className="min-w-0 text-xs">
+                          <dt className="text-muted-foreground font-medium">{fieldLabel(field)}</dt>
+                          <dd className="mt-0.5 text-foreground">
+                            <FieldValue field={field} value={org[field.fieldname]} />
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {activeTab === "comments" && (
+              <RecordCommentsThread
+                referenceDoctype={api.ORG_DOCTYPE}
+                referenceName={orgId}
+              />
+            )}
+
+            {activeTab === "tasks" && (
+              <RecordTasksTab
+                referenceDoctype={api.ORG_DOCTYPE}
+                referenceName={orgId}
+              />
+            )}
+
+            {activeTab === "notes" && (
+              <RecordNotesTab
+                referenceDoctype={api.ORG_DOCTYPE}
+                referenceName={orgId}
+              />
+            )}
+
+            {activeTab === "attachments" && (
+              <RecordAttachmentsTab
+                referenceDoctype={api.ORG_DOCTYPE}
+                referenceName={orgId}
+              />
+            )}
+
+            {activeTab === "activity" && (
+              <RecordActivityFeed
+                referenceDoctype={api.ORG_DOCTYPE}
+                referenceName={orgId}
+                creation={String(org["creation"] || "")}
+              />
+            )}
           </div>
 
           <OrgFormModal open={editOpen} onOpenChange={setEditOpen} meta={meta} organization={org} />

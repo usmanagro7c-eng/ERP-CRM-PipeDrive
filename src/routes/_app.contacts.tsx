@@ -391,8 +391,7 @@ function ContactsPage() {
               groupBy={activeGroupBy}
               onGroupByChange={handleGroupByChange}
               onRowClick={(name) => {
-                const contact = (listQuery.data ?? []).find((c) => c["name"] === name);
-                if (contact) handleEditContact(contact);
+                void navigate({ to: "/contacts/$contactId", params: { contactId: name } });
               }}
               onEdit={handleEditContact}
               onAddInStatus={handleAddInStatus}
@@ -404,8 +403,7 @@ function ContactsPage() {
               statuses={statuses}
               loading={loading}
               onRowClick={(name) => {
-                const contact = (listQuery.data ?? []).find((c) => c["name"] === name);
-                if (contact) handleEditContact(contact);
+                void navigate({ to: "/contacts/$contactId", params: { contactId: name } });
               }}
               onEdit={handleEditContact}
               emptyAction={
@@ -433,8 +431,7 @@ function ContactsPage() {
                   })
                 }
                 onRowClick={(name) => {
-                  const contact = (listQuery.data ?? []).find((c) => c["name"] === name);
-                  if (contact) handleEditContact(contact);
+                  void navigate({ to: "/contacts/$contactId", params: { contactId: name } });
                 }}
                 onEdit={handleEditContact}
                 loading={loading}

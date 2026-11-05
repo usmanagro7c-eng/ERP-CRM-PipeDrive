@@ -10,6 +10,7 @@ import {
   XCircle,
   ArrowRight,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -176,6 +177,8 @@ export function DealKanban({
     );
   }
 
+  const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
+
   // Move deal to new column
   async function handleMove(dealName: string, targetColKey: string) {
     if (targetColKey === UNASSIGNED_KEY) return;
@@ -190,7 +193,16 @@ export function DealKanban({
       return;
     }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
-    await saveMutation.mutateAsync({ name: dealName, values: patch });
+    setMovingDeals((prev) => ({ ...prev, [dealName]: targetColKey }));
+    try {
+      await saveMutation.mutateAsync({ name: dealName, values: patch });
+    } finally {
+      setMovingDeals((prev) => {
+        const next = { ...prev };
+        delete next[dealName];
+        return next;
+      });
+    }
   }
 
   return (
@@ -328,11 +340,13 @@ export function DealKanban({
                     const owner = deal["deal_owner"];
                     const probability = deal["probability"];
                     const currentStage = String(deal["status"] ?? "");
+                    const isMoving = Boolean(movingDeals[name]);
+                    const movingTo = movingDeals[name];
 
                     return (
                       <div
                         key={name}
-                        draggable
+                        draggable={!isMoving}
                         onDragStart={(e) => {
                           e.dataTransfer.setData("text/plain", name);
                           e.dataTransfer.effectAllowed = "move";
@@ -344,10 +358,19 @@ export function DealKanban({
                         }}
                         onClick={() => onRowClick?.(name)}
                         className={cn(
-                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
+                          "group relative overflow-hidden rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
                           draggedDealName === name ? "opacity-40 border-dashed" : "border-border",
+                          isMoving && "pointer-events-none ring-2 ring-primary/40",
                         )}
                       >
+                        {isMoving && (
+                          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-md bg-background/85 backdrop-blur-xs p-2 text-center animate-in fade-in duration-200">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-[11px] font-semibold text-primary shadow-xs">
+                              <Loader2 className="size-3.5 animate-spin text-primary" />
+                              <span className="truncate max-w-[170px]">Moving to {movingTo}...</span>
+                            </div>
+                          </div>
+                        )}
                         {/* Top row: Organization Name & 3-dots */}
                         <div className="flex items-start justify-between gap-1">
                           <div className="flex-1 truncate">

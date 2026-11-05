@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
@@ -91,13 +91,23 @@ function SortButton({
 function DealCellValue({
   field,
   row,
+  movingTo,
 }: {
   field: FrappeDocField;
   row: Record<string, unknown>;
+  movingTo?: string | undefined;
 }) {
   const value = row[field.fieldname];
 
   if (field.fieldname === "status") {
+    if (movingTo) {
+      return (
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/25 text-xs font-semibold text-primary animate-pulse">
+          <Loader2 className="size-3 animate-spin" />
+          <span>Moving to {movingTo}...</span>
+        </div>
+      );
+    }
     return <StageBadge stage={value as string} />;
   }
 
@@ -190,9 +200,27 @@ export function DealTable({
     targetStatus: string;
   }>({ open: false, dealName: "", targetStatus: "Lost" });
 
+  const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
+
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
     return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+  }
+
+  async function handleMove(dealName: string, targetStage: string) {
+    setMovingDeals((prev) => ({ ...prev, [dealName]: targetStage }));
+    try {
+      await saveMutation.mutateAsync({
+        name: dealName,
+        values: { status: targetStage },
+      });
+    } finally {
+      setMovingDeals((prev) => {
+        const next = { ...prev };
+        delete next[dealName];
+        return next;
+      });
+    }
   }
 
   if (loading && rows.length === 0) {
@@ -253,19 +281,24 @@ export function DealTable({
             const name = String(row["name"] ?? "");
             const currentStage = String(row["status"] ?? "");
             const orgName = String(row["organization_name"] || row["organization"] || name);
+            const isMoving = Boolean(movingDeals[name]);
+            const movingTo = movingDeals[name];
 
             return (
               <TableRow
                 key={name}
                 onClick={() => onRowClick?.(name)}
-                className="group cursor-pointer hover:bg-muted/50"
+                className={cn(
+                  "group cursor-pointer hover:bg-muted/50 transition-colors",
+                  isMoving && "opacity-60 pointer-events-none bg-primary/5",
+                )}
               >
                 <TableCell className="font-mono text-xs font-semibold text-primary">
                   {name}
                 </TableCell>
                 {activeFields.map((field) => (
                   <TableCell key={field.fieldname} className="text-sm">
-                    <DealCellValue field={field} row={row} />
+                    <DealCellValue field={field} row={row} movingTo={movingTo} />
                   </TableCell>
                 ))}
                 <TableCell

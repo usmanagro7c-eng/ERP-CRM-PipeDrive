@@ -7,6 +7,7 @@ import {
   CircleSlash,
   ArrowRight,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency } from "@/components/deals/deal-stage-badge";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
+import { cn } from "@/lib/utils";
 
 interface DealGridProps {
   meta: FrappeDocTypeMeta;
@@ -60,9 +62,27 @@ export function DealGrid({
     targetStatus: string;
   }>({ open: false, dealName: "", targetStatus: "Lost" });
 
+  const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
+
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
     return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+  }
+
+  async function handleMove(dealName: string, targetStage: string) {
+    setMovingDeals((prev) => ({ ...prev, [dealName]: targetStage }));
+    try {
+      await saveMutation.mutateAsync({
+        name: dealName,
+        values: { status: targetStage },
+      });
+    } finally {
+      setMovingDeals((prev) => {
+        const next = { ...prev };
+        delete next[dealName];
+        return next;
+      });
+    }
   }
 
   if (loading && rows.length === 0) {
@@ -106,13 +126,26 @@ export function DealGrid({
         const owner = row["deal_owner"];
         const probability = row["probability"];
         const nextStep = row["next_step"];
+        const isMoving = Boolean(movingDeals[name]);
+        const movingTo = movingDeals[name];
 
         return (
           <div
             key={name}
             onClick={() => onRowClick?.(name)}
-            className="group relative flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer"
+            className={cn(
+              "group relative overflow-hidden flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer",
+              isMoving && "pointer-events-none ring-2 ring-primary/40",
+            )}
           >
+            {isMoving && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-background/85 backdrop-blur-xs p-3 text-center animate-in fade-in duration-200">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-xs font-semibold text-primary shadow-xs">
+                  <Loader2 className="size-3.5 animate-spin text-primary" />
+                  <span className="truncate max-w-[180px]">Moving to {movingTo}...</span>
+                </div>
+              </div>
+            )}
             {/* Top row: Org & 3-dots */}
             <div>
               <div className="flex items-start justify-between gap-2">
@@ -160,10 +193,7 @@ export function DealGrid({
                               targetStatus: newStage,
                             });
                           } else {
-                            void saveMutation.mutateAsync({
-                              name,
-                              values: { status: newStage },
-                            });
+                            void handleMove(name, newStage);
                           }
                         }}
                       />

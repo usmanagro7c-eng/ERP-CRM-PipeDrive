@@ -373,12 +373,38 @@ export interface ConvertLeadToDealParams {
   dealValues: Record<string, unknown>;
 }
 
+export async function ensureOrganization(orgName: string): Promise<string> {
+  const trimmed = orgName.trim();
+  if (!trimmed) return "";
+  try {
+    const existing = await getOrganization(trimmed);
+    return String(existing["name"] ?? trimmed);
+  } catch {
+    try {
+      const created = await createOrganization({ organization_name: trimmed });
+      return String(created["name"] ?? trimmed);
+    } catch {
+      return trimmed;
+    }
+  }
+}
+
 export async function convertLeadToDeal(
   params: ConvertLeadToDealParams,
 ): Promise<{ deal: Record<string, unknown>; lead: Record<string, unknown> }> {
+  const dealValues = { ...params.dealValues };
+  const rawOrg = dealValues["organization"];
+  if (typeof rawOrg === "string" && rawOrg.trim()) {
+    try {
+      dealValues["organization"] = await ensureOrganization(rawOrg.trim());
+    } catch {
+      // Proceed with original string if auto-creation encounters issue
+    }
+  }
+
   // 1. Create the deal linked to the lead
   const deal = await createDeal({
-    ...params.dealValues,
+    ...dealValues,
     lead: params.leadName,
   });
 

@@ -95,7 +95,8 @@ export function classifyRequest(
       path === "api/method/frappe.desk.form.utils.add_comment" ||
       path === "api/method/frappe.core.doctype.communication.email.make" ||
       path === "api/method/crm.api.dashboard.get_dashboard" ||
-      path === "api/method/crm.api.session.get_users"
+      path === "api/method/crm.api.session.get_users" ||
+      path === "api/method/crm.api.activities.get_activities"
     ) {
       return { kind: "org-write" };
     }

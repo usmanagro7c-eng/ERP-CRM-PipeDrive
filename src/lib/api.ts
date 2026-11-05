@@ -1317,5 +1317,30 @@ export async function getCrmUsers(): Promise<CrmUser[]> {
   return [];
 }
 
+export interface CrmActivityEvent {
+  activity_type: string;
+  creation: string;
+  owner: string;
+  data: unknown;
+  is_lead?: boolean;
+  other_versions?: Array<Record<string, unknown>>;
+}
+
+export async function getRecordActivities(doctype: string, name: string): Promise<CrmActivityEvent[]> {
+  try {
+    const payload = await proxyRequest("api/method/crm.api.activities.get_activities", {
+      method: "POST",
+      body: { doctype, name },
+    });
+    const res = message(payload);
+    if (Array.isArray(res) && Array.isArray(res[0])) {
+      return res[0] as CrmActivityEvent[];
+    }
+  } catch {
+    // handled
+  }
+  return [];
+}
+
 // Local type import to avoid a circular-looking import in editors.
 type FrappeMetaResponse = import("./frappe-meta").FrappeDocTypeMeta;

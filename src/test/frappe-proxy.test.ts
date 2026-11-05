@@ -170,6 +170,9 @@ describe("classifyRequest", () => {
     expect(
       classifyRequest("POST", "api/method/crm.api.session.get_users", none)?.kind,
     ).toBe("org-write");
+    expect(
+      classifyRequest("POST", "api/method/crm.api.activities.get_activities", none)?.kind,
+    ).toBe("org-write");
   });
 
   it("rejects path traversal", () => {

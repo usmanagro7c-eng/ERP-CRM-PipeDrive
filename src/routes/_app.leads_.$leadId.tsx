@@ -1,20 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
+  Camera,
   CheckCircle2,
   ChevronDown,
   Copy,
   ExternalLink,
   FileText,
-  Globe,
   List,
   Loader2,
   Mail,
   MessageSquare,
   Paperclip,
-  Phone,
   PhoneCall,
   Sparkles,
   StickyNote,
@@ -24,6 +23,8 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -49,6 +50,7 @@ import {
   useSaveLead,
   useDeleteLead,
 } from "@/hooks/use-leads";
+import { useCrmUsers } from "@/hooks/use-dashboard";
 import { RecordCommentsThread } from "@/components/record-view/record-comments-thread";
 import { RecordAttachmentsTab } from "@/components/record-view/record-attachments-tab";
 import { RecordTasksTab } from "@/components/record-view/record-tasks-tab";
@@ -75,22 +77,140 @@ type TabKey =
   | "notes"
   | "attachments";
 
+const SALUTATIONS = ["Mr", "Ms", "Mx", "Dr", "Mrs", "Madam", "Miss", "Master", "Prof"];
+const SOURCES = [
+  "Email",
+  "Existing Customer",
+  "Reference",
+  "Advertisement",
+  "Cold Calling",
+  "Exhibition",
+  "Supplier Reference",
+  "Mass Mailing",
+  "Campaign",
+  "Walk In",
+  "Facebook",
+  "Website",
+  "WhatsApp",
+];
+const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
+const INDUSTRIES = [
+  "Accounting",
+  "Advertising",
+  "Aerospace",
+  "Agriculture",
+  "Airline",
+  "Apparel & Accessories",
+  "Automotive",
+  "Banking",
+  "Biotechnology",
+  "Chemical",
+  "Computer",
+  "Consulting",
+  "Consumer Products",
+  "Defense",
+  "Education",
+  "Electronics",
+  "Manufacturing",
+  "Other",
+];
+
+interface SidebarState {
+  salutation: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  mobile_no: string;
+  organization: string;
+  company_description: string;
+  website: string;
+  territory: string;
+  industry: string;
+  no_of_employees: string;
+  job_title: string;
+  source: string;
+  lead_owner: string;
+}
+
+const initialSidebarState: SidebarState = {
+  salutation: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  mobile_no: "",
+  organization: "",
+  company_description: "",
+  website: "",
+  territory: "",
+  industry: "",
+  no_of_employees: "",
+  job_title: "",
+  source: "",
+  lead_owner: "",
+};
+
 function LeadDetailPage() {
   const { leadId } = Route.useParams();
   const navigate = useNavigate();
 
   const { data: lead, isLoading } = useQuery(leadDetailOptions(leadId));
   const { data: statuses = [] } = useQuery(leadStatusesOptions());
+  const { data: users = [] } = useCrmUsers();
+
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
 
-  const [activeTab, setActiveTab] = useState<TabKey>("comments");
+  // Read URL hash if available (e.g. #activity, #emails)
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const h = window.location.hash.replace("#", "") as TabKey;
+      if (
+        ["activity", "emails", "comments", "data", "calls", "tasks", "notes", "attachments"].includes(
+          h,
+        )
+      ) {
+        return h;
+      }
+    }
+    return "activity";
+  });
+
   const [convertModalOpen, setConvertModalOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [personOpen, setPersonOpen] = useState(true);
 
+  // Local form state for inline editing in the sidebar
+  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
+
+  useEffect(() => {
+    if (lead) {
+      setSidebarValues({
+        salutation: String(lead["salutation"] || ""),
+        first_name: String(lead["first_name"] || ""),
+        last_name: String(lead["last_name"] || ""),
+        email: String(lead["email"] || ""),
+        mobile_no: String(lead["mobile_no"] || lead["phone"] || ""),
+        organization: String(lead["organization_name"] || lead["organization"] || ""),
+        company_description: String(lead["company_description"] || ""),
+        website: String(lead["website"] || ""),
+        territory: String(lead["territory"] || ""),
+        industry: String(lead["industry"] || ""),
+        no_of_employees: String(lead["no_of_employees"] || ""),
+        job_title: String(lead["job_title"] || ""),
+        source: String(lead["source"] || ""),
+        lead_owner: String(lead["lead_owner"] || lead["owner"] || ""),
+      });
+    }
+  }, [lead]);
+
   const leadName = useMemo(() => {
     if (!lead) return leadId;
+    const sal = String(lead["salutation"] || "").trim();
+    const fn = String(lead["first_name"] || "").trim();
+    const ln = String(lead["last_name"] || "").trim();
+    if (fn || ln) {
+      return [sal, fn, ln].filter(Boolean).join(" ");
+    }
     return (
       String(lead["lead_name"] || "") ||
       String(lead["organization_name"] || "") ||
@@ -100,6 +220,23 @@ function LeadDetailPage() {
   }, [lead, leadId]);
 
   const currentStatus = String(lead?.["status"] || "Open");
+
+  // Save single field on blur / selection
+  async function handleFieldSave(fieldname: string, val: string) {
+    if (!lead) return;
+    const existing = String(lead[fieldname] || "");
+    if (existing.trim() === val.trim()) return;
+
+    try {
+      await saveMutation.mutateAsync({
+        name: leadId,
+        values: { [fieldname]: val },
+      });
+      toast.success(`${fieldname.replace(/_/g, " ")} updated`);
+    } catch {
+      // toast shown by hook
+    }
+  }
 
   async function handleStatusChange(newStatus: string) {
     if (!lead) return;
@@ -149,19 +286,11 @@ function LeadDetailPage() {
     );
   }
 
-  const email = String(lead["email"] || "");
-  const phone = String(lead["mobile_no"] || lead["phone"] || "");
-  const organization = String(lead["organization_name"] || lead["organization"] || "");
-  const website = String(lead["website"] || "");
-  const jobTitle = String(lead["job_title"] || "");
-  const industry = String(lead["industry"] || "");
-  const territory = String(lead["territory"] || "");
-  const employees = String(lead["no_of_employees"] || "");
-  const salutation = String(lead["salutation"] || "");
-  const firstName = String(lead["first_name"] || leadName.split(" ")[0] || "");
-  const lastName = String(lead["last_name"] || leadName.split(" ").slice(1).join(" ") || "");
-
-  const tabs: Array<{ key: TabKey; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  const tabs: Array<{
+    key: TabKey;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }> = [
     { key: "activity", label: "Activity", icon: Activity },
     { key: "emails", label: "Emails", icon: Mail },
     { key: "comments", label: "Comments", icon: MessageSquare },
@@ -172,21 +301,24 @@ function LeadDetailPage() {
     { key: "attachments", label: "Attachments", icon: Paperclip },
   ];
 
+  const email = sidebarValues.email || "";
+  const phone = sidebarValues.mobile_no || "";
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
       {/* Top Header / Breadcrumbs & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 py-2.5 bg-card/60 backdrop-blur-xs">
-        {/* Breadcrumb */}
+        {/* Breadcrumb matching Frappe CRM */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
           <Link to="/leads" className="hover:text-foreground transition-colors font-medium">
             Leads
           </Link>
-          <span>/</span>
+          <span className="opacity-60">/</span>
           <Link to="/leads" className="flex items-center gap-1 hover:text-foreground transition-colors">
             <List className="size-3.5" />
             <span>List</span>
           </Link>
-          <span>/</span>
+          <span className="opacity-60">/</span>
           <span className="font-semibold text-foreground truncate max-w-[200px]">
             {leadName}
           </span>
@@ -197,54 +329,74 @@ function LeadDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info("Enrich feature: Lead intelligence validated")}
-            className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground"
+            onClick={() => toast.info("Enrich feature: Lead data validated")}
+            className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <Sparkles className="size-3 text-amber-500" />
             <span>Enrich</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.info("Assign To feature opened")}
-            className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground"
-          >
-            <UserPlus className="size-3" />
-            <span>Assign To</span>
-          </Button>
-
+          {/* Assign To dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs gap-1 bg-secondary/50 text-muted-foreground hover:text-foreground"
+                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <UserPlus className="size-3" />
+                <span>Assign To</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-xs w-48">
+              {users.map((u) => (
+                <DropdownMenuItem
+                  key={u.name}
+                  onClick={() => {
+                    void handleFieldSave("lead_owner", u.name);
+                    toast.success(`Assigned to ${u.full_name || u.name}`);
+                  }}
+                  className="cursor-pointer"
+                >
+                  {u.full_name || u.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* New Item Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>New</span>
                 <ChevronDown className="size-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs">
-              <DropdownMenuItem onClick={() => setActiveTab("tasks")}>
+              <DropdownMenuItem onClick={() => setActiveTab("tasks")} className="cursor-pointer">
                 Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("calls")}>
+              <DropdownMenuItem onClick={() => setActiveTab("calls")} className="cursor-pointer">
                 Call Log
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("notes")}>
+              <DropdownMenuItem onClick={() => setActiveTab("notes")} className="cursor-pointer">
                 Note
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("emails")}>
+              <DropdownMenuItem onClick={() => setActiveTab("emails")} className="cursor-pointer">
                 Email
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Convert to Deal Button */}
           <Button
             size="sm"
             onClick={() => setConvertModalOpen(true)}
-            className="h-7 gap-1.5 text-xs font-semibold shadow-xs"
+            className="h-7 gap-1.5 text-xs font-semibold shadow-xs cursor-pointer"
           >
             <Sparkles className="size-3" />
             <span>Convert to Deal</span>
@@ -265,7 +417,10 @@ function LeadDetailPage() {
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      window.location.hash = tab.key;
+                    }}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer shrink-0",
                       isActive
@@ -282,13 +437,6 @@ function LeadDetailPage() {
 
             {/* Tab Content Panel */}
             <div className="p-4 sm:p-6 overflow-y-auto">
-              {activeTab === "comments" && (
-                <RecordCommentsThread
-                  referenceDoctype={api.LEAD_DOCTYPE}
-                  referenceName={leadId}
-                />
-              )}
-
               {activeTab === "activity" && (
                 <RecordActivityFeed
                   referenceDoctype={api.LEAD_DOCTYPE}
@@ -296,6 +444,10 @@ function LeadDetailPage() {
                   owner={String(lead["owner"] || "system")}
                   status={currentStatus}
                   creation={String(lead["creation"] || "")}
+                  onNewTask={() => setActiveTab("tasks")}
+                  onNewCall={() => setActiveTab("calls")}
+                  onNewNote={() => setActiveTab("notes")}
+                  onNewComment={() => setActiveTab("comments")}
                 />
               )}
 
@@ -304,6 +456,23 @@ function LeadDetailPage() {
                   referenceDoctype={api.LEAD_DOCTYPE}
                   referenceName={leadId}
                   defaultRecipientEmail={email}
+                />
+              )}
+
+              {activeTab === "comments" && (
+                <RecordCommentsThread
+                  referenceDoctype={api.LEAD_DOCTYPE}
+                  referenceName={leadId}
+                />
+              )}
+
+              {activeTab === "data" && <RecordDataTab data={lead} />}
+
+              {activeTab === "calls" && (
+                <RecordCallsTab
+                  referenceDoctype={api.LEAD_DOCTYPE}
+                  referenceName={leadId}
+                  phoneNumber={phone}
                 />
               )}
 
@@ -321,23 +490,11 @@ function LeadDetailPage() {
                 />
               )}
 
-              {activeTab === "calls" && (
-                <RecordCallsTab
-                  referenceDoctype={api.LEAD_DOCTYPE}
-                  referenceName={leadId}
-                  phoneNumber={phone}
-                />
-              )}
-
               {activeTab === "attachments" && (
                 <RecordAttachmentsTab
                   referenceDoctype={api.LEAD_DOCTYPE}
                   referenceName={leadId}
                 />
-              )}
-
-              {activeTab === "data" && (
-                <RecordDataTab data={lead} />
               )}
             </div>
           </div>
@@ -345,14 +502,20 @@ function LeadDetailPage() {
           {/* Bottom Bar: Reply & Comment Actions (matching Frappe CRM bottom strip) */}
           <div className="border-t px-4 py-2.5 bg-card/40 flex items-center gap-3">
             <button
-              onClick={() => setActiveTab("emails")}
+              onClick={() => {
+                setActiveTab("emails");
+                window.location.hash = "emails";
+              }}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <Mail className="size-3.5" />
               <span>Reply</span>
             </button>
             <button
-              onClick={() => setActiveTab("comments")}
+              onClick={() => {
+                setActiveTab("comments");
+                window.location.hash = "comments";
+              }}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <MessageSquare className="size-3.5" />
@@ -367,13 +530,16 @@ function LeadDetailPage() {
           <div>
             <div className="text-[11px] font-mono font-medium text-muted-foreground">{leadId}</div>
             <div className="flex items-center gap-3 mt-2">
-              <div className="flex size-11 items-center justify-center rounded-full bg-muted text-foreground font-bold text-base shadow-xs shrink-0">
-                {leadName.charAt(0).toUpperCase()}
+              <div className="relative group flex size-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-bold text-base shadow-xs shrink-0 cursor-pointer overflow-hidden">
+                <span>{leadName.charAt(0).toUpperCase()}</span>
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="size-4 text-white" />
+                </div>
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-sm text-foreground truncate">{leadName}</h2>
-                {organization && (
-                  <p className="text-xs text-muted-foreground truncate">{organization}</p>
+                {sidebarValues.organization && (
+                  <p className="text-xs text-muted-foreground truncate">{sidebarValues.organization}</p>
                 )}
               </div>
             </div>
@@ -406,7 +572,7 @@ function LeadDetailPage() {
                 variant="outline"
                 size="icon"
                 onClick={handleCopyLink}
-                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30"
+                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30 cursor-pointer"
                 title="Copy Link"
               >
                 <Copy className="size-3.5" />
@@ -414,8 +580,11 @@ function LeadDetailPage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setActiveTab("attachments")}
-                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30"
+                onClick={() => {
+                  setActiveTab("attachments");
+                  window.location.hash = "attachments";
+                }}
+                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30 cursor-pointer"
                 title="View Attachments"
               >
                 <Paperclip className="size-3.5" />
@@ -424,7 +593,7 @@ function LeadDetailPage() {
                 variant="outline"
                 size="icon"
                 onClick={handleDelete}
-                className="size-7 rounded-sm text-destructive hover:bg-destructive/10 bg-secondary/30"
+                className="size-7 rounded-sm text-destructive hover:bg-destructive/10 bg-secondary/30 cursor-pointer"
                 title="Delete Lead"
               >
                 <Trash2 className="size-3.5" />
@@ -436,17 +605,19 @@ function LeadDetailPage() {
           <div className="space-y-2 border-t pt-3 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">First Response</span>
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground font-medium">
+                {String(lead["communication_status"] || "—")}
+              </span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-muted-foreground">Status</span>
               <Select value={currentStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger className="h-7 w-28 text-xs bg-card">
+                <SelectTrigger className="h-7 w-32 text-xs bg-card cursor-pointer">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   {statuses.map((s) => (
-                    <SelectItem key={s.name} value={s.name} className="text-xs">
+                    <SelectItem key={s.name} value={s.name} className="text-xs cursor-pointer">
                       {s.name}
                     </SelectItem>
                   ))}
@@ -455,7 +626,7 @@ function LeadDetailPage() {
             </div>
           </div>
 
-          {/* Collapsible Details Section */}
+          {/* Collapsible Details Section with INLINE EDITABLE FIELDS */}
           <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2 border-t pt-3">
             <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
               <span className="flex items-center gap-1.5">
@@ -464,50 +635,163 @@ function LeadDetailPage() {
               </span>
               <ExternalLink className="size-3 text-muted-foreground" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 pt-1 text-xs">
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Organization</span>
-                <span className="font-medium text-foreground truncate max-w-[150px]">{organization || "—"}</span>
+            <CollapsibleContent className="space-y-3 pt-2 text-xs">
+              {/* Organization */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Organization</span>
+                <Input
+                  value={sidebarValues.organization || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, organization: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("organization", e.target.value)}
+                  placeholder="Add Organization..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Company Desc...</span>
-                <span className="text-muted-foreground italic truncate max-w-[150px]">Add Description...</span>
+
+              {/* Company Description */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Company Description</span>
+                <Textarea
+                  value={sidebarValues.company_description || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, company_description: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("company_description", e.target.value)}
+                  placeholder="Add Company Description..."
+                  rows={2}
+                  className="text-xs bg-card resize-none"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Website</span>
-                {website ? (
-                  <a
-                    href={website.startsWith("http") ? website : `https://${website}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline truncate max-w-[150px]"
-                  >
-                    {website}
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground italic">Add Website...</span>
-                )}
+
+              {/* Website */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Website</span>
+                <Input
+                  value={sidebarValues.website || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, website: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("website", e.target.value)}
+                  placeholder="Add Website..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Territory</span>
-                <span className="text-foreground">{territory || "Add Territory..."}</span>
+
+              {/* Territory */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Territory</span>
+                <Input
+                  value={sidebarValues.territory || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, territory: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("territory", e.target.value)}
+                  placeholder="Add Territory..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Industry</span>
-                <span className="text-foreground">{industry || "Add Industry..."}</span>
+
+              {/* Industry */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Industry</span>
+                <Select
+                  value={sidebarValues.industry || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, industry: val }));
+                    void handleFieldSave("industry", val);
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
+                    <SelectValue placeholder="Add Industry..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind} value={ind} className="text-xs cursor-pointer">
+                        {ind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">No. of Employe...</span>
-                <span className="text-foreground">{employees || "1-10"}</span>
+
+              {/* No. of Employees */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">No. of Employees</span>
+                <Select
+                  value={sidebarValues.no_of_employees || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, no_of_employees: val }));
+                    void handleFieldSave("no_of_employees", val);
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
+                    <SelectValue placeholder="1-10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEE_RANGES.map((rng) => (
+                      <SelectItem key={rng} value={rng} className="text-xs cursor-pointer">
+                        {rng}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Job Title</span>
-                <span className="text-foreground">{jobTitle || "Add Job Title..."}</span>
+
+              {/* Job Title */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Job Title</span>
+                <Input
+                  value={sidebarValues.job_title || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, job_title: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("job_title", e.target.value)}
+                  placeholder="Add Job Title..."
+                  className="h-7 text-xs bg-card"
+                />
+              </div>
+
+              {/* Source */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Source</span>
+                <Select
+                  value={sidebarValues.source || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, source: val }));
+                    void handleFieldSave("source", val);
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
+                    <SelectValue placeholder="Add Source..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {SOURCES.map((src) => (
+                      <SelectItem key={src} value={src} className="text-xs cursor-pointer">
+                        {src}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Lead Owner */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Lead Owner</span>
+                <Select
+                  value={sidebarValues.lead_owner || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, lead_owner: val }));
+                    void handleFieldSave("lead_owner", val);
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
+                    <SelectValue placeholder="Select Lead Owner..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {users.map((u) => (
+                      <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
+                        {u.full_name || u.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Collapsible Person Section */}
+          {/* Collapsible Person Section with INLINE EDITABLE FIELDS */}
           <Collapsible open={personOpen} onOpenChange={setPersonOpen} className="space-y-2 border-t pt-3">
             <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
               <span className="flex items-center gap-1.5">
@@ -515,26 +799,79 @@ function LeadDetailPage() {
                 <span>Person</span>
               </span>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 pt-1 text-xs">
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Salutation</span>
-                <span className="text-muted-foreground italic">{salutation || "Add Salutation..."}</span>
+            <CollapsibleContent className="space-y-3 pt-2 text-xs">
+              {/* Salutation */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Salutation</span>
+                <Select
+                  value={sidebarValues.salutation || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, salutation: val }));
+                    void handleFieldSave("salutation", val);
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
+                    <SelectValue placeholder="Add Salutation..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALUTATIONS.map((sal) => (
+                      <SelectItem key={sal} value={sal} className="text-xs cursor-pointer">
+                        {sal}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">First Name *</span>
-                <span className="font-medium text-foreground">{firstName || "—"}</span>
+
+              {/* First Name * */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">
+                  First Name <span className="text-destructive">*</span>
+                </span>
+                <Input
+                  value={sidebarValues.first_name || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, first_name: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("first_name", e.target.value)}
+                  placeholder="Add First Name..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Last Name</span>
-                <span className="text-foreground">{lastName || "—"}</span>
+
+              {/* Last Name */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Last Name</span>
+                <Input
+                  value={sidebarValues.last_name || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, last_name: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("last_name", e.target.value)}
+                  placeholder="Add Last Name..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Email</span>
-                <span className="text-foreground truncate max-w-[150px]">{email || "—"}</span>
+
+              {/* Email */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Email</span>
+                <Input
+                  value={sidebarValues.email || ""}
+                  type="email"
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, email: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("email", e.target.value)}
+                  placeholder="Add Email..."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
-              <div className="flex justify-between items-center py-0.5">
-                <span className="text-muted-foreground">Mobile No.</span>
-                <span className="text-foreground">{phone || "—"}</span>
+
+              {/* Mobile No. */}
+              <div className="space-y-1">
+                <span className="text-muted-foreground block text-[11px]">Mobile No.</span>
+                <Input
+                  value={sidebarValues.mobile_no || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, mobile_no: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("mobile_no", e.target.value)}
+                  placeholder="Add Mobile No...."
+                  className="h-7 text-xs bg-card"
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

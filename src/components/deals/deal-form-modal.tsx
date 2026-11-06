@@ -242,7 +242,7 @@ export function DealFormModal({
         }`}
       >
         {/* Header Matching Frappe CRM */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/20">
+        <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <DialogTitle className="text-lg font-semibold text-foreground">
             {isEdit ? "Edit Deal" : "Create Deal"}
           </DialogTitle>
@@ -255,7 +255,7 @@ export function DealFormModal({
               className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
               title={isFullscreen ? "Minimize" : "Maximize"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </Button>
             <Button
               type="button"
@@ -270,20 +270,20 @@ export function DealFormModal({
         </div>
 
         {/* Modal Form Body matching Frappe CRM exact layout */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-3 space-y-6">
           {/* Top Toggles Row */}
           {!isEdit && (
-            <div className="flex flex-wrap items-center gap-6 text-xs text-muted-foreground pb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs">Choose Existing Organization</span>
+            <div className="flex items-center gap-8 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-normal text-muted-foreground">Choose Existing Organization</span>
                 <Switch
                   checked={chooseExistingOrg}
                   onCheckedChange={setChooseExistingOrg}
                   className="scale-90"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs">Choose Existing Contact</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-normal text-muted-foreground">Choose Existing Contact</span>
                 <Switch
                   checked={chooseExistingContact}
                   onCheckedChange={setChooseExistingContact}
@@ -294,7 +294,7 @@ export function DealFormModal({
           )}
 
           {/* Section 1: Organization Details (3 Columns) */}
-          <div className="space-y-3">
+          <div>
             {chooseExistingOrg ? (
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-foreground">Select Existing Organization *</Label>
@@ -316,25 +316,25 @@ export function DealFormModal({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Column 1 */}
+                {/* Column 1: Organization Name & Territory */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Organization Name *</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Organization Name</Label>
                     <Input
                       value={formData.organization}
                       onChange={(e) => handleChange("organization", e.target.value)}
                       placeholder="Organization Name"
-                      className="h-8 text-xs bg-background"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Territory</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Territory</Label>
                     <Select
                       value={formData.territory || undefined}
                       onValueChange={(val) => handleChange("territory", val)}
                     >
-                      <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                         <SelectValue placeholder="Territory" />
                       </SelectTrigger>
                       <SelectContent>
@@ -346,14 +346,36 @@ export function DealFormModal({
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Column 2: Website, Annual Revenue, Company Description */}
+                <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Company Description</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Website</Label>
+                    <Input
+                      value={formData.website}
+                      onChange={(e) => handleChange("website", e.target.value)}
+                      placeholder="Website"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-normal text-muted-foreground">Annual Revenue</Label>
+                    <Input
+                      value={formData.annual_revenue}
+                      onChange={(e) => handleChange("annual_revenue", e.target.value)}
+                      placeholder="Annual Revenue"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-normal text-muted-foreground">Company Description</Label>
                     <Textarea
                       value={formData.company_description}
                       onChange={(e) => handleChange("company_description", e.target.value)}
                       placeholder="Company Description"
                       rows={3}
-                      className="text-xs bg-background resize-none"
+                      className="text-xs bg-muted/30 border-muted-foreground/20 resize-none focus-visible:bg-background"
                     />
                     <p className="text-[11px] text-muted-foreground/75 leading-tight">
                       Company description discovered by Domain Enrichment.
@@ -361,37 +383,15 @@ export function DealFormModal({
                   </div>
                 </div>
 
-                {/* Column 2 */}
+                {/* Column 3: No. of Employees & Industry */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Website</Label>
-                    <Input
-                      value={formData.website}
-                      onChange={(e) => handleChange("website", e.target.value)}
-                      placeholder="Website"
-                      className="h-8 text-xs bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Annual Revenue</Label>
-                    <Input
-                      value={formData.annual_revenue}
-                      onChange={(e) => handleChange("annual_revenue", e.target.value)}
-                      placeholder="Annual Revenue"
-                      className="h-8 text-xs bg-background"
-                    />
-                  </div>
-                </div>
-
-                {/* Column 3 */}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">No. of Employees</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">No. of Employees</Label>
                     <Select
                       value={formData.no_of_employees || undefined}
                       onValueChange={(val) => handleChange("no_of_employees", val)}
                     >
-                      <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                         <SelectValue placeholder="1-10" />
                       </SelectTrigger>
                       <SelectContent>
@@ -404,12 +404,12 @@ export function DealFormModal({
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Industry</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Industry</Label>
                     <Select
                       value={formData.industry || undefined}
                       onValueChange={(val) => handleChange("industry", val)}
                     >
-                      <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                         <SelectValue placeholder="Industry" />
                       </SelectTrigger>
                       <SelectContent className="max-h-56">
@@ -427,7 +427,7 @@ export function DealFormModal({
           </div>
 
           {/* Section 2: Contact Details (3 Columns) */}
-          <div className="border-t border-border/60 pt-4 space-y-3">
+          <div>
             {chooseExistingContact ? (
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-foreground">Select Existing Contact</Label>
@@ -450,15 +450,15 @@ export function DealFormModal({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Column 1 */}
+                {/* Column 1: Salutation & Primary email */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Salutation</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Salutation</Label>
                     <Select
                       value={formData.salutation || undefined}
                       onValueChange={(val) => handleChange("salutation", val)}
                     >
-                      <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                         <SelectValue placeholder="Salutation" />
                       </SelectTrigger>
                       <SelectContent>
@@ -471,57 +471,57 @@ export function DealFormModal({
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Primary email</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Primary email</Label>
                     <Input
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
                       placeholder="Primary email"
-                      className="h-8 text-xs bg-background"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
                     />
                   </div>
                 </div>
 
-                {/* Column 2 */}
+                {/* Column 2: First name & Primary mobile no */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">First name</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">First name</Label>
                     <Input
                       value={formData.first_name}
                       onChange={(e) => handleChange("first_name", e.target.value)}
                       placeholder="First name"
-                      className="h-8 text-xs bg-background"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Primary mobile no</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Primary mobile no</Label>
                     <Input
                       value={formData.mobile_no}
                       onChange={(e) => handleChange("mobile_no", e.target.value)}
                       placeholder="Primary mobile no"
-                      className="h-8 text-xs bg-background"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
                     />
                   </div>
                 </div>
 
-                {/* Column 3 */}
+                {/* Column 3: Last name & Gender */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Last name</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Last name</Label>
                     <Input
                       value={formData.last_name}
                       onChange={(e) => handleChange("last_name", e.target.value)}
                       placeholder="Last name"
-                      className="h-8 text-xs bg-background"
+                      className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-foreground">Gender</Label>
+                    <Label className="text-xs font-normal text-muted-foreground">Gender</Label>
                     <Select
                       value={formData.gender || undefined}
                       onValueChange={(val) => handleChange("gender", val)}
                     >
-                      <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                         <SelectValue placeholder="Gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -539,17 +539,17 @@ export function DealFormModal({
           </div>
 
           {/* Section 3: Status & Ownership (2 Columns) */}
-          <div className="border-t border-border/60 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">
+              <Label className="text-xs font-normal text-muted-foreground">
                 Status <span className="text-destructive">*</span>
               </Label>
               <Select
                 value={formData.status}
                 onValueChange={(val) => handleChange("status", val)}
               >
-                <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
-                  <div className="flex items-center gap-1.5">
+                <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                  <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-foreground inline-block" />
                     <SelectValue placeholder="Status" />
                   </div>
@@ -557,7 +557,7 @@ export function DealFormModal({
                 <SelectContent>
                   {stages.map((s) => (
                     <SelectItem key={s.name} value={s.name} className="text-xs cursor-pointer">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <span className="size-2 rounded-full bg-foreground inline-block" />
                         <span>{s.name}</span>
                       </div>
@@ -568,36 +568,40 @@ export function DealFormModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">Deal Owner</Label>
+              <Label className="text-xs font-normal text-muted-foreground">Deal Owner</Label>
               <Select
                 value={formData.deal_owner || undefined}
                 onValueChange={(val) => handleChange("deal_owner", val)}
               >
-                <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                   <SelectValue placeholder="Select Owner..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
-                  {users.map((u) => (
-                    <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <div className="size-4 rounded-full bg-secondary text-foreground flex items-center justify-center text-[10px] font-bold">
-                          {(u.full_name || u.name).charAt(0).toUpperCase()}
+                  {users.map((u) => {
+                    const displayName = u.full_name || u.name;
+                    return (
+                      <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <div className="relative size-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[10px] font-medium">
+                            {displayName.charAt(0).toUpperCase()}
+                            <span className="absolute -bottom-0.5 -right-0.5 size-1.5 rounded-full bg-emerald-500 ring-1 ring-background" />
+                          </div>
+                          <span>{displayName}</span>
                         </div>
-                        <span>{u.full_name || u.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Footer Submit Button */}
-          <div className="flex justify-end pt-3 border-t border-border/60">
+          <div className="flex justify-end pt-2 pb-1">
             <Button
               type="submit"
               disabled={saveMutation.isPending}
-              className="h-8 text-xs px-4 rounded-md font-semibold bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+              className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="size-3.5 animate-spin mr-1" />

@@ -1,303 +1,632 @@
-import { useState } from "react";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
-  ArrowLeft,
-  CheckCircle2,
-  FileText,
+  Briefcase,
+  ChevronDown,
+  ExternalLink,
+  List,
   Loader2,
-  MessageSquare,
-  Paperclip,
-  Pencil,
-  PhoneCall,
-  StickyNote,
+  Mail,
+  Phone,
+  Plus,
+  Sparkles,
   Trash2,
-  TriangleAlert,
+  Users,
 } from "lucide-react";
+import { toast } from "sonner";
 
-import { OrgFormModal } from "@/components/organizations/org-form-modal";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LoadingState } from "@/components/ui/loading";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  errorMessage,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import {
   orgDetailOptions,
-  orgMetaOptions,
+  useSaveOrganization,
   useDeleteOrganization,
 } from "@/hooks/use-organizations";
-import {
-  fieldLabel,
-  formatFieldValue,
-  groupIntoSections,
-  type FrappeDocField,
-} from "@/lib/frappe-meta";
-import { RecordCommentsThread } from "@/components/record-view/record-comments-thread";
-import { RecordAttachmentsTab } from "@/components/record-view/record-attachments-tab";
-import { RecordTasksTab } from "@/components/record-view/record-tasks-tab";
-import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
-import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
-import * as api from "@/lib/api";
+import { dealListOptions } from "@/hooks/use-deals";
+import { contactListOptions } from "@/hooks/use-contacts";
+import { OrgFormModal } from "@/components/organizations/org-form-modal";
+import { DealFormModal } from "@/components/deals/deal-form-modal";
+import { ContactFormModal } from "@/components/contacts/contact-form-modal";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/organizations/$orgId")({
-  head: () => ({ meta: [{ title: "Organization · AgroCRM" }] }),
+  head: () => ({ meta: [{ title: "Organization Detail · AgroCRM" }] }),
   component: OrganizationDetailPage,
 });
 
-type TabKey = "overview" | "comments" | "tasks" | "notes" | "attachments" | "activity";
+const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
+const TERRITORIES = [
+  "All Territories",
+  "Pakistan",
+  "Punjab",
+  "Sindh",
+  "KPK",
+  "Balochistan",
+];
+const INDUSTRIES = [
+  "Accounting",
+  "Advertising",
+  "Aerospace",
+  "Agriculture",
+  "Airline",
+  "Apparel & Accessories",
+  "Automotive",
+  "Banking",
+  "Biotechnology",
+  "Chemical",
+  "Computer",
+  "Consulting",
+  "Consumer Products",
+  "Defense",
+  "Education",
+  "Electronics",
+  "Manufacturing",
+  "Other",
+];
 
-function FieldValue({ field, value }: { field: FrappeDocField; value: unknown }) {
-  const empty = value === null || value === undefined || value === "";
-  if (empty) return <span className="text-muted-foreground/60">—</span>;
-  if (field.fieldtype === "Attach Image" && typeof value === "string") {
-    return (
-      <img src={value} alt={fieldLabel(field)} className="size-16 rounded-lg border object-cover" />
-    );
-  }
-  if (field.fieldtype === "Attach" && typeof value === "string") {
-    return (
-      <a href={value} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-        Open file
-      </a>
-    );
-  }
-  const text = formatFieldValue(field, value);
-  if (field.fieldname === "website" && typeof value === "string") {
-    const href = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="text-primary hover:underline"
-      >
-        {text}
-      </a>
-    );
-  }
-  return <span className="whitespace-pre-wrap break-words">{text}</span>;
+interface SidebarState {
+  organization_name: string;
+  company_description: string;
+  website: string;
+  territory: string;
+  industry: string;
+  no_of_employees: string;
+  address: string;
 }
+
+const initialSidebarState: SidebarState = {
+  organization_name: "",
+  company_description: "",
+  website: "",
+  territory: "",
+  industry: "",
+  no_of_employees: "1-10",
+  address: "",
+};
 
 function OrganizationDetailPage() {
   const { orgId } = Route.useParams();
   const navigate = useNavigate();
-  const metaQuery = useQuery(orgMetaOptions());
-  const orgQuery = useQuery(orgDetailOptions(orgId));
+
+  const { data: organization, isLoading, refetch } = useQuery(orgDetailOptions(orgId));
+  const saveMutation = useSaveOrganization();
   const deleteMutation = useDeleteOrganization();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
-  const meta = metaQuery.data;
-  const org = orgQuery.data;
-  const error = metaQuery.error ?? orgQuery.error;
+  // Query all deals to link to this organization
+  const { data: dealsData = [] } = useQuery(
+    dealListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
+  );
 
-  const titleField = meta?.title_field || "organization_name";
-  const title = org ? String(org[titleField] ?? org["name"] ?? orgId) : orgId;
-  const imageUrl = meta?.image_field && org ? org[meta.image_field] : undefined;
-  const sections = meta ? groupIntoSections(meta.fields ?? []) : [];
+  // Query all contacts to link to this organization
+  const { data: contactsData = [] } = useQuery(
+    contactListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
+  );
 
-  const tabs: Array<{ key: TabKey; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-    { key: "overview", label: "Overview & Fields", icon: FileText },
-    { key: "comments", label: "Comments", icon: MessageSquare },
-    { key: "tasks", label: "Tasks", icon: CheckCircle2 },
-    { key: "notes", label: "Notes", icon: StickyNote },
-    { key: "attachments", label: "Attachments", icon: Paperclip },
-    { key: "activity", label: "Activity", icon: Activity },
-  ];
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<"deals" | "contacts">("deals");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [dealModalOpen, setDealModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+
+  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
+
+  useEffect(() => {
+    if (organization) {
+      setSidebarValues({
+        organization_name: String(organization["organization_name"] || organization["name"] || ""),
+        company_description: String(organization["company_description"] || ""),
+        website: String(organization["website"] || ""),
+        territory: String(organization["territory"] || ""),
+        industry: String(organization["industry"] || ""),
+        no_of_employees: String(organization["no_of_employees"] || "1-10"),
+        address: String(organization["address"] || ""),
+      });
+    }
+  }, [organization]);
+
+  const orgName =
+    String(organization?.["organization_name"] || organization?.["name"] || orgId);
+
+  // Linked Deals: match by organization ID or Name
+  const linkedDeals = useMemo(() => {
+    const list = Array.isArray(dealsData) ? dealsData : [];
+    return list.filter((deal) => {
+      const dealOrg = String(deal["organization"] || "").trim().toLowerCase();
+      const dealOrgName = String(deal["organization_name"] || "").trim().toLowerCase();
+      const currentId = orgId.trim().toLowerCase();
+      const currentName = orgName.trim().toLowerCase();
+      return (
+        dealOrg === currentId ||
+        dealOrg === currentName ||
+        dealOrgName === currentId ||
+        dealOrgName === currentName
+      );
+    });
+  }, [dealsData, orgId, orgName]);
+
+  // Linked Contacts: match by company_name or organization
+  const linkedContacts = useMemo(() => {
+    const list = Array.isArray(contactsData) ? contactsData : [];
+    return list.filter((c) => {
+      const company = String(c["company_name"] || c["organization"] || "").trim().toLowerCase();
+      const currentId = orgId.trim().toLowerCase();
+      const currentName = orgName.trim().toLowerCase();
+      return company === currentId || company === currentName;
+    });
+  }, [contactsData, orgId, orgName]);
+
+  function handleFieldChange(fieldname: keyof SidebarState, value: string) {
+    setSidebarValues((prev) => ({ ...prev, [fieldname]: value }));
+  }
+
+  async function handleFieldBlur(fieldname: keyof SidebarState) {
+    if (!organization) return;
+    const val = sidebarValues[fieldname];
+    const existing = String(organization[fieldname] || "");
+    if (existing.trim() === val.trim()) return;
+
+    try {
+      await saveMutation.mutateAsync({
+        name: orgId,
+        values: { [fieldname]: val },
+      });
+      void refetch();
+    } catch {
+      // toast handled by hook
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`Are you sure you want to delete organization "${orgName}"?`)) return;
+    try {
+      await deleteMutation.mutateAsync(orgId);
+      void navigate({ to: "/organizations" });
+    } catch {
+      // handled
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-base font-semibold">Organization not found</h2>
+        <Button asChild size="sm" variant="outline" className="mt-4">
+          <Link to="/organizations">Back to Organizations</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 md:px-6">
-      {/* Top Breadcrumb */}
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1 text-muted-foreground">
-        <Link to="/organizations" search={{}}>
-          <ArrowLeft className="size-4" />
-          Organizations
-        </Link>
-      </Button>
+    <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
+      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+        {/* Breadcrumb: Organizations / ☰ List / {orgName} */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+          <Link to="/organizations" className="hover:text-foreground transition-colors font-medium">
+            Organizations
+          </Link>
+          <span className="opacity-60">/</span>
+          <Link to="/organizations" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <List className="size-3.5" />
+            <span>List</span>
+          </Link>
+          <span className="opacity-60">/</span>
+          <span className="font-semibold text-foreground truncate max-w-[240px]">
+            {orgName}
+          </span>
+        </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <TriangleAlert className="size-4" />
-          <AlertTitle>Could not load organization</AlertTitle>
-          <AlertDescription>{errorMessage(error)}</AlertDescription>
-        </Alert>
-      )}
-
-      {(metaQuery.isLoading || orgQuery.isLoading) && (
-        <LoadingState
-          title="Loading organization..."
-          description="Fetching organization record and attributes."
-        />
-      )}
-
-      {meta && org && (
-        <>
-          {/* Header Card */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-xl border bg-card shadow-2xs">
-            <div className="flex items-center gap-3 min-w-0">
-              {typeof imageUrl === "string" && imageUrl ? (
-                <img src={imageUrl} alt="" className="size-12 sm:size-14 rounded-xl border object-cover shrink-0" />
-              ) : (
-                <span className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-accent text-lg font-bold text-accent-foreground shrink-0">
-                  {title.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-              <div className="min-w-0">
-                <h1 className="truncate font-display text-xl sm:text-2xl font-bold tracking-tight">
-                  {title}
-                </h1>
-                <p className="text-xs text-muted-foreground font-mono">{String(org["name"])}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1.5 h-8 text-xs">
-                <Pencil className="size-3.5" />
-                <span>Edit</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setDeleteOpen(true)}
-                className="gap-1.5 h-8 text-xs text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="size-3.5" />
-                <span>Delete</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* Horizontal Tabs */}
-          <div className="flex items-center gap-1 border-b overflow-x-auto scrollbar-none bg-card/30">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer shrink-0",
-                    isActive
-                      ? "border-primary text-foreground font-semibold"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tab Content */}
-          <div className="pt-2">
-            {activeTab === "overview" && (
-              <div className="space-y-6 rounded-xl border bg-card p-5 shadow-2xs">
-                {sections.map((section, index) => (
-                  <section key={section.label ?? index} className="space-y-3">
-                    {section.label && (
-                      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b pb-1">
-                        {section.label}
-                      </h2>
-                    )}
-                    <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                      {section.fields.map((field) => (
-                        <div key={field.fieldname} className="min-w-0 text-xs">
-                          <dt className="text-muted-foreground font-medium">{fieldLabel(field)}</dt>
-                          <dd className="mt-0.5 text-foreground">
-                            <FieldValue field={field} value={org[field.fieldname]} />
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                ))}
-              </div>
-            )}
-
-            {activeTab === "comments" && (
-              <RecordCommentsThread
-                referenceDoctype={api.ORG_DOCTYPE}
-                referenceName={orgId}
-              />
-            )}
-
-            {activeTab === "tasks" && (
-              <RecordTasksTab
-                referenceDoctype={api.ORG_DOCTYPE}
-                referenceName={orgId}
-              />
-            )}
-
-            {activeTab === "notes" && (
-              <RecordNotesTab
-                referenceDoctype={api.ORG_DOCTYPE}
-                referenceName={orgId}
-              />
-            )}
-
-            {activeTab === "attachments" && (
-              <RecordAttachmentsTab
-                referenceDoctype={api.ORG_DOCTYPE}
-                referenceName={orgId}
-              />
-            )}
-
-            {activeTab === "activity" && (
-              <RecordActivityFeed
-                referenceDoctype={api.ORG_DOCTYPE}
-                referenceName={orgId}
-                creation={String(org["creation"] || "")}
-              />
-            )}
-          </div>
-
-          <OrgFormModal open={editOpen} onOpenChange={setEditOpen} meta={meta} organization={org} />
-
-          <AlertDialog
-            open={deleteOpen}
-            onOpenChange={(next) => !deleteMutation.isPending && setDeleteOpen(next)}
+        {/* Top Right Actions: Enrich + Solid Black "+ New Deal" Button matching Frappe CRM */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.info("Organization domain enrichment triggered")}
+            className="h-7 text-xs font-medium px-3 rounded-md border-border/60 cursor-pointer gap-1.5 transition-colors"
           >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this organization?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  “{title}” will be permanently removed from Frappe CRM. This cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  disabled={deleteMutation.isPending}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    deleteMutation.mutate(orgId, {
-                      onSuccess: () => void navigate({ to: "/organizations", search: {} }),
-                    });
+            <Sparkles className="size-3.5 text-muted-foreground" />
+            <span>Enrich</span>
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => setDealModalOpen(true)}
+            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+          >
+            <Plus className="size-3.5" />
+            <span>New Deal</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+        {/* LEFT COLUMN: Sidebar (Details & Organization Attributes) */}
+        <div className="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card/30 p-4 sm:p-5 flex flex-col gap-5 overflow-y-auto">
+          {/* Avatar & Organization Name & Delete */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative flex size-12 items-center justify-center rounded-full bg-neutral-800 text-neutral-200 font-bold text-lg shadow-xs shrink-0 select-none">
+                <span>{orgName.charAt(0).toUpperCase()}</span>
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-bold text-base text-foreground truncate">{orgName}</h2>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              className="h-7 text-xs px-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-border/60 cursor-pointer"
+              title="Delete Organization"
+            >
+              <Trash2 className="size-3.5 mr-1" />
+              <span>Delete</span>
+            </Button>
+          </div>
+
+          {/* Collapsible: Details */}
+          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2">
+            <div className="flex items-center justify-between py-1">
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-foreground hover:text-foreground/80 cursor-pointer"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 transition-transform duration-200",
+                      !detailsOpen && "-rotate-90",
+                    )}
+                  />
+                  <span>Details</span>
+                </button>
+              </CollapsibleTrigger>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditModalOpen(true)}
+                className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
+                title="Edit Organization in dialog"
+              >
+                <ExternalLink className="size-3.5" />
+              </Button>
+            </div>
+
+            <CollapsibleContent className="space-y-3.5 pt-1">
+              {/* Organization Name */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Organization Name</label>
+                <Input
+                  value={sidebarValues.organization_name}
+                  onChange={(e) => handleFieldChange("organization_name", e.target.value)}
+                  onBlur={() => handleFieldBlur("organization_name")}
+                  className="h-7 text-xs bg-transparent border-border/40 focus:bg-background"
+                />
+              </div>
+
+              {/* Company Description */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Company Description</label>
+                <Textarea
+                  value={sidebarValues.company_description}
+                  onChange={(e) => handleFieldChange("company_description", e.target.value)}
+                  onBlur={() => handleFieldBlur("company_description")}
+                  rows={2}
+                  className="text-xs bg-transparent border-border/40 focus:bg-background resize-none"
+                />
+              </div>
+
+              {/* Website */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Website</label>
+                <Input
+                  value={sidebarValues.website}
+                  onChange={(e) => handleFieldChange("website", e.target.value)}
+                  onBlur={() => handleFieldBlur("website")}
+                  className="h-7 text-xs bg-transparent border-border/40 focus:bg-background"
+                />
+              </div>
+
+              {/* Territory */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Territory</label>
+                <Select
+                  value={sidebarValues.territory || undefined}
+                  onValueChange={(val) => {
+                    handleFieldChange("territory", val);
+                    void saveMutation.mutateAsync({
+                      name: orgId,
+                      values: { territory: val },
+                    }).then(() => refetch());
                   }}
                 >
-                  {deleteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
+                  <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
+                    <SelectValue placeholder="Territory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TERRITORIES.map((t) => (
+                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Industry */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Industry</label>
+                <Select
+                  value={sidebarValues.industry || undefined}
+                  onValueChange={(val) => {
+                    handleFieldChange("industry", val);
+                    void saveMutation.mutateAsync({
+                      name: orgId,
+                      values: { industry: val },
+                    }).then(() => refetch());
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
+                    <SelectValue placeholder="Industry" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind} value={ind} className="text-xs cursor-pointer">
+                        {ind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* No. of Employees */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">No. of Employees</label>
+                <Select
+                  value={sidebarValues.no_of_employees || undefined}
+                  onValueChange={(val) => {
+                    handleFieldChange("no_of_employees", val);
+                    void saveMutation.mutateAsync({
+                      name: orgId,
+                      values: { no_of_employees: val },
+                    }).then(() => refetch());
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
+                    <SelectValue placeholder="1-10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEE_RANGES.map((r) => (
+                      <SelectItem key={r} value={r} className="text-xs cursor-pointer">
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-normal text-muted-foreground">Address</label>
+                <Input
+                  value={sidebarValues.address}
+                  onChange={(e) => handleFieldChange("address", e.target.value)}
+                  onBlur={() => handleFieldBlur("address")}
+                  className="h-7 text-xs bg-transparent border-border/40 focus:bg-background"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* RIGHT COLUMN: Canvas with Deals & Contacts Tabs */}
+        <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+          {/* Top Tabs: Deals {count} & Contacts {count} */}
+          <div className="flex items-center gap-6 border-b border-border pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab("deals")}
+              className={cn(
+                "text-xs font-semibold pb-1 cursor-pointer transition-colors border-b-2 -mb-[13px]",
+                activeTab === "deals"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Deals <span className="ml-1 text-muted-foreground font-normal">{linkedDeals.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("contacts")}
+              className={cn(
+                "text-xs font-semibold pb-1 cursor-pointer transition-colors border-b-2 -mb-[13px]",
+                activeTab === "contacts"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Contacts <span className="ml-1 text-muted-foreground font-normal">{linkedContacts.length}</span>
+            </button>
+          </div>
+
+          {/* Deals Tab Body */}
+          {activeTab === "deals" && (
+            <div className="pt-8">
+              {linkedDeals.length === 0 ? (
+                /* Empty state matching Frappe CRM */
+                <div className="flex flex-col items-center justify-center text-center py-20">
+                  <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
+                    <Briefcase className="size-5" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">No Deals Found</h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                    Use New Deal to create a deal for this organization.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setDealModalOpen(true)}
+                    className="mt-4 h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+                  >
+                    <Plus className="size-3.5" />
+                    <span>New Deal</span>
+                  </Button>
+                </div>
+              ) : (
+                /* Deals List Cards */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {linkedDeals.map((deal) => {
+                    const dealName = String(deal["name"] || "");
+                    const orgTitle = String(deal["organization_name"] || deal["organization"] || dealName);
+                    const status = String(deal["status"] || "Qualification");
+                    const amount = Number(deal["annual_revenue"] || deal["deal_value"] || 0);
+                    return (
+                      <Link
+                        key={dealName}
+                        to="/deals/$dealId"
+                        params={{ dealId: dealName }}
+                        className="p-4 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors flex flex-col gap-2 group cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            {orgTitle}
+                          </h4>
+                          <Badge variant="outline" className="text-[11px] font-normal shrink-0">
+                            {status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/50">
+                          <span className="font-mono text-[11px]">{dealName}</span>
+                          <span className="font-semibold text-foreground">
+                            {amount > 0 ? `PKR ${amount.toLocaleString()}` : "PKR 0.00"}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Contacts Tab Body */}
+          {activeTab === "contacts" && (
+            <div className="pt-8">
+              {linkedContacts.length === 0 ? (
+                /* Empty state matching Frappe CRM */
+                <div className="flex flex-col items-center justify-center text-center py-20">
+                  <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
+                    <Users className="size-5" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">No Contacts Found</h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                    No contacts have been added for this organization yet.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setContactModalOpen(true)}
+                    className="mt-4 h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+                  >
+                    <Plus className="size-3.5" />
+                    <span>New Contact</span>
+                  </Button>
+                </div>
+              ) : (
+                /* Contacts List Cards */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {linkedContacts.map((contact) => {
+                    const cName = String(contact["first_name"] || contact["name"] || "Contact");
+                    const email = String(contact["email_id"] || contact["email"] || "");
+                    const mobile = String(contact["mobile_no"] || contact["phone"] || "");
+                    const designation = String(contact["designation"] || "");
+                    return (
+                      <Link
+                        key={String(contact["name"])}
+                        to="/contacts/$contactId"
+                        params={{ contactId: String(contact["name"]) }}
+                        className="p-4 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="size-9 rounded-full bg-neutral-800 text-neutral-200 font-semibold text-xs flex items-center justify-center shrink-0">
+                            {cName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+                              {cName}
+                            </h4>
+                            {designation && (
+                              <p className="text-[11px] text-muted-foreground truncate">{designation}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 text-[11px] text-muted-foreground shrink-0">
+                          {email && (
+                            <span className="flex items-center gap-1">
+                              <Mail className="size-3" />
+                              <span className="truncate max-w-[140px]">{email}</span>
+                            </span>
+                          )}
+                          {mobile && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="size-3" />
+                              <span>{mobile}</span>
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Dialog Modals */}
+      <OrgFormModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        organization={organization}
+        onSuccess={() => void refetch()}
+      />
+
+      <DealFormModal
+        open={dealModalOpen}
+        onOpenChange={setDealModalOpen}
+        initialValues={{ organization: orgName }}
+      />
+
+      <ContactFormModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        initialValues={{ company_name: orgName }}
+      />
     </div>
   );
 }

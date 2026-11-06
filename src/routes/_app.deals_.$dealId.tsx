@@ -20,6 +20,7 @@ import {
   Trash2,
   UserPlus,
   Zap,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,7 +62,7 @@ import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
 import { RecordCallsTab } from "@/components/record-view/record-calls-tab";
 import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
 import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
-import { RecordDataTab } from "@/components/record-view/record-data-tab";
+import { DealDataTab } from "@/components/deals/deal-data-tab";
 import { RecordQuotationsTab } from "@/components/record-view/record-quotations-tab";
 import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -114,40 +115,42 @@ const TERRITORIES = [
 ];
 
 interface SidebarState {
-  salutation: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  mobile_no: string;
   organization: string;
   company_description: string;
   website: string;
   territory: string;
   industry: string;
   no_of_employees: string;
+  annual_revenue: string;
+  closed_date: string;
+  probability: string;
+  next_step: string;
   deal_owner: string;
+  lost_reason: string;
+  lost_notes: string;
 }
 
 const initialSidebarState: SidebarState = {
-  salutation: "",
-  first_name: "",
-  last_name: "",
-  email: "",
-  mobile_no: "",
   organization: "",
   company_description: "",
   website: "",
   territory: "",
   industry: "",
   no_of_employees: "",
+  annual_revenue: "",
+  closed_date: "",
+  probability: "",
+  next_step: "",
   deal_owner: "",
+  lost_reason: "",
+  lost_notes: "",
 };
 
 function DealDetailPage() {
   const { dealId } = Route.useParams();
   const navigate = useNavigate();
 
-  const { data: deal, isLoading } = useQuery(dealDetailOptions(dealId));
+  const { data: deal, isLoading, refetch } = useQuery(dealDetailOptions(dealId));
   const { data: stages = [] } = useQuery(dealStatusesOptions());
   const { data: users = [] } = useCrmUsers();
 
@@ -187,8 +190,9 @@ function DealDetailPage() {
   }, []);
 
   // Collapsible sections
-  const [detailsOpen, setDetailsOpen] = useState(true);
-  const [personOpen, setPersonOpen] = useState(true);
+  const [contactsOpen, setContactsOpen] = useState(true);
+  const [lostReasonOpen, setLostReasonOpen] = useState(false);
+  const [orgDetailsOpen, setOrgDetailsOpen] = useState(true);
 
   // Editable local form fields for sidebar
   const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
@@ -196,18 +200,19 @@ function DealDetailPage() {
   useEffect(() => {
     if (deal) {
       setSidebarValues({
-        salutation: String(deal["salutation"] || ""),
-        first_name: String(deal["first_name"] || ""),
-        last_name: String(deal["last_name"] || ""),
-        email: String(deal["email"] || ""),
-        mobile_no: String(deal["mobile_no"] || deal["phone"] || ""),
         organization: String(deal["organization_name"] || deal["organization"] || ""),
         company_description: String(deal["company_description"] || ""),
         website: String(deal["website"] || ""),
         territory: String(deal["territory"] || ""),
         industry: String(deal["industry"] || ""),
         no_of_employees: String(deal["no_of_employees"] || "1-10"),
+        annual_revenue: String(deal["annual_revenue"] || deal["deal_value"] || ""),
+        closed_date: String(deal["closed_date"] || deal["expected_closing"] || ""),
+        probability: String(deal["probability"] || ""),
+        next_step: String(deal["next_step"] || ""),
         deal_owner: String(deal["deal_owner"] || deal["owner"] || ""),
+        lost_reason: String(deal["lost_reason"] || ""),
+        lost_notes: String(deal["lost_notes"] || ""),
       });
     }
   }, [deal]);
@@ -224,8 +229,8 @@ function DealDetailPage() {
 
   const currentStage = String(deal?.["status"] || "Qualification");
   const dealValue = Number(deal?.["annual_revenue"] || deal?.["deal_value"] || 0);
-  const email = sidebarValues.email || "";
-  const phone = sidebarValues.mobile_no || "";
+  const email = String(deal?.["email"] || "");
+  const phone = String(deal?.["mobile_no"] || deal?.["phone"] || "");
 
   // Save single field on blur / selection
   async function handleFieldSave(fieldname: string, val: string) {
@@ -500,10 +505,11 @@ function DealDetailPage() {
               )}
 
               {activeTab === "data" && (
-                <RecordDataTab
-                  data={deal}
+                <DealDataTab
+                  deal={deal}
                   users={users}
                   onOpenModal={() => setEditModalOpen(true)}
+                  onReload={() => void refetch()}
                   onSave={async (values) => {
                     await saveMutation.mutateAsync({ name: dealId, values });
                   }}
@@ -677,12 +683,68 @@ function DealDetailPage() {
             </div>
           </div>
 
-          {/* Collapsible Details Section with 2-Column Key-Value Rows */}
-          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2 border-t pt-3">
+          {/* Section 1: Contacts (Collapsible) matching Frappe CRM */}
+          <Collapsible open={contactsOpen} onOpenChange={setContactsOpen} className="space-y-2 border-t pt-3">
             <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
               <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
-                <ChevronDown className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")} />
-                <span>Details</span>
+                <ChevronDown className={cn("size-3.5 transition-transform", !contactsOpen && "-rotate-90")} />
+                <span>Contacts</span>
+              </CollapsibleTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-5 text-muted-foreground hover:text-foreground cursor-pointer"
+                onClick={() => toast.info("Add Contact to Deal")}
+                title="Add Contact"
+              >
+                <Plus className="size-3" />
+              </Button>
+            </div>
+            <CollapsibleContent className="pt-1 text-xs">
+              <div className="text-muted-foreground text-xs py-2 text-center bg-muted/20 rounded-md">
+                No Contacts Added
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Section 2: Lost Reason (Collapsible) matching Frappe CRM */}
+          <Collapsible open={lostReasonOpen} onOpenChange={setLostReasonOpen} className="space-y-2 border-t pt-3">
+            <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-xs font-semibold text-foreground cursor-pointer hover:text-foreground/80">
+              <ChevronDown className={cn("size-3.5 transition-transform", !lostReasonOpen && "-rotate-90")} />
+              <span>Lost Reason</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2 pt-1 text-xs">
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Lost Reason</span>
+                <Input
+                  value={sidebarValues.lost_reason || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, lost_reason: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("lost_reason", e.target.value)}
+                  placeholder="Add Lost Reason..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+              <div className="grid grid-cols-[100px_1fr] items-start gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate pt-0.5">Lost Notes</span>
+                <Textarea
+                  value={sidebarValues.lost_notes || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, lost_notes: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("lost_notes", e.target.value)}
+                  placeholder="Add Lost Notes..."
+                  rows={2}
+                  className="min-h-[26px] h-6 w-full border-0 bg-transparent px-1 py-0.5 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded resize-none shadow-none"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Section 3: Organization Details (Collapsible) matching Frappe CRM */}
+          <Collapsible open={orgDetailsOpen} onOpenChange={setOrgDetailsOpen} className="space-y-2 border-t pt-3">
+            <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
+              <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
+                <ChevronDown className={cn("size-3.5 transition-transform", !orgDetailsOpen && "-rotate-90")} />
+                <span>Organization Details</span>
               </CollapsibleTrigger>
               <button
                 type="button"
@@ -718,41 +780,6 @@ function DealDetailPage() {
                   rows={1}
                   className="min-h-[26px] h-6 w-full border-0 bg-transparent px-1 py-0.5 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded resize-none shadow-none"
                 />
-              </div>
-
-              {/* Website */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Website</span>
-                <Input
-                  value={sidebarValues.website || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, website: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("website", e.target.value)}
-                  placeholder="Add Website..."
-                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
-                />
-              </div>
-
-              {/* Territory */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Territory</span>
-                <Select
-                  value={sidebarValues.territory || undefined}
-                  onValueChange={(val) => {
-                    setSidebarValues((p) => ({ ...p, territory: val }));
-                    void handleFieldSave("territory", val);
-                  }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Territory... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Industry */}
@@ -801,6 +828,89 @@ function DealDetailPage() {
                 </Select>
               </div>
 
+              {/* Website */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Website</span>
+                <Input
+                  value={sidebarValues.website || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, website: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("website", e.target.value)}
+                  placeholder="Add Website..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+
+              {/* Territory */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Territory</span>
+                <Select
+                  value={sidebarValues.territory || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, territory: val }));
+                    void handleFieldSave("territory", val);
+                  }}
+                >
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Add Territory... ▾" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TERRITORIES.map((t) => (
+                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Annual Revenue */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Annual Revenue</span>
+                <Input
+                  value={sidebarValues.annual_revenue || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, annual_revenue: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("annual_revenue", e.target.value)}
+                  placeholder="Add Annual Revenue..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+
+              {/* Closed Date */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Closed Date</span>
+                <Input
+                  type="date"
+                  value={sidebarValues.closed_date || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, closed_date: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("closed_date", e.target.value)}
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+
+              {/* Probability */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Probability</span>
+                <Input
+                  value={sidebarValues.probability || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, probability: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("probability", e.target.value)}
+                  placeholder="Add Probability..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+
+              {/* Next Step */}
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Next Step</span>
+                <Input
+                  value={sidebarValues.next_step || ""}
+                  onChange={(e) => setSidebarValues((p) => ({ ...p, next_step: e.target.value }))}
+                  onBlur={(e) => void handleFieldSave("next_step", e.target.value)}
+                  placeholder="Add Next Step..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
+                />
+              </div>
+
               {/* Deal Owner */}
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Deal Owner</span>
@@ -822,91 +932,6 @@ function DealDetailPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Collapsible Person Section with 2-Column Key-Value Rows */}
-          <Collapsible open={personOpen} onOpenChange={setPersonOpen} className="space-y-2 border-t pt-3">
-            <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
-              <span className="flex items-center gap-1.5">
-                <ChevronDown className={cn("size-3.5 transition-transform", !personOpen && "-rotate-90")} />
-                <span>Person</span>
-              </span>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-1.5 pt-1 text-xs">
-              {/* Salutation */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Salutation</span>
-                <Select
-                  value={sidebarValues.salutation || undefined}
-                  onValueChange={(val) => {
-                    setSidebarValues((p) => ({ ...p, salutation: val }));
-                    void handleFieldSave("salutation", val);
-                  }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Salutation... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SALUTATIONS.map((sal) => (
-                      <SelectItem key={sal} value={sal} className="text-xs cursor-pointer">
-                        {sal}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* First Name * */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">
-                  First Name <span className="text-destructive">*</span>
-                </span>
-                <Input
-                  value={sidebarValues.first_name || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, first_name: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("first_name", e.target.value)}
-                  placeholder="First Name..."
-                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
-                />
-              </div>
-
-              {/* Last Name */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Last Name</span>
-                <Input
-                  value={sidebarValues.last_name || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, last_name: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("last_name", e.target.value)}
-                  placeholder="Last Name..."
-                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
-                />
-              </div>
-
-              {/* Email */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Email</span>
-                <Input
-                  value={sidebarValues.email || ""}
-                  type="email"
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, email: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("email", e.target.value)}
-                  placeholder="Add Email..."
-                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
-                />
-              </div>
-
-              {/* Mobile No. */}
-              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
-                <span className="text-muted-foreground truncate">Mobile No.</span>
-                <Input
-                  value={sidebarValues.mobile_no || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, mobile_no: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("mobile_no", e.target.value)}
-                  placeholder="Add Mobile No...."
-                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
-                />
               </div>
             </CollapsibleContent>
           </Collapsible>

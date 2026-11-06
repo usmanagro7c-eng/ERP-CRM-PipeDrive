@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageSquare, Plus, Send, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,12 +14,16 @@ interface RecordCommentsThreadProps {
   referenceDoctype: string;
   referenceName: string;
   defaultOpenEditor?: boolean;
+  isOpenEditor?: boolean;
+  onOpenEditorChange?: (open: boolean) => void;
 }
 
 export function RecordCommentsThread({
   referenceDoctype,
   referenceName,
   defaultOpenEditor = false,
+  isOpenEditor,
+  onOpenEditorChange,
 }: RecordCommentsThreadProps) {
   const { data: comments = [], isLoading } = useQuery(
     commentsListOptions(referenceDoctype, referenceName),
@@ -27,8 +31,24 @@ export function RecordCommentsThread({
   const addMutation = useAddComment(referenceDoctype, referenceName);
   const deleteMutation = useDeleteComment(referenceDoctype, referenceName);
 
-  const [showEditor, setShowEditor] = useState(defaultOpenEditor);
+  const [internalEditor, setInternalEditor] = useState(defaultOpenEditor);
+  const showEditor = isOpenEditor !== undefined ? isOpenEditor : internalEditor;
+  const setShowEditor = (val: boolean) => {
+    if (onOpenEditorChange) {
+      onOpenEditorChange(val);
+    } else {
+      setInternalEditor(val);
+    }
+  };
+
   const [commentText, setCommentText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (showEditor) {
+      textareaRef.current?.focus();
+    }
+  }, [showEditor]);
 
   async function handleAdd() {
     if (!commentText.trim()) return;
@@ -57,35 +77,39 @@ export function RecordCommentsThread({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Comments ({comments.length})</h3>
+    <div className="flex flex-col h-full min-h-[460px]">
+      {/* Top Header Row matching Frappe CRM: Title on left, + New Comment on right */}
+      <div className="flex items-center justify-between pb-5">
+        <h2 className="text-base font-semibold text-foreground">Comments</h2>
         <Button
           size="sm"
-          variant="outline"
           onClick={() => setShowEditor(true)}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs font-medium gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900 rounded-md cursor-pointer shadow-xs"
         >
           <Plus className="size-3" />
           <span>New Comment</span>
         </Button>
       </div>
 
+      {/* Editor Box */}
       {showEditor && (
-        <div className="space-y-2 rounded-lg border bg-card p-3 shadow-2xs">
+        <div className="rounded-lg border bg-card p-3 shadow-xs space-y-2 mb-6">
           <Textarea
+            ref={textareaRef}
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Write a comment, note, or @mention a teammate..."
-            className="min-h-[80px] text-xs resize-none border-none focus-visible:ring-0 p-0 shadow-none"
-            autoFocus
+            placeholder="Write a comment..."
+            className="min-h-[85px] text-xs resize-none bg-transparent border-0 focus-visible:ring-0 p-1 shadow-none"
           />
-          <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center justify-between pt-2 border-t border-border/50">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowEditor(false)}
-              className="h-7 text-xs text-muted-foreground"
+              onClick={() => {
+                setShowEditor(false);
+                setCommentText("");
+              }}
+              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel
             </Button>
@@ -93,20 +117,23 @@ export function RecordCommentsThread({
               size="sm"
               onClick={handleAdd}
               disabled={!commentText.trim() || addMutation.isPending}
-              className="h-7 text-xs gap-1"
+              className="h-7 text-xs gap-1.5 cursor-pointer"
             >
               <Send className="size-3" />
-              <span>{addMutation.isPending ? "Posting..." : "Submit"}</span>
+              <span>{addMutation.isPending ? "Posting..." : "Comment"}</span>
             </Button>
           </div>
         </div>
       )}
 
+      {/* Empty State vs Comments Feed */}
       {comments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-          <MessageSquare className="size-10 stroke-[1.25] text-muted-foreground/40 mb-2" />
-          <p className="text-sm font-medium text-foreground/80">No Comments Found</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Be the first to add one.</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-24 select-none">
+          <div className="flex items-center justify-center size-14 rounded-full mb-2">
+            <MessageSquare className="size-10 stroke-[1.2] text-muted-foreground/45" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No Comments Found</p>
+          <p className="text-xs text-muted-foreground mt-1">Be the first to add one.</p>
         </div>
       ) : (
         <div className="space-y-3">

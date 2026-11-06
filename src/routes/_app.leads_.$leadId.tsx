@@ -19,6 +19,7 @@ import {
   StickyNote,
   Trash2,
   UserPlus,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +45,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
+import { LeadFormModal } from "@/components/leads/lead-form-modal";
 import {
   leadDetailOptions,
   leadStatusesOptions,
@@ -160,26 +162,42 @@ function LeadDetailPage() {
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
 
-  // Read URL hash if available (e.g. #activity, #emails)
-  const [activeTab, setActiveTab] = useState<TabKey>(() => {
-    if (typeof window !== "undefined" && window.location.hash) {
-      const h = window.location.hash.replace("#", "") as TabKey;
-      if (
-        ["activity", "emails", "comments", "data", "calls", "tasks", "notes", "attachments"].includes(
-          h,
-        )
-      ) {
-        return h;
-      }
-    }
-    return "activity";
-  });
-
   const [convertModalOpen, setConvertModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [commentComposerOpen, setCommentComposerOpen] = useState(false);
+
+  // Hash tab router sync
+  const [activeTab, setActiveTab] = useState<TabKey>("activity");
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "") as TabKey;
+      if (
+        [
+          "activity",
+          "emails",
+          "comments",
+          "data",
+          "calls",
+          "tasks",
+          "notes",
+          "attachments",
+        ].includes(hash)
+      ) {
+        setActiveTab(hash);
+      }
+    };
+
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  // Collapsible sections
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [personOpen, setPersonOpen] = useState(true);
 
-  // Local form state for inline editing in the sidebar
+  // Editable local form fields for sidebar
   const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
 
   useEffect(() => {
@@ -195,7 +213,7 @@ function LeadDetailPage() {
         website: String(lead["website"] || ""),
         territory: String(lead["territory"] || ""),
         industry: String(lead["industry"] || ""),
-        no_of_employees: String(lead["no_of_employees"] || ""),
+        no_of_employees: String(lead["no_of_employees"] || "1-10"),
         job_title: String(lead["job_title"] || ""),
         source: String(lead["source"] || ""),
         lead_owner: String(lead["lead_owner"] || lead["owner"] || ""),
@@ -306,9 +324,9 @@ function LeadDetailPage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
-      {/* Top Header / Breadcrumbs & Action Bar */}
+      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 py-2.5 bg-card/60 backdrop-blur-xs">
-        {/* Breadcrumb matching Frappe CRM */}
+        {/* Breadcrumb: Leads / ☰ List / Zubair Khan */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
           <Link to="/leads" className="hover:text-foreground transition-colors font-medium">
             Leads
@@ -319,12 +337,12 @@ function LeadDetailPage() {
             <span>List</span>
           </Link>
           <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[200px]">
+          <span className="font-semibold text-foreground truncate max-w-[240px]">
             {leadName}
           </span>
         </div>
 
-        {/* Top Right Actions Matching Frappe CRM */}
+        {/* Top Right Actions Matching Frappe CRM: ⚡ Enrich, Assign To, ● New ▾, Convert to Deal */}
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
@@ -332,7 +350,7 @@ function LeadDetailPage() {
             onClick={() => toast.info("Enrich feature: Lead data validated")}
             className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            <Sparkles className="size-3 text-amber-500" />
+            <Zap className="size-3 text-muted-foreground" />
             <span>Enrich</span>
           </Button>
 
@@ -364,14 +382,15 @@ function LeadDetailPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* New Item Dropdown */}
+          {/* New Item Dropdown with bullet dot */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs gap-1 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
               >
+                <span className="size-1.5 rounded-full bg-foreground inline-block" />
                 <span>New</span>
                 <ChevronDown className="size-3" />
               </Button>
@@ -396,7 +415,7 @@ function LeadDetailPage() {
           <Button
             size="sm"
             onClick={() => setConvertModalOpen(true)}
-            className="h-7 gap-1.5 text-xs font-semibold shadow-xs cursor-pointer"
+            className="h-7 gap-1.5 text-xs font-semibold shadow-xs cursor-pointer bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900"
           >
             <Sparkles className="size-3" />
             <span>Convert to Deal</span>
@@ -408,9 +427,9 @@ function LeadDetailPage() {
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left / Center Tab Canvas */}
         <div className="flex-1 flex flex-col min-w-0 border-b lg:border-b-0 lg:border-r border-border justify-between">
-          <div>
+          <div className="flex-1 flex flex-col">
             {/* Horizontal Tabs List */}
-            <div className="flex items-center gap-1 border-b px-4 overflow-x-auto scrollbar-none bg-card/30">
+            <div className="flex items-center gap-1 border-b px-4 overflow-x-auto scrollbar-none bg-card/30 shrink-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
@@ -436,7 +455,7 @@ function LeadDetailPage() {
             </div>
 
             {/* Tab Content Panel */}
-            <div className="p-4 sm:p-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 flex-1 flex flex-col overflow-y-auto">
               {activeTab === "activity" && (
                 <RecordActivityFeed
                   referenceDoctype={api.LEAD_DOCTYPE}
@@ -447,7 +466,11 @@ function LeadDetailPage() {
                   onNewTask={() => setActiveTab("tasks")}
                   onNewCall={() => setActiveTab("calls")}
                   onNewNote={() => setActiveTab("notes")}
-                  onNewComment={() => setActiveTab("comments")}
+                  onNewComment={() => {
+                    setActiveTab("comments");
+                    window.location.hash = "comments";
+                    setCommentComposerOpen(true);
+                  }}
                 />
               )}
 
@@ -463,10 +486,21 @@ function LeadDetailPage() {
                 <RecordCommentsThread
                   referenceDoctype={api.LEAD_DOCTYPE}
                   referenceName={leadId}
+                  isOpenEditor={commentComposerOpen}
+                  onOpenEditorChange={setCommentComposerOpen}
                 />
               )}
 
-              {activeTab === "data" && <RecordDataTab data={lead} />}
+              {activeTab === "data" && (
+                <RecordDataTab
+                  data={lead}
+                  users={users}
+                  onOpenModal={() => setEditModalOpen(true)}
+                  onSave={async (values) => {
+                    await saveMutation.mutateAsync({ name: leadId, values });
+                  }}
+                />
+              )}
 
               {activeTab === "calls" && (
                 <RecordCallsTab
@@ -500,7 +534,7 @@ function LeadDetailPage() {
           </div>
 
           {/* Bottom Bar: Reply & Comment Actions (matching Frappe CRM bottom strip) */}
-          <div className="border-t px-4 py-2.5 bg-card/40 flex items-center gap-3">
+          <div className="border-t px-4 py-2.5 bg-card/40 flex items-center gap-4 shrink-0">
             <button
               onClick={() => {
                 setActiveTab("emails");
@@ -515,6 +549,7 @@ function LeadDetailPage() {
               onClick={() => {
                 setActiveTab("comments");
                 window.location.hash = "comments";
+                setCommentComposerOpen(true);
               }}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
@@ -524,80 +559,77 @@ function LeadDetailPage() {
           </div>
         </div>
 
-        {/* Right Sidebar (Record Attributes & Details Panel) */}
-        <div className="w-full lg:w-80 shrink-0 bg-card/40 p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+        {/* Right Sidebar (Record Attributes & Details Panel) Matching Frappe CRM */}
+        <div className="w-full lg:w-80 shrink-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
           {/* Top Identifier & Avatar */}
           <div>
-            <div className="text-[11px] font-mono font-medium text-muted-foreground">{leadId}</div>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="relative group flex size-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-bold text-base shadow-xs shrink-0 cursor-pointer overflow-hidden">
+            <div className="text-xs text-muted-foreground font-sans">{leadId}</div>
+            <div className="flex items-center gap-3 mt-2.5">
+              <div className="relative group flex size-13 items-center justify-center rounded-full bg-neutral-800 text-neutral-300 font-bold text-lg shadow-xs shrink-0 cursor-pointer overflow-hidden">
                 <span>{leadName.charAt(0).toUpperCase()}</span>
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="size-4 text-white" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-sm text-foreground truncate">{leadName}</h2>
-                {sidebarValues.organization && (
-                  <p className="text-xs text-muted-foreground truncate">{sidebarValues.organization}</p>
-                )}
-              </div>
-            </div>
+                <h2 className="font-bold text-base text-foreground truncate">{leadName}</h2>
 
-            {/* Quick Action Icons Matching Screenshot: Mail, Copy Link, Attachment, Delete */}
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t">
-              {email ? (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="icon"
-                  className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30"
-                  title="Send Email"
-                >
-                  <a href={`mailto:${email}`}>
-                    <Mail className="size-3.5" />
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled
-                  className="size-7 rounded-sm opacity-40 bg-secondary/30"
-                >
-                  <Mail className="size-3.5" />
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopyLink}
-                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30 cursor-pointer"
-                title="Copy Link"
-              >
-                <Copy className="size-3.5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  setActiveTab("attachments");
-                  window.location.hash = "attachments";
-                }}
-                className="size-7 rounded-sm text-muted-foreground hover:text-foreground bg-secondary/30 cursor-pointer"
-                title="View Attachments"
-              >
-                <Paperclip className="size-3.5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleDelete}
-                className="size-7 rounded-sm text-destructive hover:bg-destructive/10 bg-secondary/30 cursor-pointer"
-                title="Delete Lead"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+                {/* 4 Action Icons Row Matching Frappe CRM: Mail, Link, Attachment, Delete */}
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  {email ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="icon"
+                      className="size-6 rounded-md text-muted-foreground hover:text-foreground bg-secondary/50 border-0"
+                      title="Send Email"
+                    >
+                      <a href={`mailto:${email}`}>
+                        <Mail className="size-3" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled
+                      className="size-6 rounded-md opacity-30 bg-secondary/50 border-0"
+                    >
+                      <Mail className="size-3" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyLink}
+                    className="size-6 rounded-md text-muted-foreground hover:text-foreground bg-secondary/50 border-0 cursor-pointer"
+                    title="Copy Link"
+                  >
+                    <Copy className="size-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      setActiveTab("attachments");
+                      window.location.hash = "attachments";
+                    }}
+                    className="size-6 rounded-md text-muted-foreground hover:text-foreground bg-secondary/50 border-0 cursor-pointer"
+                    title="View Attachments"
+                  >
+                    <Paperclip className="size-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleDelete}
+                    className="size-6 rounded-md text-red-400 bg-red-950/40 hover:bg-red-900/60 border-0 cursor-pointer"
+                    title="Delete Lead"
+                  >
+                    <Trash2 className="size-3" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -612,7 +644,7 @@ function LeadDetailPage() {
             <div className="flex items-center justify-between gap-2">
               <span className="text-muted-foreground">Status</span>
               <Select value={currentStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger className="h-7 w-32 text-xs bg-card cursor-pointer">
+                <SelectTrigger className="h-7 w-28 text-xs bg-card/60 cursor-pointer border-border/60">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -626,68 +658,88 @@ function LeadDetailPage() {
             </div>
           </div>
 
-          {/* Collapsible Details Section with INLINE EDITABLE FIELDS */}
+          {/* Collapsible Details Section with 2-Column Key-Value Rows & Edit Modal Trigger */}
           <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2 border-t pt-3">
-            <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
-              <span className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
+              <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
                 <ChevronDown className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")} />
                 <span>Details</span>
-              </span>
-              <ExternalLink className="size-3 text-muted-foreground" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 pt-2 text-xs">
+              </CollapsibleTrigger>
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(true)}
+                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer rounded hover:bg-secondary/50"
+                title="Edit Lead in Modal"
+              >
+                <ExternalLink className="size-3.5" />
+              </button>
+            </div>
+
+            <CollapsibleContent className="space-y-1.5 pt-1 text-xs">
               {/* Organization */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Organization</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Organization</span>
                 <Input
                   value={sidebarValues.organization || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, organization: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("organization", e.target.value)}
                   placeholder="Add Organization..."
-                  className="h-7 text-xs bg-card"
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Company Description */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Company Description</span>
+              <div className="grid grid-cols-[100px_1fr] items-start gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate pt-0.5">Company Desc...</span>
                 <Textarea
                   value={sidebarValues.company_description || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, company_description: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("company_description", e.target.value)}
                   placeholder="Add Company Description..."
-                  rows={2}
-                  className="text-xs bg-card resize-none"
+                  rows={1}
+                  className="min-h-[26px] h-6 w-full border-0 bg-transparent px-1 py-0.5 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded resize-none shadow-none"
                 />
               </div>
 
               {/* Website */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Website</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Website</span>
                 <Input
                   value={sidebarValues.website || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, website: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("website", e.target.value)}
                   placeholder="Add Website..."
-                  className="h-7 text-xs bg-card"
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Territory */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Territory</span>
-                <Input
-                  value={sidebarValues.territory || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, territory: e.target.value }))}
-                  onBlur={(e) => void handleFieldSave("territory", e.target.value)}
-                  placeholder="Add Territory..."
-                  className="h-7 text-xs bg-card"
-                />
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Territory</span>
+                <Select
+                  value={sidebarValues.territory || undefined}
+                  onValueChange={(val) => {
+                    setSidebarValues((p) => ({ ...p, territory: val }));
+                    void handleFieldSave("territory", val);
+                  }}
+                >
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Add Territory... ▾" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Territories">All Territories</SelectItem>
+                    <SelectItem value="Pakistan">Pakistan</SelectItem>
+                    <SelectItem value="Punjab">Punjab</SelectItem>
+                    <SelectItem value="Sindh">Sindh</SelectItem>
+                    <SelectItem value="KPK">KPK</SelectItem>
+                    <SelectItem value="Balochistan">Balochistan</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Industry */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Industry</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Industry</span>
                 <Select
                   value={sidebarValues.industry || undefined}
                   onValueChange={(val) => {
@@ -695,8 +747,8 @@ function LeadDetailPage() {
                     void handleFieldSave("industry", val);
                   }}
                 >
-                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
-                    <SelectValue placeholder="Add Industry..." />
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Add Industry... ▾" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
                     {INDUSTRIES.map((ind) => (
@@ -709,8 +761,8 @@ function LeadDetailPage() {
               </div>
 
               {/* No. of Employees */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">No. of Employees</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">No. of Employe...</span>
                 <Select
                   value={sidebarValues.no_of_employees || undefined}
                   onValueChange={(val) => {
@@ -718,13 +770,13 @@ function LeadDetailPage() {
                     void handleFieldSave("no_of_employees", val);
                   }}
                 >
-                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
-                    <SelectValue placeholder="1-10" />
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Select Range... ▾" />
                   </SelectTrigger>
                   <SelectContent>
-                    {EMPLOYEE_RANGES.map((rng) => (
-                      <SelectItem key={rng} value={rng} className="text-xs cursor-pointer">
-                        {rng}
+                    {EMPLOYEE_RANGES.map((r) => (
+                      <SelectItem key={r} value={r} className="text-xs cursor-pointer">
+                        {r}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -732,20 +784,20 @@ function LeadDetailPage() {
               </div>
 
               {/* Job Title */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Job Title</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Job Title</span>
                 <Input
                   value={sidebarValues.job_title || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, job_title: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("job_title", e.target.value)}
                   placeholder="Add Job Title..."
-                  className="h-7 text-xs bg-card"
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Source */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Source</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Source</span>
                 <Select
                   value={sidebarValues.source || undefined}
                   onValueChange={(val) => {
@@ -753,8 +805,8 @@ function LeadDetailPage() {
                     void handleFieldSave("source", val);
                   }}
                 >
-                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
-                    <SelectValue placeholder="Add Source..." />
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Add Source... ▾" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
                     {SOURCES.map((src) => (
@@ -767,8 +819,8 @@ function LeadDetailPage() {
               </div>
 
               {/* Lead Owner */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Lead Owner</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Lead Owner</span>
                 <Select
                   value={sidebarValues.lead_owner || undefined}
                   onValueChange={(val) => {
@@ -776,8 +828,8 @@ function LeadDetailPage() {
                     void handleFieldSave("lead_owner", val);
                   }}
                 >
-                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
-                    <SelectValue placeholder="Select Lead Owner..." />
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Select Owner... ▾" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
                     {users.map((u) => (
@@ -791,7 +843,7 @@ function LeadDetailPage() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Collapsible Person Section with INLINE EDITABLE FIELDS */}
+          {/* Collapsible Person Section with 2-Column Key-Value Rows */}
           <Collapsible open={personOpen} onOpenChange={setPersonOpen} className="space-y-2 border-t pt-3">
             <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
               <span className="flex items-center gap-1.5">
@@ -799,10 +851,10 @@ function LeadDetailPage() {
                 <span>Person</span>
               </span>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 pt-2 text-xs">
+            <CollapsibleContent className="space-y-1.5 pt-1 text-xs">
               {/* Salutation */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Salutation</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Salutation</span>
                 <Select
                   value={sidebarValues.salutation || undefined}
                   onValueChange={(val) => {
@@ -810,8 +862,8 @@ function LeadDetailPage() {
                     void handleFieldSave("salutation", val);
                   }}
                 >
-                  <SelectTrigger className="h-7 text-xs bg-card cursor-pointer">
-                    <SelectValue placeholder="Add Salutation..." />
+                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
+                    <SelectValue placeholder="Add Salutation... ▾" />
                   </SelectTrigger>
                   <SelectContent>
                     {SALUTATIONS.map((sal) => (
@@ -824,53 +876,53 @@ function LeadDetailPage() {
               </div>
 
               {/* First Name * */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">
                   First Name <span className="text-destructive">*</span>
                 </span>
                 <Input
                   value={sidebarValues.first_name || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, first_name: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("first_name", e.target.value)}
-                  placeholder="Add First Name..."
-                  className="h-7 text-xs bg-card"
+                  placeholder="First Name..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Last Name */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Last Name</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Last Name</span>
                 <Input
                   value={sidebarValues.last_name || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, last_name: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("last_name", e.target.value)}
-                  placeholder="Add Last Name..."
-                  className="h-7 text-xs bg-card"
+                  placeholder="Last Name..."
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Email */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Email</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Email</span>
                 <Input
                   value={sidebarValues.email || ""}
                   type="email"
                   onChange={(e) => setSidebarValues((p) => ({ ...p, email: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("email", e.target.value)}
                   placeholder="Add Email..."
-                  className="h-7 text-xs bg-card"
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
 
               {/* Mobile No. */}
-              <div className="space-y-1">
-                <span className="text-muted-foreground block text-[11px]">Mobile No.</span>
+              <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
+                <span className="text-muted-foreground truncate">Mobile No.</span>
                 <Input
                   value={sidebarValues.mobile_no || ""}
                   onChange={(e) => setSidebarValues((p) => ({ ...p, mobile_no: e.target.value }))}
                   onBlur={(e) => void handleFieldSave("mobile_no", e.target.value)}
                   placeholder="Add Mobile No...."
-                  className="h-7 text-xs bg-card"
+                  className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
                 />
               </div>
             </CollapsibleContent>
@@ -882,6 +934,13 @@ function LeadDetailPage() {
       <ConvertLeadModal
         open={convertModalOpen}
         onOpenChange={setConvertModalOpen}
+        lead={lead}
+      />
+
+      {/* Edit Lead Modal Matching Create/Edit Layout */}
+      <LeadFormModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
         lead={lead}
       />
     </div>

@@ -197,6 +197,7 @@ export function LeadFormModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        showCloseButton={false}
         className={`p-0 overflow-hidden flex flex-col transition-all duration-200 ${
           isFullscreen
             ? "w-screen h-screen max-w-none max-h-none rounded-none"

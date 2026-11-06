@@ -76,145 +76,143 @@ export function RecordTasksTab({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Tasks & Action Items ({tasks.length})</h3>
+    <div className="flex flex-col h-full min-h-[460px] max-w-4xl px-1 sm:px-4">
+      {/* Tasks Header matching Frappe CRM */}
+      <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
+        <h2 className="text-2xl font-semibold text-foreground">Tasks</h2>
         <Button
           size="sm"
-          variant="outline"
           onClick={() => setShowNewTask(true)}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
         >
-          <Plus className="size-3" />
+          <Plus className="size-3.5" />
           <span>New Task</span>
         </Button>
       </div>
 
       {showNewTask && (
-        <div className="rounded-lg border bg-card p-3 space-y-3 shadow-2xs">
+        <div className="rounded-lg border bg-card p-3.5 space-y-3 shadow-xs mb-5">
           <Input
             value={taskTitle}
             onChange={(e) => setTaskTitle(e.target.value)}
             placeholder="What needs to be done? (e.g. Follow up on proposal)"
-            className="text-xs h-8"
+            className="text-xs h-8 bg-secondary/30"
             autoFocus
           />
-          <div className="flex items-center gap-2 flex-wrap">
-            <Select value={taskPriority} onValueChange={setTaskPriority}>
-              <SelectTrigger className="h-7 w-28 text-xs">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={taskDueDate}
-              onChange={(e) => setTaskDueDate(e.target.value)}
-              className="h-7 w-36 text-xs"
-            />
-
-            <div className="flex-1 flex justify-end gap-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowNewTask(false)}
-                className="h-7 text-xs text-muted-foreground"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleCreateTask}
-                disabled={!taskTitle.trim() || saveMutation.isPending}
-                className="h-7 text-xs"
-              >
-                {saveMutation.isPending ? "Adding..." : "Add Task"}
-              </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[11px] text-muted-foreground">Priority</label>
+              <Select value={taskPriority} onValueChange={setTaskPriority}>
+                <SelectTrigger className="h-7 text-xs mt-1 bg-secondary/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground">Due Date</label>
+              <Input
+                type="date"
+                value={taskDueDate}
+                onChange={(e) => setTaskDueDate(e.target.value)}
+                className="h-7 text-xs mt-1 bg-secondary/30"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-1.5 pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowNewTask(false)}
+              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCreateTask}
+              disabled={!taskTitle.trim() || saveMutation.isPending}
+              className="h-7 text-xs cursor-pointer"
+            >
+              {saveMutation.isPending ? "Creating..." : "Create Task"}
+            </Button>
           </div>
         </div>
       )}
 
       {tasks.length === 0 ? (
-        <div className="py-12 text-center text-xs text-muted-foreground">
-          No open tasks for this record.
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-24 select-none">
+          <div className="flex items-center justify-center size-14 rounded-full mb-2">
+            <CheckCircle2 className="size-10 stroke-[1.2] text-muted-foreground/45" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No Tasks Found</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Nothing to do at the moment. Start organizing by adding one here.
+          </p>
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-          {tasks.map((task) => {
-            const isCompleted = task.status === "Completed";
+        <div className="space-y-2 pb-8">
+          {tasks.map((t) => {
+            const isCompleted = t.status === "Closed" || t.status === "Completed";
             return (
               <div
-                key={task.name}
-                className={`group flex items-center justify-between p-3 text-xs transition-colors ${
-                  isCompleted ? "bg-muted/20 opacity-70" : "hover:bg-muted/40"
-                }`}
+                key={t.name}
+                className="group flex items-center justify-between rounded-lg border bg-card p-3 text-xs shadow-2xs hover:border-primary/40 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <button
                     onClick={() =>
-                      toggleMutation.mutate({
-                        name: task.name,
-                        currentStatus: task.status,
-                      })
+                      toggleMutation.mutate({ name: t.name, currentStatus: t.status })
                     }
-                    className="cursor-pointer shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                    className="text-muted-foreground hover:text-primary cursor-pointer shrink-0"
+                    title={isCompleted ? "Mark incomplete" : "Mark complete"}
                   >
                     {isCompleted ? (
-                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <CheckCircle2 className="size-4 text-emerald-500" />
                     ) : (
                       <Circle className="size-4" />
                     )}
                   </button>
-                  <div className="min-w-0">
-                    <p
-                      className={`font-medium text-foreground truncate ${
-                        isCompleted ? "line-through text-muted-foreground" : ""
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className={`font-medium truncate ${
+                        isCompleted ? "line-through text-muted-foreground" : "text-foreground"
                       }`}
                     >
-                      {task.title}
-                    </p>
+                      {t.title}
+                    </div>
                     <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                      {task.due_date && (
+                      {t.due_date && (
                         <span className="flex items-center gap-1">
-                          <Clock className="size-3" />
-                          <span>Due: {task.due_date}</span>
+                          <Clock className="size-2.5" />
+                          <span>Due {t.due_date}</span>
                         </span>
                       )}
-                      {task.assigned_to && (
+                      {t.assigned_to && (
                         <span className="flex items-center gap-1">
-                          <User className="size-3" />
-                          <span>{task.assigned_to}</span>
+                          <User className="size-2.5" />
+                          <span>{t.assigned_to}</span>
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] px-1.5 py-0 h-4 ${getPriorityColor(
-                      task.priority,
-                    )}`}
-                  >
-                    {task.priority}
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${getPriorityColor(t.priority)}`}>
+                    {t.priority || "Medium"}
                   </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteMutation.mutate(task.name)}
-                    className="size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  <button
+                    onClick={() => deleteMutation.mutate(t.name)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive cursor-pointer p-0.5"
                     title="Delete task"
                   >
-                    <Trash2 className="size-3" />
-                  </Button>
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               </div>
             );

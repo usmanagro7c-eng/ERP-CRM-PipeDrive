@@ -72,27 +72,27 @@ export function RecordCallsTab({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Call Logs ({calls.length})</h3>
+    <div className="flex flex-col h-full min-h-[460px] max-w-4xl px-1 sm:px-4">
+      {/* Calls Header matching Frappe CRM */}
+      <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
+        <h2 className="text-2xl font-semibold text-foreground">Calls</h2>
         <Button
           size="sm"
-          variant="outline"
           onClick={() => setShowLogModal(true)}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
         >
-          <Plus className="size-3" />
-          <span>Log Call</span>
+          <Plus className="size-3.5" />
+          <span>Log a Call</span>
         </Button>
       </div>
 
       {showLogModal && (
-        <div className="rounded-lg border bg-card p-3 space-y-3 shadow-2xs">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-lg border bg-card p-3.5 space-y-3 shadow-xs mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
               <label className="text-[11px] text-muted-foreground">Type</label>
               <Select value={callType} onValueChange={setCallType}>
-                <SelectTrigger className="h-7 text-xs mt-1">
+                <SelectTrigger className="h-7 text-xs mt-1 bg-secondary/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,7 +104,7 @@ export function RecordCallsTab({
             <div>
               <label className="text-[11px] text-muted-foreground">Outcome</label>
               <Select value={callStatus} onValueChange={setCallStatus}>
-                <SelectTrigger className="h-7 text-xs mt-1">
+                <SelectTrigger className="h-7 text-xs mt-1 bg-secondary/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,7 +121,7 @@ export function RecordCallsTab({
                 type="number"
                 value={durationSec}
                 onChange={(e) => setDurationSec(e.target.value)}
-                className="h-7 text-xs mt-1"
+                className="h-7 text-xs mt-1 bg-secondary/30"
               />
             </div>
           </div>
@@ -130,7 +130,7 @@ export function RecordCallsTab({
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder="Call notes & key takeaway points..."
-            className="text-xs min-h-[70px] resize-none"
+            className="text-xs min-h-[75px] resize-none bg-secondary/30"
           />
 
           <div className="flex justify-end gap-1.5 pt-1">
@@ -138,7 +138,7 @@ export function RecordCallsTab({
               variant="ghost"
               size="sm"
               onClick={() => setShowLogModal(false)}
-              className="h-7 text-xs text-muted-foreground"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel
             </Button>
@@ -146,65 +146,66 @@ export function RecordCallsTab({
               size="sm"
               onClick={handleSaveCall}
               disabled={saveMutation.isPending}
-              className="h-7 text-xs"
+              className="h-7 text-xs cursor-pointer"
             >
-              {saveMutation.isPending ? "Logging..." : "Save Log"}
+              {saveMutation.isPending ? "Logging..." : "Save Call Log"}
             </Button>
           </div>
         </div>
       )}
 
       {calls.length === 0 ? (
-        <div className="py-12 text-center text-xs text-muted-foreground">
-          No calls recorded for this record yet.
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-24 select-none">
+          <div className="flex items-center justify-center size-14 rounded-full mb-2">
+            <PhoneCall className="size-10 stroke-[1.2] text-muted-foreground/45" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No Call History</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No recent calls to display. Log a call or call someone now!
+          </p>
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+        <div className="space-y-3 pb-8">
           {calls.map((c) => (
             <div
               key={c.name}
-              className="group flex items-center justify-between p-3 text-xs hover:bg-muted/40 transition-colors"
+              className="group flex items-start justify-between rounded-lg border bg-card p-3 text-xs shadow-2xs hover:border-primary/40 transition-colors"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground mt-0.5">
                   {c.type === "Inbound" ? (
                     <ArrowDownLeft className="size-3.5 text-blue-500" />
                   ) : (
                     <ArrowUpRight className="size-3.5 text-emerald-500" />
                   )}
                 </div>
-                <div className="min-w-0">
+                <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">
-                      {c.type} Call ({formatDuration(c.duration)})
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] px-1 py-0 h-4 border-muted-foreground/30"
-                    >
-                      {c.status}
+                    <span className="font-semibold text-foreground">{c.type || "Call"}</span>
+                    <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal">
+                      {c.status || "Completed"}
                     </Badge>
+                    <span className="text-[11px] text-muted-foreground font-mono">
+                      ⏱ {formatDuration(c.duration)}
+                    </span>
                   </div>
+                  {c.to && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5">To: {c.to}</div>
+                  )}
                   {c.summary && (
-                    <p className="mt-0.5 text-muted-foreground truncate">{c.summary}</p>
+                    <p className="text-xs text-foreground/90 mt-1 whitespace-pre-wrap">
+                      {c.summary}
+                    </p>
                   )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-muted-foreground">
-                  {c.creation?.split(" ")[0]}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMutation.mutate(c.name)}
-                  className="size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  title="Delete call log"
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              </div>
+              <button
+                onClick={() => deleteMutation.mutate(c.name)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive cursor-pointer p-0.5"
+                title="Delete call log"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
             </div>
           ))}
         </div>

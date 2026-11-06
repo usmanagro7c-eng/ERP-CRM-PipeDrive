@@ -65,29 +65,29 @@ export function RecordEmailsTab({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Emails ({sentEmails.length})</h3>
+    <div className="flex flex-col h-full min-h-[460px] max-w-4xl px-1 sm:px-4">
+      {/* Emails Header matching Frappe CRM */}
+      <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
+        <h2 className="text-2xl font-semibold text-foreground">Emails</h2>
         <Button
           size="sm"
-          variant="outline"
           onClick={() => setShowComposer(true)}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
         >
-          <Plus className="size-3" />
-          <span>Compose Email</span>
+          <Plus className="size-3.5" />
+          <span>New Email</span>
         </Button>
       </div>
 
       {showComposer && (
-        <div className="rounded-lg border bg-card p-3 space-y-2.5 shadow-2xs">
+        <div className="rounded-lg border bg-card p-3.5 space-y-2.5 shadow-xs mb-5">
           <div>
             <label className="text-[11px] text-muted-foreground">To</label>
             <Input
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="recipient@example.com"
-              className="text-xs h-7 mt-0.5"
+              className="text-xs h-7 mt-0.5 bg-secondary/30"
             />
           </div>
           <div>
@@ -96,7 +96,7 @@ export function RecordEmailsTab({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="e.g. Follow-up regarding Quotation #1002"
-              className="text-xs h-7 mt-0.5"
+              className="text-xs h-7 mt-0.5 bg-secondary/30"
             />
           </div>
           <div>
@@ -104,8 +104,9 @@ export function RecordEmailsTab({
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Type your email message..."
-              className="text-xs min-h-[100px] mt-0.5 resize-none"
+              placeholder="Write your email message..."
+              rows={5}
+              className="text-xs mt-0.5 bg-secondary/30 resize-none"
             />
           </div>
           <div className="flex justify-end gap-1.5 pt-1">
@@ -113,7 +114,7 @@ export function RecordEmailsTab({
               variant="ghost"
               size="sm"
               onClick={() => setShowComposer(false)}
-              className="h-7 text-xs text-muted-foreground"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel
             </Button>
@@ -121,7 +122,7 @@ export function RecordEmailsTab({
               size="sm"
               onClick={handleSend}
               disabled={sending}
-              className="h-7 text-xs gap-1"
+              className="h-7 text-xs gap-1 cursor-pointer"
             >
               <Send className="size-3" />
               <span>{sending ? "Sending..." : "Send Email"}</span>
@@ -131,31 +132,25 @@ export function RecordEmailsTab({
       )}
 
       {sentEmails.length === 0 ? (
-        <div className="py-12 text-center text-xs text-muted-foreground">
-          <Mail className="size-8 mx-auto opacity-30 mb-2" />
-          <p className="font-medium text-foreground/80">No Emails Sent</p>
-          <p className="text-[11px] opacity-75 mt-0.5">
-            Click &ldquo;Compose Email&rdquo; to send a message directly to this contact.
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-24 select-none">
+          <div className="flex items-center justify-center size-14 rounded-full mb-2">
+            <Mail className="size-10 stroke-[1.2] text-muted-foreground/45" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No Emails Found</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No emails found in your inbox. New messages will appear here soon.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {sentEmails.map((email) => (
-            <div
-              key={email.id}
-              className="rounded-lg border bg-card p-3.5 space-y-2 text-xs shadow-2xs"
-            >
+        <div className="space-y-3 pb-8">
+          {sentEmails.map((e) => (
+            <div key={e.id} className="rounded-lg border bg-card p-3.5 text-xs shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Mail className="size-3.5 text-primary" />
-                  <span className="font-semibold text-foreground">{email.subject}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground">{email.time}</span>
+                <span className="font-semibold text-foreground">{e.subject}</span>
+                <span className="text-[10px] text-muted-foreground">{e.time}</span>
               </div>
-              <p className="text-[11px] text-muted-foreground">To: {email.to}</p>
-              <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {email.body}
-              </p>
+              <div className="text-[11px] text-muted-foreground">To: {e.to}</div>
+              <p className="text-xs text-foreground/90 whitespace-pre-wrap">{e.body}</p>
             </div>
           ))}
         </div>

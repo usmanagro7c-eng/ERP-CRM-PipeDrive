@@ -3,9 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ChevronDown,
   ChevronRight,
-  Clock,
   Plus,
-  Sparkles,
   User as UserIcon,
   CheckCircle2,
   PhoneCall,
@@ -75,21 +73,20 @@ export function RecordActivityFeed({
   };
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      {/* Activity Header with "+ New" button matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="text-sm font-semibold text-foreground">Activity</h3>
+    <div className="flex flex-col h-full max-w-4xl px-1 sm:px-4">
+      {/* Activity Header with "+ New ▾" button matching Frappe CRM */}
+      <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
+        <h2 className="text-2xl font-semibold text-foreground">Activity</h2>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="outline"
               size="sm"
-              className="h-7 text-xs gap-1 cursor-pointer font-medium"
+              className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
             >
-              <Plus className="size-3" />
+              <Plus className="size-3.5" />
               <span>New</span>
-              <ChevronDown className="size-3 opacity-60" />
+              <ChevronDown className="size-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="text-xs w-36">
@@ -98,7 +95,7 @@ export function RecordActivityFeed({
               <span>Task</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onNewCall} className="gap-2 cursor-pointer">
-              <PhoneCall className="size-3.5 text-rose-500" />
+              <PhoneCall className="size-3.5 text-emerald-500" />
               <span>Call Log</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onNewNote} className="gap-2 cursor-pointer">
@@ -106,123 +103,128 @@ export function RecordActivityFeed({
               <span>Note</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onNewComment} className="gap-2 cursor-pointer">
-              <MessageSquare className="size-3.5 text-emerald-500" />
+              <MessageSquare className="size-3.5 text-violet-500" />
               <span>Comment</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* Activity Timeline List */}
-      <div className="space-y-4 pt-1">
-        {rawActivities.length > 0 ? (
-          rawActivities.map((act, idx) => {
-            const author = authorName(act.owner);
-            const isCreation = act.activity_type === "creation";
-            const isChanged = act.activity_type === "changed";
-            const changeData = (act.data && typeof act.data === "object" ? act.data : null) as {
-              field_label?: string;
-              old_value?: string;
-              value?: string;
-            } | null;
+      {/* Timeline Stream */}
+      <div className="relative pl-6 space-y-5 border-l-2 border-border/60 ml-3 mt-3 pb-8">
+        {/* Creation Event Node (Always shown matching Frappe CRM) */}
+        <div className="relative group">
+          <div className="absolute -left-[33px] top-0 flex size-6 items-center justify-center rounded-full bg-secondary text-foreground ring-4 ring-background">
+            <UserIcon className="size-3" />
+          </div>
+          <div className="text-xs">
+            <span className="font-semibold text-foreground">{authorName(owner)}</span>{" "}
+            <span className="text-muted-foreground">created this {referenceDoctype.toLowerCase().replace("crm ", "")}</span>
+            {creation && (
+              <span className="text-[11px] text-muted-foreground ml-2">
+                {timeAgo(creation)}
+              </span>
+            )}
+          </div>
+        </div>
 
-            return (
-              <div key={idx} className="flex items-start gap-3 text-xs">
-                {/* Author Avatar Initial */}
-                <div className="flex size-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-semibold shrink-0">
-                  {author.charAt(0)}
-                </div>
+        {/* Live Timeline Items from Frappe Backend */}
+        {rawActivities.map((event: CrmActivityEvent, idx: number) => {
+          const isExpanded = !!expandedEvents[idx];
+          const eventData = (event.data && typeof event.data === "object" ? event.data : {}) as {
+            changed?: Array<{ fieldName?: string; field_label?: string; oldValue?: unknown; newValue?: unknown }>;
+            added?: unknown[];
+            removed?: unknown[];
+            field_label?: string;
+            old_value?: string;
+            value?: string;
+          };
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-semibold text-foreground">{author}</span>
-                      {isCreation && (
-                        <span className="text-muted-foreground">created this {referenceDoctype.toLowerCase().replace("crm ", "")}</span>
-                      )}
-                      {isChanged && changeData && (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpand(idx)}
-                          className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer font-medium"
-                        >
-                          <span>Show changes</span>
-                          {expandedEvents[idx] ? (
-                            <ChevronDown className="size-3" />
-                          ) : (
-                            <ChevronRight className="size-3" />
-                          )}
-                        </button>
-                      )}
-                      {!isCreation && !isChanged && (
-                        <span className="text-muted-foreground">{String(act.data || act.activity_type)}</span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-muted-foreground shrink-0">
-                      {timeAgo(act.creation)}
-                    </span>
-                  </div>
+          const hasDiff = Boolean(
+            (eventData.changed && eventData.changed.length > 0) ||
+            (eventData.added && eventData.added.length > 0) ||
+            (eventData.removed && eventData.removed.length > 0) ||
+            (eventData.field_label && (eventData.value !== undefined || eventData.old_value !== undefined)),
+          );
 
-                  {/* Expandable Change Diff Box */}
-                  {isChanged && changeData && expandedEvents[idx] && (
-                    <div className="mt-2 rounded-md border border-border/80 bg-muted/40 p-2.5 text-xs space-y-1">
-                      <div className="font-medium text-foreground">
-                        {changeData.field_label || "Field"}:
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span className="line-through text-rose-500/80">
-                          {changeData.old_value || "(empty)"}
-                        </span>
-                        <span>→</span>
-                        <span className="text-emerald-500 font-medium">
-                          {changeData.value || "(empty)"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+          const author = authorName(event.owner);
+          const subject =
+            event.activity_type === "creation"
+              ? "created this lead"
+              : event.activity_type === "changed" && eventData.field_label
+              ? `updated ${eventData.field_label}`
+              : event.activity_type || "updated";
+
+          return (
+            <div key={idx} className="relative group">
+              <div className="absolute -left-[33px] top-0 flex size-6 items-center justify-center rounded-full bg-secondary text-foreground ring-4 ring-background">
+                <span className="text-[10px] font-bold">
+                  {author.charAt(0).toUpperCase()}
+                </span>
               </div>
-            );
-          })
-        ) : (
-          <div className="space-y-4">
-            {/* Fallback default creation event */}
-            <div className="flex items-start gap-3 text-xs">
-              <div className="flex size-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-semibold shrink-0">
-                {(owner ? authorName(owner) : "U").charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-foreground">
-                      {owner ? authorName(owner) : "Usman"}
-                    </span>
-                    <span className="text-muted-foreground">created this lead</span>
-                  </div>
+
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-semibold text-foreground">{author}</span>
+                  <span className="text-muted-foreground">{subject}</span>
                   <span className="text-[11px] text-muted-foreground">
-                    {timeAgo(creation)}
+                    {timeAgo(event.creation)}
                   </span>
                 </div>
-              </div>
-            </div>
 
-            {/* Current status item */}
-            <div className="flex items-start gap-3 text-xs">
-              <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0">
-                <CheckCircle2 className="size-3.5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-foreground">Status</span>
-                    <span className="text-muted-foreground">is currently &quot;{status || "New"}&quot;</span>
+                {/* Collapsible Changes Diff (matching Frappe CRM "Show changes") */}
+                {hasDiff && (
+                  <div className="mt-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(idx)}
+                      className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium cursor-pointer"
+                    >
+                      <ChevronRight
+                        className={`size-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                      />
+                      <span>{isExpanded ? "Hide changes" : "Show changes"}</span>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-2 rounded-md border bg-muted/30 p-2.5 space-y-1 text-[11px] font-mono">
+                        {eventData.changed && eventData.changed.length > 0 ? (
+                          eventData.changed.map((c, ci) => (
+                            <div key={ci} className="flex items-center gap-2">
+                              <span className="text-muted-foreground font-semibold">
+                                {c.fieldName || c.field_label || "field"}:
+                              </span>
+                              <span className="text-red-500 line-through">
+                                {String(c.oldValue ?? "empty")}
+                              </span>
+                              <span>→</span>
+                              <span className="text-emerald-500 font-semibold">
+                                {String(c.newValue ?? "empty")}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground font-semibold">
+                              {eventData.field_label || "field"}:
+                            </span>
+                            <span className="text-red-500 line-through">
+                              {String(eventData.old_value ?? "empty")}
+                            </span>
+                            <span>→</span>
+                            <span className="text-emerald-500 font-semibold">
+                              {String(eventData.value ?? "empty")}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[11px] text-muted-foreground">current</span>
-                </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );

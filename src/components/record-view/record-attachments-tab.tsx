@@ -58,22 +58,22 @@ export function RecordAttachmentsTab({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Attachments ({attachments.length})</h3>
+    <div className="flex flex-col h-full min-h-[460px] max-w-4xl px-1 sm:px-4">
+      {/* Attachments Header matching Frappe CRM */}
+      <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
+        <h2 className="text-2xl font-semibold text-foreground">Attachments</h2>
         <Button
           size="sm"
-          variant="outline"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadMutation.isPending}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
         >
           {uploadMutation.isPending ? (
-            <Loader2 className="size-3 animate-spin" />
+            <Loader2 className="size-3.5 animate-spin" />
           ) : (
-            <Plus className="size-3" />
+            <Plus className="size-3.5" />
           )}
-          <span>Upload File</span>
+          <span>Upload Attachment</span>
         </Button>
         <input
           ref={fileInputRef}
@@ -92,58 +92,68 @@ export function RecordAttachmentsTab({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors mb-5 ${
           isDragging
             ? "border-primary bg-primary/5"
-            : "border-border hover:border-muted-foreground/50 bg-card/50"
+            : "border-border/70 hover:border-muted-foreground/50 bg-card/40"
         }`}
       >
-        <Paperclip className="size-8 mx-auto text-muted-foreground/50 mb-2" />
-        <p className="text-xs font-medium text-foreground">
-          Drag & drop files here, or click to browse
+        <Paperclip className="size-6 text-muted-foreground mx-auto mb-1.5 opacity-60" />
+        <p className="text-xs text-foreground font-medium">
+          Drag & drop files here, or <span className="text-primary underline">browse</span>
         </p>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          PDF, Images, Excel, Word documents supported
+          Attach PDFs, images, spreadsheets, or documents
         </p>
       </div>
 
-      {/* Attachments List */}
       {attachments.length === 0 ? (
-        <div className="py-8 text-center text-xs text-muted-foreground">
-          No files attached to this record yet.
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-20 select-none">
+          <div className="flex items-center justify-center size-14 rounded-full mb-2">
+            <Paperclip className="size-10 stroke-[1.2] text-muted-foreground/45" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No Attachments Found</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No files have been attached yet. Upload files to see them here.
+          </p>
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-          {attachments.map((file) => (
+        <div className="space-y-2 pb-8">
+          {attachments.map((att) => (
             <div
-              key={file.name}
-              className="flex items-center justify-between p-3 text-xs hover:bg-muted/40 transition-colors"
+              key={att.name}
+              className="group flex items-center justify-between rounded-lg border bg-card p-3 text-xs shadow-2xs hover:border-primary/40 transition-colors"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <File className="size-4 text-primary shrink-0" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-foreground">
+                  <File className="size-4" />
+                </div>
                 <div className="min-w-0">
-                  <p className="font-medium text-foreground truncate">{file.file_name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {formatFileSize(file.file_size)} • {file.creation?.split(" ")[0]}
-                  </p>
+                  <div className="font-semibold text-foreground truncate">{att.file_name}</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {formatFileSize(att.file_size)}
+                  </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-1">
+                {att.file_url && (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-foreground"
+                    title="Download file"
+                  >
+                    <a href={att.file_url} target="_blank" rel="noopener noreferrer" download>
+                      <Download className="size-3.5" />
+                    </a>
+                  </Button>
+                )}
                 <Button
-                  asChild
                   variant="ghost"
                   size="icon"
-                  className="size-7 text-muted-foreground hover:text-foreground"
-                >
-                  <a href={file.file_url} target="_blank" rel="noreferrer" download title="Download">
-                    <Download className="size-3.5" />
-                  </a>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMutation.mutate(file.name)}
+                  onClick={() => deleteMutation.mutate(att.name)}
+                  disabled={deleteMutation.isPending}
                   className="size-7 text-muted-foreground hover:text-destructive"
                   title="Delete file"
                 >

@@ -1,362 +1,374 @@
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { FieldInput } from "@/components/organizations/field-input";
-import { FormSectionNav } from "@/components/ui/form-section-nav";
 import {
-  fieldLabel,
-  fromInputValue,
-  groupIntoSectionPages,
-  isEditableField,
-  toInputValue,
-  type FrappeDocField,
-  type FrappeDocTypeMeta,
-} from "@/lib/frappe-meta";
-import { useSaveContact, errorMessage } from "@/hooks/use-contacts";
-import { uploadAttachment, CONTACT_DOCTYPE } from "@/lib/api";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSaveContact } from "@/hooks/use-contacts";
+import { orgListOptions } from "@/hooks/use-organizations";
+import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
+import { cn } from "@/lib/utils";
 
 interface ContactFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meta: FrappeDocTypeMeta;
+  meta?: FrappeDocTypeMeta;
   /** Existing doc when editing; null when creating. */
   contact?: Record<string, unknown> | null;
   /** Optional initial field values */
   initialValues?: Record<string, unknown> | null;
+  onSuccess?: (savedContact: Record<string, unknown>) => void;
 }
 
-function buildInitialValues(
-  fields: FrappeDocField[],
-  doc?: Record<string, unknown> | null,
-  presets?: Record<string, unknown> | null,
-) {
-  const values: Record<string, unknown> = {};
-  for (const field of fields) {
-    const raw = doc
-      ? doc[field.fieldname]
-      : presets?.[field.fieldname] !== undefined
-        ? presets[field.fieldname]
-        : field.fieldname === "status"
-          ? "Open"
-          : field.default;
-    values[field.fieldname] = toInputValue(field, raw);
-  }
-  return values;
+const SALUTATIONS = ["Mr", "Ms", "Mx", "Dr", "Mrs", "Madam", "Miss", "Master", "Prof"];
+const GENDERS = ["Male", "Female", "Other"];
+
+interface FormState {
+  salutation: string;
+  first_name: string;
+  last_name: string;
+  email_id: string;
+  mobile_no: string;
+  gender: string;
+  company_name: string;
+  designation: string;
+  address: string;
 }
 
-function cnFieldSpan(field: FrappeDocField): string {
-  const wide = [
-    "Small Text",
-    "Text",
-    "Long Text",
-    "Text Editor",
-    "Code",
-    "Attach",
-    "Attach Image",
-  ].includes(field.fieldtype);
-  return wide ? "sm:col-span-2 space-y-1.5" : "space-y-1.5";
-}
+const defaultFormState: FormState = {
+  salutation: "",
+  first_name: "",
+  last_name: "",
+  email_id: "",
+  mobile_no: "",
+  gender: "",
+  company_name: "",
+  designation: "",
+  address: "",
+};
 
 export function ContactFormModal({
   open,
   onOpenChange,
-  meta,
   contact,
   initialValues,
+  onSuccess,
 }: ContactFormModalProps) {
   const isEdit = Boolean(contact);
-  const docName = contact ? String(contact["name"]) : undefined;
   const saveMutation = useSaveContact();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const pages = useMemo(() => groupIntoSectionPages(meta.fields ?? []), [meta]);
-  const fields = useMemo(() => pages.flatMap((p) => p.fields), [pages]);
-  const [activePageIndex, setActivePageIndex] = useState(0);
-
-  const [values, setValues] = useState(() =>
-    buildInitialValues(fields, contact, initialValues),
+  // Existing organizations for company picker
+  const { data: existingOrgs = [] } = useQuery(
+    orgListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
   );
-  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
 
-  // Re-seed the form when the modal opens for a different doc or preset
-  const [seedKey, setSeedKey] = useState<string | null>(
-    contact ? String(contact["name"]) : null,
-  );
-  const wantedKey = contact
-    ? String(contact["name"])
-    : `__create_${initialValues?.["status"] ?? ""}`;
-  if (open && seedKey !== wantedKey) {
-    setSeedKey(wantedKey);
-    setValues(buildInitialValues(fields, contact, initialValues));
-    setPendingFiles({});
-    setActivePageIndex(0);
-  } else if (!open && seedKey !== null) {
-    setSeedKey(null);
-    setActivePageIndex(0);
-  }
+  const [form, setForm] = useState<FormState>(defaultFormState);
+  const [errors, setErrors] = useState<{ first_name?: string }>({});
 
-  function setValue(fieldname: string, value: unknown) {
-    setValues((previous) => ({ ...previous, [fieldname]: value }));
-  }
-
-  function isFieldRequired(field: FrappeDocField): boolean {
-    return Boolean(field.reqd || field.fieldname === "first_name");
-  }
-
-  async function handleSubmit() {
-    const missing = fields
-      .filter((field) => isFieldRequired(field) && isEditableField(field))
-      .filter((field) => {
-        const value = values[field.fieldname];
-        return (
-          value === "" ||
-          value === null ||
-          value === undefined ||
-          (typeof value === "string" && !value.trim())
-        );
-      });
-
-    if (missing.length > 0) {
-      const firstMissing = missing[0];
-      if (firstMissing) {
-        const targetIdx = pages.findIndex((p) =>
-          p.fields.some((f) => f.fieldname === firstMissing.fieldname),
-        );
-        if (targetIdx !== -1 && targetIdx !== activePageIndex) {
-          setActivePageIndex(targetIdx);
+  useEffect(() => {
+    if (open) {
+      if (contact) {
+        // Find primary email
+        let primaryEmail = String(contact["email_id"] || contact["email"] || "");
+        if (!primaryEmail && Array.isArray(contact["email_ids"])) {
+          const first = (contact["email_ids"] as Array<Record<string, unknown>>)[0];
+          primaryEmail = String(first?.["email_id"] || "");
         }
+
+        // Find primary phone
+        let primaryPhone = String(contact["mobile_no"] || contact["phone"] || "");
+        if (!primaryPhone && Array.isArray(contact["phone_nos"])) {
+          const first = (contact["phone_nos"] as Array<Record<string, unknown>>)[0];
+          primaryPhone = String(first?.["phone"] || "");
+        }
+
+        // Find linked company
+        let company = String(contact["company_name"] || contact["organization"] || "");
+        if (!company && Array.isArray(contact["links"])) {
+          const first = (contact["links"] as Array<Record<string, unknown>>)[0];
+          company = String(first?.["link_name"] || "");
+        }
+
+        setForm({
+          salutation: String(contact["salutation"] || ""),
+          first_name: String(contact["first_name"] || ""),
+          last_name: String(contact["last_name"] || ""),
+          email_id: primaryEmail,
+          mobile_no: primaryPhone,
+          gender: String(contact["gender"] || ""),
+          company_name: company,
+          designation: String(contact["designation"] || contact["job_title"] || ""),
+          address: String(contact["address"] || ""),
+        });
+      } else if (initialValues) {
+        setForm({
+          ...defaultFormState,
+          salutation: String(initialValues["salutation"] || ""),
+          first_name: String(initialValues["first_name"] || ""),
+          last_name: String(initialValues["last_name"] || ""),
+          email_id: String(initialValues["email_id"] || initialValues["email"] || ""),
+          mobile_no: String(initialValues["mobile_no"] || initialValues["phone"] || ""),
+          gender: String(initialValues["gender"] || ""),
+          company_name: String(initialValues["company_name"] || initialValues["organization"] || ""),
+          designation: String(initialValues["designation"] || ""),
+          address: String(initialValues["address"] || ""),
+        });
+      } else {
+        setForm(defaultFormState);
       }
-      const missingLabels = missing.map((f) => fieldLabel(f)).join(", ");
-      toast.error(`Please fill required fields: ${missingLabels}`);
+      setErrors({});
+    }
+  }, [open, contact, initialValues]);
+
+  const handleChange = (field: keyof FormState, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "first_name" && value.trim()) {
+      setErrors({});
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.first_name.trim()) {
+      setErrors({ first_name: "First Name is required" });
+      toast.error("Please enter First Name");
       return;
     }
 
-    const payload: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (!isEditableField(field)) continue;
-      payload[field.fieldname] = fromInputValue(field, values[field.fieldname]);
-    }
-
-    // For updates with new pending files, upload first
-    if (isEdit && docName) {
-      for (const [fieldname, file] of Object.entries(pendingFiles)) {
-        try {
-          const fileUrl = await uploadAttachment({
-            doctype: CONTACT_DOCTYPE,
-            docname: docName,
-            fieldname,
-            file,
-          });
-          payload[fieldname] = fileUrl;
-        } catch (error) {
-          toast.error(`Could not upload ${fieldname}: ${errorMessage(error)}`);
-          return;
-        }
-      }
-    }
+    const payload: Record<string, unknown> = {
+      salutation: form.salutation || undefined,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim() || undefined,
+      email_id: form.email_id.trim() || undefined,
+      mobile_no: form.mobile_no.trim() || undefined,
+      gender: form.gender || undefined,
+      company_name: form.company_name.trim() || undefined,
+      designation: form.designation.trim() || undefined,
+      address: form.address.trim() || undefined,
+    };
 
     try {
-      const savedDoc = await saveMutation.mutateAsync({
-        name: docName,
+      const result = await saveMutation.mutateAsync({
+        name: contact ? String(contact["name"]) : undefined,
         values: payload,
       });
-
-      // For creates with pending files, upload now that we have a docname
-      if (!isEdit && savedDoc && typeof savedDoc === "object" && "name" in savedDoc) {
-        const newName = String((savedDoc as Record<string, unknown>)["name"]);
-        for (const [fieldname, file] of Object.entries(pendingFiles)) {
-          try {
-            await uploadAttachment({
-              doctype: CONTACT_DOCTYPE,
-              docname: newName,
-              fieldname,
-              file,
-            });
-          } catch (error) {
-            toast.error(`Attached ${fieldname} failed to upload: ${errorMessage(error)}`);
-          }
-        }
-      }
-
+      onSuccess?.(result ?? payload);
       onOpenChange(false);
     } catch {
-      // toast shown by hook
+      // error handled by mutation
     }
-  }
-
-  const title = isEdit
-    ? `Edit Contact · ${String(contact?.["first_name"] ?? contact?.["name"] ?? docName)}`
-    : "Create Contact";
-  const subtitle = isEdit
-    ? "Update contact details, communication numbers, and associated organization."
-    : "Fill in the details across section pages to add a new contact.";
-
-  const activePage = pages[activePageIndex] ?? pages[0];
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[92vh] flex flex-col p-0">
-        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{subtitle}</DialogDescription>
-        </DialogHeader>
-
-        {/* Section Navigation Tabs */}
-        <FormSectionNav
-          pages={pages}
-          activePageIndex={activePageIndex}
-          onSelectPage={setActivePageIndex}
-          values={values}
-          isFieldRequired={isFieldRequired}
-        />
-
-        {/* Active Page Content */}
-        <ScrollArea className="flex-1 px-6 py-4">
-          <form
-            id="contact-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSubmit();
-            }}
-            className="space-y-4 pb-4"
-          >
-            {activePage && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {activePage.label}
-                  </h4>
-                  {pages.length > 1 && (
-                    <span className="text-[11px] font-medium text-muted-foreground">
-                      Step {activePageIndex + 1} of {pages.length}
-                    </span>
-                  )}
-                </div>
-                <Separator />
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {activePage.fields.map((field) => {
-                    const editable = isEditableField(field);
-                    const id = `contact-field-${field.fieldname}`;
-                    const isRequired = isFieldRequired(field);
-
-                    return (
-                      <div
-                        key={field.fieldname}
-                        className={cnFieldSpan(field)}
-                      >
-                        <Label
-                          htmlFor={id}
-                          className="text-xs font-medium text-foreground flex items-center justify-between"
-                        >
-                          <span className="flex items-center">
-                            {fieldLabel(field)}
-                            {isRequired && (
-                              <span className="ml-1 text-destructive font-bold" title="Mandatory field">
-                                *
-                              </span>
-                            )}
-                          </span>
-                          {isRequired && (
-                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
-                              Required
-                            </span>
-                          )}
-                        </Label>
-                        <FieldInput
-                          id={id}
-                          field={field}
-                          value={values[field.fieldname]}
-                          onValueChange={(val) => setValue(field.fieldname, val)}
-                          disabled={!editable || saveMutation.isPending}
-                          docName={docName}
-                          pendingFile={pendingFiles[field.fieldname]}
-                          onPendingFileChange={(file) =>
-                            setPendingFiles((prev) => {
-                              const copy = { ...prev };
-                              if (file) copy[field.fieldname] = file;
-                              else delete copy[field.fieldname];
-                              return copy;
-                            })
-                          }
-                        />
-                        {field.description && (
-                          <p className="text-[11px] text-muted-foreground">{field.description}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </form>
-        </ScrollArea>
-
-        <DialogFooter className="border-t p-3 sm:p-5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-muted/20">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={saveMutation.isPending}
-          >
-            Cancel
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {pages.length > 1 && activePageIndex > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
-                disabled={saveMutation.isPending}
-              >
-                <ChevronLeft className="size-3.5" />
-                Previous
-              </Button>
-            )}
-
-            {pages.length > 1 && activePageIndex < pages.length - 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setActivePageIndex((prev) => Math.min(pages.length - 1, prev + 1))}
-                disabled={saveMutation.isPending}
-              >
-                Next
-                <ChevronRight className="size-3.5" />
-              </Button>
-            )}
-
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "p-0 gap-0 overflow-hidden bg-background text-foreground transition-all duration-200 border-border/70 shadow-2xl flex flex-col",
+          isFullscreen
+            ? "max-w-none w-screen h-screen rounded-none"
+            : "sm:max-w-lg w-full rounded-xl max-h-[90vh]",
+        )}
+      >
+        {/* Header matching Frappe CRM: Title on left, Maximize + Single Close on right */}
+        <DialogHeader className="px-6 py-4 border-b border-border/60 flex flex-row items-center justify-between shrink-0 space-y-0">
+          <DialogTitle className="text-base font-semibold text-foreground tracking-tight">
+            {isEdit ? "Edit Contact" : "New Contact"}
+          </DialogTitle>
+          <div className="flex items-center gap-1.5">
             <Button
-              type="submit"
-              form="contact-form"
-              size="sm"
-              disabled={saveMutation.isPending}
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+              title={isFullscreen ? "Restore window" : "Maximize window"}
             >
-              {saveMutation.isPending && (
-                <Loader2 className="mr-2 size-3.5 animate-spin" />
-              )}
-              {isEdit ? "Save Changes" : "Create Contact"}
+              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Close"
+            >
+              <X className="size-4" />
             </Button>
           </div>
-        </DialogFooter>
+        </DialogHeader>
+
+        {/* Modal Body Form matching Frappe CRM */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-6 space-y-4 overflow-y-auto flex-1">
+            {/* Salutation */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Salutation</Label>
+              <Select
+                value={form.salutation || undefined}
+                onValueChange={(val) => handleChange("salutation", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                  <SelectValue placeholder="Salutation" />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {SALUTATIONS.map((sal) => (
+                    <SelectItem key={sal} value={sal} className="text-xs cursor-pointer">
+                      {sal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Row: First Name & Last Name (2 columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-normal text-muted-foreground">
+                  First Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  value={form.first_name}
+                  onChange={(e) => handleChange("first_name", e.target.value)}
+                  placeholder="First Name"
+                  className={cn(
+                    "h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md",
+                    errors.first_name && "border-destructive focus-visible:ring-destructive",
+                  )}
+                  autoFocus
+                />
+                {errors.first_name && (
+                  <p className="text-[11px] text-destructive">{errors.first_name}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-normal text-muted-foreground">Last Name</Label>
+                <Input
+                  value={form.last_name}
+                  onChange={(e) => handleChange("last_name", e.target.value)}
+                  placeholder="Last Name"
+                  className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
+              </div>
+            </div>
+
+            {/* Email Address */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Email Address</Label>
+              <Input
+                type="email"
+                value={form.email_id}
+                onChange={(e) => handleChange("email_id", e.target.value)}
+                placeholder="Email Address"
+                className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+              />
+            </div>
+
+            {/* Row: Mobile No & Gender (2 columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-normal text-muted-foreground">Mobile No</Label>
+                <Input
+                  type="tel"
+                  value={form.mobile_no}
+                  onChange={(e) => handleChange("mobile_no", e.target.value)}
+                  placeholder="Mobile No"
+                  className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-normal text-muted-foreground">Gender</Label>
+                <Select
+                  value={form.gender || undefined}
+                  onValueChange={(val) => handleChange("gender", val)}
+                >
+                  <SelectTrigger className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                    <SelectValue placeholder="Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDERS.map((g) => (
+                      <SelectItem key={g} value={g} className="text-xs cursor-pointer">
+                        {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Company Name / Organization */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Company Name</Label>
+              <Input
+                value={form.company_name}
+                onChange={(e) => handleChange("company_name", e.target.value)}
+                placeholder="Company Name"
+                className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                list="org-list-suggestions"
+              />
+              <datalist id="org-list-suggestions">
+                {(existingOrgs as Array<Record<string, unknown>>).map((org) => {
+                  const title = String(org["organization_name"] || org["name"]);
+                  return <option key={String(org["name"])} value={title} />;
+                })}
+              </datalist>
+            </div>
+
+            {/* Designation */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Designation</Label>
+              <Input
+                value={form.designation}
+                onChange={(e) => handleChange("designation", e.target.value)}
+                placeholder="Designation"
+                className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+              />
+            </div>
+
+            {/* Address */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Address</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+                placeholder="Address"
+                className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+              />
+            </div>
+          </div>
+
+          {/* Footer with Solid Black Create Button matching Frappe CRM */}
+          <div className="px-6 py-3 border-t border-border/60 bg-muted/20 flex items-center justify-end shrink-0">
+            <Button
+              type="submit"
+              disabled={saveMutation.isPending}
+              className="h-8 px-5 rounded-md bg-foreground text-background hover:bg-foreground/90 font-medium text-xs cursor-pointer shadow-xs transition-colors"
+            >
+              {saveMutation.isPending && <Loader2 className="size-3 animate-spin mr-1.5" />}
+              <span>{isEdit ? "Save" : "Create"}</span>
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -1110,16 +1110,16 @@ export async function deleteNote(name: string): Promise<void> {
 // ---------------------------------------------------------------------------
 export interface CrmCallLog {
   name: string;
-  type?: "Inbound" | "Outbound" | string;
-  status?: "Connected" | "No Answer" | "Busy" | "Failed" | string;
-  duration?: number;
-  from?: string;
-  to?: string;
-  note?: string;
-  summary?: string;
-  reference_doctype?: string;
-  reference_docname?: string;
-  creation?: string;
+  type?: "Inbound" | "Outbound" | string | undefined;
+  status?: "Connected" | "No Answer" | "Busy" | "Failed" | string | undefined;
+  duration?: number | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+  note?: string | undefined;
+  summary?: string | undefined;
+  reference_doctype?: string | undefined;
+  reference_docname?: string | undefined;
+  creation?: string | undefined;
 }
 
 export async function listCallLogs(params: {
@@ -1159,14 +1159,32 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
   const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}`, {
     method: "POST",
     body: {
-      type: "Outbound",
-      status: "Connected",
-      duration: values.duration || 60,
-      to: values.to,
-      from: values.from || "Agent",
+      type: values.type || "Outbound",
+      status: values.status || "Connected",
+      duration: values.duration ?? 60,
+      to: values.to || "",
+      from: values.from || "",
       note: values.summary || values.note || "",
-      reference_doctype: values.reference_doctype,
-      reference_docname: values.reference_docname,
+      reference_doctype: values.reference_doctype || null,
+      reference_docname: values.reference_docname || null,
+    },
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as CrmCallLog;
+}
+
+export async function updateCallLog(name: string, values: Partial<CrmCallLog>): Promise<CrmCallLog> {
+  const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: {
+      ...(values.type ? { type: values.type } : {}),
+      ...(values.status ? { status: values.status } : {}),
+      ...(values.duration !== undefined ? { duration: values.duration } : {}),
+      ...(values.to !== undefined ? { to: values.to } : {}),
+      ...(values.from !== undefined ? { from: values.from } : {}),
+      ...(values.summary || values.note ? { note: values.summary || values.note } : {}),
+      ...(values.reference_doctype !== undefined ? { reference_doctype: values.reference_doctype } : {}),
+      ...(values.reference_docname !== undefined ? { reference_docname: values.reference_docname } : {}),
     },
   });
   const data = unwrapResourceData<unknown>(payload);

@@ -19,10 +19,16 @@ export function callLogsListOptions(params: {
 export function useSaveCallLog() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (values: Partial<CrmCallLog>) => api.createCallLog(values),
-    onSuccess: () => {
+    mutationFn: (values: Partial<CrmCallLog> & { name?: string | undefined }) => {
+      if (values.name) {
+        const { name, ...rest } = values;
+        return api.updateCallLog(name, rest);
+      }
+      return api.createCallLog(values);
+    },
+    onSuccess: (_doc, variables) => {
       void queryClient.invalidateQueries({ queryKey: [CALL_LOGS_QUERY_ROOT] });
-      toast.success("Call log saved");
+      toast.success(variables.name ? "Call log updated" : "Call log saved");
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to save call log");

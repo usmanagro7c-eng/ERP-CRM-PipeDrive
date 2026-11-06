@@ -1,19 +1,17 @@
 import {
   ArrowDown,
   ArrowUp,
-  ChevronsUpDown,
-  CircleSlash,
-  MoreVertical,
   Calendar,
-  User,
-  Link as LinkIcon,
   CheckCircle2,
   Circle,
-  AlertCircle,
+  CircleSlash,
+  MoreVertical,
+  User,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,17 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ActivityStatusBadge,
-  ActivityPriorityBadge,
-} from "@/components/activities/activity-badge";
 import { useSaveActivity, useDeleteActivity, type FrappeDocTypeMeta } from "@/hooks/use-activities";
-import {
-  fieldsByNames,
-  fieldLabel,
-  formatFieldValue,
-  type FrappeDocField,
-} from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
 export interface SortState {
@@ -51,9 +39,9 @@ export interface SortState {
 }
 
 interface ActivityTableProps {
-  meta: FrappeDocTypeMeta;
+  meta?: FrappeDocTypeMeta;
   rows: Record<string, unknown>[];
-  columns: string[];
+  columns?: string[];
   sort: SortState | null;
   onSortChange: (sort: SortState) => void;
   onRowClick?: (name: string) => void;
@@ -63,143 +51,96 @@ interface ActivityTableProps {
 }
 
 const STATUS_OPTIONS = [
+  { key: "Backlog", label: "Backlog", value: "Backlog" },
   { key: "Todo", label: "Todo", value: "Todo" },
   { key: "In Progress", label: "In Progress", value: "In Progress" },
   { key: "Done", label: "Done", value: "Done" },
-  { key: "Backlog", label: "Backlog", value: "Backlog" },
   { key: "Canceled", label: "Canceled", value: "Canceled" },
 ];
 
-function isOverdue(dueDate: unknown, status: unknown): boolean {
-  if (!dueDate || status === "Done" || status === "Canceled") return false;
+function formatRelativeTime(dateStr: unknown): string {
+  if (!dateStr || typeof dateStr !== "string") return "-";
   try {
-    const d = new Date(String(dueDate));
-    return !isNaN(d.getTime()) && d.getTime() < Date.now();
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays === 0) {
+      if (diffHours === 0) {
+        if (diffMin <= 1) return "just now";
+        return `${diffMin}m ago`;
+      }
+      return `${diffHours}h ago`;
+    }
+    if (diffDays === 1) return "yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   } catch {
-    return false;
+    return String(dateStr);
   }
 }
 
-function SortButton({
-  field,
-  label,
-  sort,
-  onSortChange,
-}: {
-  field: string;
-  label: string;
-  sort: SortState | null;
-  onSortChange: (sort: SortState) => void;
-}) {
-  const active = sort?.field === field;
+function formatDueDate(dateStr: unknown): string {
+  if (!dateStr || typeof dateStr !== "string") return "-";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    return d.toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return String(dateStr);
+  }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const s = status.trim().toLowerCase();
+  let color = "bg-muted text-muted-foreground border-border/40";
+  if (s === "done" || s === "completed") {
+    color = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+  } else if (s === "in progress") {
+    color = "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800";
+  } else if (s === "todo") {
+    color = "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-800";
+  } else if (s === "canceled" || s === "cancelled") {
+    color = "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() =>
-        onSortChange({ field, direction: active && sort?.direction === "asc" ? "desc" : "asc" })
-      }
+    <span
       className={cn(
-        "group inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer",
-        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border",
+        color,
       )}
-      aria-label={`Sort by ${label}`}
     >
-      {label}
-      {active ? (
-        sort?.direction === "asc" ? (
-          <ArrowUp className="size-3" />
-        ) : (
-          <ArrowDown className="size-3" />
-        )
-      ) : (
-        <ChevronsUpDown className="size-3 opacity-40 group-hover:opacity-100" />
-      )}
-    </button>
+      {status || "Backlog"}
+    </span>
   );
 }
 
-function ActivityCellValue({
-  field,
-  row,
-}: {
-  field: FrappeDocField;
-  row: Record<string, unknown>;
-}) {
-  const value = row[field.fieldname];
+function PriorityBadge({ priority }: { priority: string }) {
+  const p = priority.trim().toLowerCase();
+  let color = "text-muted-foreground";
+  if (p === "urgent") color = "text-rose-600 dark:text-rose-400 font-medium";
+  else if (p === "high") color = "text-amber-600 dark:text-amber-400 font-medium";
+  else if (p === "medium") color = "text-sky-600 dark:text-sky-400 font-medium";
+  else if (p === "low") color = "text-muted-foreground";
 
-  if (field.fieldname === "status") {
-    return <ActivityStatusBadge status={value as string} />;
-  }
-
-  if (field.fieldname === "priority") {
-    return <ActivityPriorityBadge priority={value as string} />;
-  }
-
-  if (field.fieldname === "title") {
-    const isDone = row["status"] === "Done";
-    return (
-      <span
-        className={cn(
-          "font-medium text-foreground truncate max-w-[240px]",
-          isDone && "line-through text-muted-foreground",
-        )}
-      >
-        {String(value || "—")}
-      </span>
-    );
-  }
-
-  if (field.fieldname === "due_date") {
-    if (!value) return <span className="text-muted-foreground">—</span>;
-    const overdue = isOverdue(value, row["status"]);
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-1.5 text-xs",
-          overdue ? "text-destructive font-medium" : "text-muted-foreground",
-        )}
-      >
-        {overdue ? (
-          <AlertCircle className="size-3 text-destructive shrink-0" />
-        ) : (
-          <Calendar className="size-3 shrink-0" />
-        )}
-        <span>{formatFieldValue(field, value)}</span>
-      </div>
-    );
-  }
-
-  if (field.fieldname === "assigned_to") {
-    if (!value) return <span className="text-muted-foreground">—</span>;
-    return (
-      <div className="flex items-center gap-1.5 text-xs">
-        <User className="size-3 text-muted-foreground shrink-0" />
-        <span className="truncate">{String(value)}</span>
-      </div>
-    );
-  }
-
-  if (field.fieldname === "reference_docname") {
-    if (!value) return <span className="text-muted-foreground">—</span>;
-    const docType = String(row["reference_doctype"] ?? "");
-    return (
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <LinkIcon className="size-3 shrink-0 opacity-70" />
-        <span className="truncate max-w-[150px] font-mono text-[11px]">
-          {docType ? `${docType}: ` : ""}
-          {String(value)}
-        </span>
-      </div>
-    );
-  }
-
-  return <span>{formatFieldValue(field, value)}</span>;
+  return <span className={cn("text-xs", color)}>{priority || "Low"}</span>;
 }
 
 export function ActivityTable({
-  meta,
   rows,
-  columns,
   sort,
   onSortChange,
   onRowClick,
@@ -209,14 +150,31 @@ export function ActivityTable({
 }: ActivityTableProps) {
   const saveMutation = useSaveActivity();
   const deleteMutation = useDeleteActivity();
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
 
-  const activeFields = useMemo(() => fieldsByNames(meta, columns), [meta, columns]);
+  const allNames = rows.map((r) => String(r["name"]));
+  const allSelected = allNames.length > 0 && allNames.every((n) => selectedNames.includes(n));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedNames([]);
+    } else {
+      setSelectedNames(allNames);
+    }
+  };
+
+  const toggleSelectRow = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedNames((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  };
 
   if (loading && rows.length === 0) {
     return (
       <div className="space-y-2 p-4">
         {Array.from({ length: 8 }).map((_, idx) => (
-          <Skeleton key={idx} className="h-12 w-full" />
+          <Skeleton key={idx} className="h-10 w-full" />
         ))}
       </div>
     );
@@ -225,13 +183,13 @@ export function ActivityTable({
   if (!loading && rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-          <CircleSlash className="size-6 text-muted-foreground" />
+        <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <CircleSlash className="size-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-base font-semibold">No activities found</h3>
+          <h3 className="text-sm font-semibold text-foreground">No Tasks Found</h3>
           <p className="text-xs text-muted-foreground max-w-sm">
-            No activities match your search criteria or none have been scheduled yet.
+            No tasks match your search criteria or none have been created yet.
           </p>
         </div>
         {emptyAction}
@@ -241,112 +199,224 @@ export function ActivityTable({
 
   return (
     <div className="relative overflow-x-auto">
-      <Table className="min-w-[650px]">
+      <Table className="min-w-[800px]">
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {/* Quick Done Checkbox Header */}
-            <TableHead className="w-[44px] text-center" />
-            <TableHead className="w-[100px]">
-              <SortButton
-                field="name"
-                label="ID"
-                sort={sort}
-                onSortChange={onSortChange}
+          <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
+            {/* Checkbox */}
+            <TableHead className="w-[40px] pl-4">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+                className="translate-y-[2px]"
               />
             </TableHead>
-            {activeFields.map((field) => (
-              <TableHead key={field.fieldname}>
-                <SortButton
-                  field={field.fieldname}
-                  label={fieldLabel(field)}
-                  sort={sort}
-                  onSortChange={onSortChange}
-                />
-              </TableHead>
-            ))}
-            <TableHead className="w-[60px] text-right">Actions</TableHead>
+
+            {/* Title */}
+            <TableHead className="w-[40%]">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "title",
+                    direction: sort?.field === "title" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Title</span>
+                {sort?.field === "title" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Status */}
+            <TableHead className="w-[12%]">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "status",
+                    direction: sort?.field === "status" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Status</span>
+                {sort?.field === "status" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Priority */}
+            <TableHead className="w-[12%]">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "priority",
+                    direction: sort?.field === "priority" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Priority</span>
+                {sort?.field === "priority" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Due Date */}
+            <TableHead className="w-[15%]">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "due_date",
+                    direction: sort?.field === "due_date" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Due Date</span>
+                {sort?.field === "due_date" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Assigned To */}
+            <TableHead className="w-[13%]">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "assigned_to",
+                    direction: sort?.field === "assigned_to" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Assigned To</span>
+                {sort?.field === "assigned_to" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Last Modified */}
+            <TableHead className="w-[12%] text-right pr-4">
+              <button
+                type="button"
+                onClick={() =>
+                  onSortChange({
+                    field: "modified",
+                    direction: sort?.field === "modified" && sort?.direction === "asc" ? "desc" : "asc",
+                  })
+                }
+                className="ml-auto flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>Last Modified</span>
+                {sort?.field === "modified" && (
+                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                )}
+              </button>
+            </TableHead>
+
+            {/* Actions */}
+            <TableHead className="w-[40px] text-right pr-2" />
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {rows.map((row) => {
             const name = String(row["name"] ?? "");
-            const currentStatus = String(row["status"] ?? "");
-            const isDone = currentStatus === "Done";
+            const title = String(row["title"] ?? row["subject"] ?? name);
+            const status = String(row["status"] ?? "Backlog");
+            const priority = String(row["priority"] ?? "Low");
+            const dueDate = row["due_date"];
+            const assignedTo = String(row["assigned_to"] ?? "");
+            const modified = row["modified"] || row["creation"];
+            const isSelected = selectedNames.includes(name);
 
             return (
               <TableRow
                 key={name}
-                onClick={() => onRowClick?.(name)}
-                className="group cursor-pointer hover:bg-muted/50"
+                onClick={() => (onEdit ? onEdit(row) : onRowClick?.(name))}
+                className={cn(
+                  "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
+                  isSelected && "bg-muted/30",
+                )}
               >
-                {/* Complete / Done Toggle button */}
-                <TableCell
-                  className="w-[44px] text-center p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void saveMutation.mutateAsync({
-                      name,
-                      values: { status: isDone ? "Todo" : "Done" },
-                    });
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 text-muted-foreground hover:text-primary"
-                    title={isDone ? "Mark as Todo" : "Mark as Done"}
-                  >
-                    {isDone ? (
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <Circle className="size-4 opacity-50 group-hover:opacity-100" />
-                    )}
-                  </Button>
+                {/* Checkbox */}
+                <TableCell className="w-[40px] pl-4 py-2" onClick={(e) => toggleSelectRow(name, e)}>
+                  <Checkbox checked={isSelected} aria-label={`Select ${title}`} />
                 </TableCell>
 
-                <TableCell className="font-mono text-xs font-semibold text-primary">
-                  #{name}
+                {/* Title */}
+                <TableCell className="text-xs font-medium text-foreground py-2 truncate max-w-[320px]">
+                  <span className="hover:underline">{title}</span>
                 </TableCell>
-                {activeFields.map((field) => (
-                  <TableCell key={field.fieldname} className="text-sm">
-                    <ActivityCellValue field={field} row={row} />
-                  </TableCell>
-                ))}
-                <TableCell
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
+
+                {/* Status */}
+                <TableCell className="py-2">
+                  <StatusBadge status={status} />
+                </TableCell>
+
+                {/* Priority */}
+                <TableCell className="py-2">
+                  <PriorityBadge priority={priority} />
+                </TableCell>
+
+                {/* Due Date */}
+                <TableCell className="text-xs text-muted-foreground py-2">
+                  {dueDate ? formatDueDate(dueDate) : "-"}
+                </TableCell>
+
+                {/* Assigned To */}
+                <TableCell className="py-2">
+                  {assignedTo ? (
+                    <div className="flex items-center gap-1.5 text-xs text-foreground">
+                      <div className="size-5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[10px] font-semibold shrink-0">
+                        {assignedTo.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="truncate max-w-[110px]">{assignedTo}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">-</span>
+                  )}
+                </TableCell>
+
+                {/* Last Modified */}
+                <TableCell className="text-xs text-muted-foreground text-right pr-4 py-2">
+                  {formatRelativeTime(modified)}
+                </TableCell>
+
+                {/* Dropdown Menu Actions */}
+                <TableCell className="text-right pr-2 py-2" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                        className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
                       >
-                        <MoreVertical className="size-4" />
-                        <span className="sr-only">Open menu</span>
+                        <MoreVertical className="size-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 text-xs">
+                    <DropdownMenuContent align="end" className="w-44 text-xs">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       {onEdit && (
                         <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Activity
+                          Edit Task
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem
-                        onClick={() => {
-                          void saveMutation.mutateAsync({
-                            name,
-                            values: { status: isDone ? "Todo" : "Done" },
-                          });
-                        }}
-                      >
-                        {isDone ? "Mark as Todo" : "Mark as Done"}
-                      </DropdownMenuItem>
                       <MoveToSubmenu
-                        label="Move to Status"
-                        currentValue={currentStatus}
+                        label="Change Status"
+                        currentValue={status}
                         options={STATUS_OPTIONS}
                         onSelect={(newStatus) => {
                           void saveMutation.mutateAsync({
@@ -359,16 +429,12 @@ export function ActivityTable({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete activity #${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete task "${title}"?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}
                       >
-                        Delete Activity
+                        Delete Task
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

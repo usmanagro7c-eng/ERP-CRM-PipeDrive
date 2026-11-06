@@ -1,351 +1,312 @@
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { FieldInput } from "@/components/organizations/field-input";
-import { FormSectionNav } from "@/components/ui/form-section-nav";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  fieldLabel,
-  fromInputValue,
-  groupIntoSectionPages,
-  isEditableField,
-  toInputValue,
-  type FrappeDocField,
-  type FrappeDocTypeMeta,
-} from "@/lib/frappe-meta";
-import { useSaveActivity, uploadActivityFile, errorMessage } from "@/hooks/use-activities";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSaveActivity, type FrappeDocTypeMeta } from "@/hooks/use-activities";
+import { useCrmUsers } from "@/hooks/use-dashboard";
+import { cn } from "@/lib/utils";
 
 interface ActivityFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meta: FrappeDocTypeMeta;
+  meta?: FrappeDocTypeMeta;
   /** Existing doc when editing; null when creating. */
   activity?: Record<string, unknown> | null;
-  /** Optional initial field values (e.g. preset status when adding from a Kanban column) */
+  /** Optional initial field values */
   initialValues?: Record<string, unknown> | null;
+  onSuccess?: (savedDoc: Record<string, unknown>) => void;
 }
 
-function buildInitialValues(
-  fields: FrappeDocField[],
-  doc?: Record<string, unknown> | null,
-  presets?: Record<string, unknown> | null,
-) {
-  const values: Record<string, unknown> = {};
-  for (const field of fields) {
-    const raw = doc
-      ? doc[field.fieldname]
-      : presets?.[field.fieldname] !== undefined
-        ? presets[field.fieldname]
-        : field.fieldname === "status"
-          ? "Todo"
-          : field.default;
-    values[field.fieldname] = toInputValue(field, raw);
-  }
-  return values;
+const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+const STATUSES = ["Backlog", "Todo", "In Progress", "Done", "Canceled"];
+
+interface FormDataState {
+  title: string;
+  priority: string;
+  due_date: string;
+  assigned_to: string;
+  status: string;
+  description: string;
 }
 
-function cnFieldSpan(field: FrappeDocField): string {
-  const wide = [
-    "Small Text",
-    "Text",
-    "Long Text",
-    "Text Editor",
-    "Code",
-    "Attach",
-    "Attach Image",
-  ].includes(field.fieldtype);
-  return wide ? "sm:col-span-2 space-y-1.5" : "space-y-1.5";
-}
+const defaultFormData: FormDataState = {
+  title: "",
+  priority: "Low",
+  due_date: "",
+  assigned_to: "",
+  status: "Backlog",
+  description: "",
+};
 
 export function ActivityFormModal({
   open,
   onOpenChange,
-  meta,
   activity,
   initialValues,
+  onSuccess,
 }: ActivityFormModalProps) {
   const isEdit = Boolean(activity);
   const docName = activity ? String(activity["name"]) : undefined;
   const saveMutation = useSaveActivity();
+  const { data: users = [] } = useCrmUsers();
 
-  const pages = useMemo(() => groupIntoSectionPages(meta.fields ?? []), [meta]);
-  const fields = useMemo(() => pages.flatMap((p) => p.fields), [pages]);
-  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [formData, setFormData] = useState<FormDataState>(defaultFormData);
+  const [errors, setErrors] = useState<{ title?: string }>({});
 
-  const [values, setValues] = useState(() =>
-    buildInitialValues(fields, activity, initialValues),
-  );
-  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
-
-  // Re-seed the form when the modal opens for a different doc or preset
-  const [seedKey, setSeedKey] = useState<string | null>(
-    activity ? String(activity["name"]) : null,
-  );
-  const wantedKey = activity
-    ? String(activity["name"])
-    : `__create_${initialValues?.["status"] ?? ""}`;
-  if (open && seedKey !== wantedKey) {
-    setSeedKey(wantedKey);
-    setValues(buildInitialValues(fields, activity, initialValues));
-    setPendingFiles({});
-    setActivePageIndex(0);
-  } else if (!open && seedKey !== null) {
-    setSeedKey(null);
-    setActivePageIndex(0);
-  }
-
-  function setValue(fieldname: string, value: unknown) {
-    setValues((previous) => ({ ...previous, [fieldname]: value }));
-  }
-
-  function isFieldRequired(field: FrappeDocField): boolean {
-    return Boolean(field.reqd || field.fieldname === "title");
-  }
-
-  async function handleSubmit() {
-    const missing = fields
-      .filter((field) => isFieldRequired(field) && isEditableField(field))
-      .filter((field) => {
-        const value = values[field.fieldname];
-        return (
-          value === "" ||
-          value === null ||
-          value === undefined ||
-          (typeof value === "string" && !value.trim())
-        );
-      });
-
-    if (missing.length > 0) {
-      const firstMissing = missing[0];
-      if (firstMissing) {
-        const targetIdx = pages.findIndex((p) =>
-          p.fields.some((f) => f.fieldname === firstMissing.fieldname),
-        );
-        if (targetIdx !== -1 && targetIdx !== activePageIndex) {
-          setActivePageIndex(targetIdx);
-        }
+  useEffect(() => {
+    if (open) {
+      if (activity) {
+        setFormData({
+          title: String(activity["title"] || ""),
+          priority: String(activity["priority"] || "Low"),
+          due_date: String(activity["due_date"] || "").replace(" ", "T").slice(0, 16),
+          assigned_to: String(activity["assigned_to"] || ""),
+          status: String(activity["status"] || "Backlog"),
+          description: String(activity["description"] || ""),
+        });
+      } else {
+        const defaultOwner = users.find((u) => u.session_user)?.name || users[0]?.name || "";
+        const presetStatus = String(initialValues?.["status"] || "Backlog");
+        setFormData({
+          ...defaultFormData,
+          status: presetStatus,
+          assigned_to: defaultOwner,
+          ...(initialValues ? {
+            title: String(initialValues["title"] || ""),
+            priority: String(initialValues["priority"] || "Low"),
+            due_date: String(initialValues["due_date"] || ""),
+            description: String(initialValues["description"] || ""),
+          } : {}),
+        });
       }
-      const missingLabels = missing.map((f) => fieldLabel(f)).join(", ");
-      toast.error(`Please fill required fields: ${missingLabels}`);
+      setErrors({});
+    }
+  }, [open, activity, initialValues, users]);
+
+  const handleChange = (field: keyof FormDataState, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "title" && value.trim()) {
+      setErrors({});
+    }
+  };
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!formData.title.trim()) {
+      setErrors({ title: "Title is required" });
+      toast.error("Please enter a Title");
       return;
     }
 
-    const payload: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (!isEditableField(field)) continue;
-      payload[field.fieldname] = fromInputValue(field, values[field.fieldname]);
-    }
-
-    // For updates with new pending files, upload first
-    if (isEdit && docName) {
-      for (const [fieldname, file] of Object.entries(pendingFiles)) {
-        try {
-          const fileUrl = await uploadActivityFile(docName, fieldname, file);
-          payload[fieldname] = fileUrl;
-        } catch (error) {
-          toast.error(`Could not upload ${fieldname}: ${errorMessage(error)}`);
-          return;
-        }
-      }
-    }
+    const payload: Record<string, unknown> = {
+      title: formData.title.trim(),
+      priority: formData.priority || "Low",
+      status: formData.status || "Backlog",
+      due_date: formData.due_date ? formData.due_date.replace("T", " ") : null,
+      assigned_to: formData.assigned_to || null,
+      description: formData.description.trim() || null,
+    };
 
     try {
-      const savedDoc = await saveMutation.mutateAsync({
+      const result = await saveMutation.mutateAsync({
         name: docName,
         values: payload,
       });
-
-      // For creates with pending files, upload now that we have a docname
-      if (!isEdit && savedDoc && typeof savedDoc === "object" && "name" in savedDoc) {
-        const newName = String((savedDoc as Record<string, unknown>)["name"]);
-        for (const [fieldname, file] of Object.entries(pendingFiles)) {
-          try {
-            await uploadActivityFile(newName, fieldname, file);
-          } catch (error) {
-            toast.error(`Attached ${fieldname} failed to upload: ${errorMessage(error)}`);
-          }
-        }
-      }
-
+      onSuccess?.(result ?? payload);
       onOpenChange(false);
     } catch {
       // toast shown by hook
     }
   }
 
-  const title = isEdit
-    ? `Edit Activity · ${String(activity?.["title"] ?? docName)}`
-    : "Create Activity";
-  const subtitle = isEdit
-    ? "Update task details, schedule, priority, and assignments."
-    : "Fill in the details across section pages to schedule a new activity.";
-
-  const activePage = pages[activePageIndex] ?? pages[0];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[92vh] flex flex-col p-0">
-        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{subtitle}</DialogDescription>
-        </DialogHeader>
-
-        {/* Section Navigation Tabs */}
-        <FormSectionNav
-          pages={pages}
-          activePageIndex={activePageIndex}
-          onSelectPage={setActivePageIndex}
-          values={values}
-          isFieldRequired={isFieldRequired}
-        />
-
-        {/* Active Page Content */}
-        <ScrollArea className="flex-1 px-6 py-4">
-          <form
-            id="activity-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSubmit();
-            }}
-            className="space-y-4 pb-4"
-          >
-            {activePage && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {activePage.label}
-                  </h4>
-                  {pages.length > 1 && (
-                    <span className="text-[11px] font-medium text-muted-foreground">
-                      Step {activePageIndex + 1} of {pages.length}
-                    </span>
-                  )}
-                </div>
-                <Separator />
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {activePage.fields.map((field) => {
-                    const editable = isEditableField(field);
-                    const id = `activity-field-${field.fieldname}`;
-                    const isRequired = isFieldRequired(field);
-
-                    return (
-                      <div
-                        key={field.fieldname}
-                        className={cnFieldSpan(field)}
-                      >
-                        <Label
-                          htmlFor={id}
-                          className="text-xs font-medium text-foreground flex items-center justify-between"
-                        >
-                          <span className="flex items-center">
-                            {fieldLabel(field)}
-                            {isRequired && (
-                              <span className="ml-1 text-destructive font-bold" title="Mandatory field">
-                                *
-                              </span>
-                            )}
-                          </span>
-                          {isRequired && (
-                            <span className="text-[10px] text-destructive/80 uppercase font-mono tracking-wider">
-                              Required
-                            </span>
-                          )}
-                        </Label>
-                        <FieldInput
-                          id={id}
-                          field={field}
-                          value={values[field.fieldname]}
-                          onValueChange={(val) => setValue(field.fieldname, val)}
-                          disabled={!editable || saveMutation.isPending}
-                          docName={docName}
-                          pendingFile={pendingFiles[field.fieldname]}
-                          onPendingFileChange={(file) =>
-                            setPendingFiles((prev) => {
-                              const copy = { ...prev };
-                              if (file) copy[field.fieldname] = file;
-                              else delete copy[field.fieldname];
-                              return copy;
-                            })
-                          }
-                        />
-                        {field.description && (
-                          <p className="text-[11px] text-muted-foreground">{field.description}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </form>
-        </ScrollArea>
-
-        <DialogFooter className="border-t p-3 sm:p-5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-muted/20">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={saveMutation.isPending}
-          >
-            Cancel
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {pages.length > 1 && activePageIndex > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
-                disabled={saveMutation.isPending}
-              >
-                <ChevronLeft className="size-3.5" />
-                Previous
-              </Button>
-            )}
-
-            {pages.length > 1 && activePageIndex < pages.length - 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setActivePageIndex((prev) => Math.min(pages.length - 1, prev + 1))}
-                disabled={saveMutation.isPending}
-              >
-                Next
-                <ChevronRight className="size-3.5" />
-              </Button>
-            )}
-
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "p-0 overflow-hidden flex flex-col transition-all duration-200 border border-border bg-card shadow-2xl",
+          isFullscreen
+            ? "w-screen h-screen max-w-none max-h-none rounded-none"
+            : "w-[95vw] sm:max-w-xl max-h-[90vh] rounded-xl",
+        )}
+      >
+        {/* Header matching Frappe CRM: Title on left, Maximize + Single Close on right */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-2">
+          <DialogTitle className="text-base font-semibold text-foreground">
+            {isEdit ? "Edit Task" : "Create Task"}
+          </DialogTitle>
+          <div className="flex items-center gap-1.5">
             <Button
-              type="submit"
-              form="activity-form"
-              size="sm"
-              disabled={saveMutation.isPending}
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullscreen((p) => !p)}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+              title={isFullscreen ? "Restore window" : "Maximize window"}
             >
-              {saveMutation.isPending && (
-                <Loader2 className="mr-2 size-3.5 animate-spin" />
-              )}
-              {isEdit ? "Save Changes" : "Create Activity"}
+              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Close"
+            >
+              <X className="size-4" />
             </Button>
           </div>
-        </DialogFooter>
+        </div>
+
+        {/* Modal Form Body matching Frappe CRM exact layout */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-normal text-muted-foreground">
+              Title <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={formData.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              placeholder="Title"
+              className={cn(
+                "h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background",
+                errors.title && "border-destructive focus-visible:ring-destructive",
+              )}
+              autoFocus
+              required
+            />
+            {errors.title && (
+              <p className="text-[11px] text-destructive">{errors.title}</p>
+            )}
+          </div>
+
+          {/* Row 1: Priority & Due Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Priority</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(val) => handleChange("priority", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p} value={p} className="text-xs cursor-pointer">
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Due Date</Label>
+              <Input
+                type="datetime-local"
+                value={formData.due_date}
+                onChange={(e) => handleChange("due_date", e.target.value)}
+                className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Assigned To & Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Assigned To</Label>
+              <Select
+                value={formData.assigned_to || undefined}
+                onValueChange={(val) => handleChange("assigned_to", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                  <SelectValue placeholder="Assigned To" />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {users.map((u) => {
+                    const name = u.full_name || u.name;
+                    return (
+                      <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <div className="size-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[10px] font-medium">
+                            {name.charAt(0).toUpperCase()}
+                          </div>
+                          <span>{name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-muted-foreground">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) => handleChange("status", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s} className="text-xs cursor-pointer">
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-normal text-muted-foreground">Description</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              placeholder="Description"
+              rows={4}
+              className="text-xs bg-muted/30 border-muted-foreground/20 resize-none focus-visible:bg-background"
+            />
+          </div>
+
+          {/* Footer Submit Button matching Frappe CRM */}
+          <div className="flex justify-end pt-3 pb-1 border-t border-border/40">
+            <Button
+              type="submit"
+              disabled={saveMutation.isPending}
+              className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
+            >
+              {saveMutation.isPending && (
+                <Loader2 className="size-3.5 animate-spin mr-1.5" />
+              )}
+              <span>{isEdit ? "Save Changes" : "Create"}</span>
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

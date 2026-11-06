@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, FileText, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -7,14 +7,10 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -31,6 +27,7 @@ import {
   itemsListOptions,
 } from "@/hooks/use-quotations";
 import type { QuotationItem } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface QuotationFormModalProps {
   open: boolean;
@@ -54,6 +51,7 @@ export function QuotationFormModal({
   const saveMutation = useSaveQuotation();
   const submitMutation = useSubmitQuotation();
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [partyName, setPartyName] = useState("");
   const [crmDeal, setCrmDeal] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
@@ -155,157 +153,173 @@ export function QuotationFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-4 sm:p-6 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <FileText className="size-5" />
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "p-0 overflow-hidden flex flex-col transition-all duration-200 border border-border bg-card shadow-2xl",
+          isFullscreen
+            ? "w-screen h-screen max-w-none max-h-none rounded-none"
+            : "w-[95vw] sm:max-w-3xl max-h-[92vh] rounded-xl",
+        )}
+      >
+        {/* Header Matching Frappe CRM */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-2">
+          <DialogTitle className="text-base font-semibold text-foreground">
+            {quotation ? `Edit Quotation ${quotation.name}` : "Create Quotation"}
+          </DialogTitle>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullscreen((p) => !p)}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+              title={isFullscreen ? "Restore window" : "Maximize window"}
+            >
+              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Close"
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Modal Form Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+          {/* Header Details (2 Columns) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Customer */}
+            <div className="space-y-1.5">
+              <Label htmlFor="party-name" className="text-xs font-normal text-muted-foreground">
+                Customer / Party <span className="text-destructive">*</span>
+              </Label>
+              {customerOptions.length > 0 ? (
+                <Select value={partyName} onValueChange={setPartyName}>
+                  <SelectTrigger id="party-name" className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {customerOptions.map((opt: { name: string }) => (
+                      <SelectItem key={opt.name} value={opt.name} className="text-xs cursor-pointer">
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="party-name"
+                  value={partyName}
+                  onChange={(e) => setPartyName(e.target.value)}
+                  placeholder="Customer name"
+                  className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+                />
+              )}
             </div>
-            <div>
-              <DialogTitle className="text-base sm:text-lg">
-                {quotation ? `Edit Quotation ${quotation.name}` : "Create New Quotation"}
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                Prepare a formal quotation with pricing, line items, and terms.
-              </DialogDescription>
+
+            {/* Linked Deal */}
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-deal" className="text-xs font-normal text-muted-foreground">
+                CRM Deal (Optional)
+              </Label>
+              <Input
+                id="crm-deal"
+                value={crmDeal}
+                onChange={(e) => setCrmDeal(e.target.value)}
+                placeholder="e.g. CRM-DEAL-2026-00001"
+                className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+              />
+            </div>
+
+            {/* Transaction Date */}
+            <div className="space-y-1.5">
+              <Label htmlFor="trans-date" className="text-xs font-normal text-muted-foreground">
+                Date
+              </Label>
+              <Input
+                id="trans-date"
+                type="date"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+                className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+              />
+            </div>
+
+            {/* Valid Till */}
+            <div className="space-y-1.5">
+              <Label htmlFor="valid-till" className="text-xs font-normal text-muted-foreground">
+                Valid Till
+              </Label>
+              <Input
+                id="valid-till"
+                type="date"
+                value={validTill}
+                onChange={(e) => setValidTill(e.target.value)}
+                className="h-8 text-xs bg-muted/30 border-muted-foreground/20 focus-visible:bg-background"
+              />
             </div>
           </div>
-        </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 sm:px-6 py-2 overflow-y-auto">
-          <div className="space-y-5 pb-4">
-            {/* Header Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border bg-muted/20 p-4">
-              {/* Customer */}
-              <div className="space-y-1.5">
-                <Label htmlFor="party-name" className="text-xs font-semibold">
-                  Customer / Party <span className="text-destructive">*</span>
-                </Label>
-                {customerOptions.length > 0 ? (
-                  <Select value={partyName} onValueChange={setPartyName}>
-                    <SelectTrigger id="party-name" className="h-9 text-xs">
-                      <SelectValue placeholder="Select customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customerOptions.map((opt: { name: string }) => (
-                        <SelectItem key={opt.name} value={opt.name} className="text-xs">
-                          {opt.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    id="party-name"
-                    value={partyName}
-                    onChange={(e) => setPartyName(e.target.value)}
-                    placeholder="Customer name"
-                    className="h-9 text-xs"
-                  />
-                )}
-              </div>
-
-              {/* Linked Deal */}
-              <div className="space-y-1.5">
-                <Label htmlFor="crm-deal" className="text-xs font-semibold">
-                  CRM Deal (Optional)
-                </Label>
-                <Input
-                  id="crm-deal"
-                  value={crmDeal}
-                  onChange={(e) => setCrmDeal(e.target.value)}
-                  placeholder="e.g. CRM-DEAL-2026-00001"
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              {/* Transaction Date */}
-              <div className="space-y-1.5">
-                <Label htmlFor="trans-date" className="text-xs font-semibold">
-                  Date
-                </Label>
-                <Input
-                  id="trans-date"
-                  type="date"
-                  value={transactionDate}
-                  onChange={(e) => setTransactionDate(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              {/* Valid Till */}
-              <div className="space-y-1.5">
-                <Label htmlFor="valid-till" className="text-xs font-semibold">
-                  Valid Till
-                </Label>
-                <Input
-                  id="valid-till"
-                  type="date"
-                  value={validTill}
-                  onChange={(e) => setValidTill(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Line Items Editor */}
+          {/* Line Items Editor */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">Items & Pricing</Label>
             <ItemRowPicker items={items} onChange={setItems} />
+          </div>
 
-            {/* Grand Total Summary */}
-            <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-4 gap-2">
-              <div className="text-xs text-muted-foreground">
-                <span>Total Items: </span>
-                <strong className="text-foreground">{items.length}</strong>
-                <span className="mx-2">•</span>
-                <span>Total Quantity: </span>
-                <strong className="text-foreground">{totalQty}</strong>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Grand Total:</span>
-                <span className="text-lg sm:text-xl font-bold text-primary">
-                  PKR {grandTotal.toLocaleString()}
-                </span>
-              </div>
+          {/* Grand Total Summary */}
+          <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between rounded-lg bg-muted/30 border border-border/60 p-3.5 gap-2">
+            <div className="text-xs text-muted-foreground">
+              <span>Total Items: </span>
+              <strong className="text-foreground">{items.length}</strong>
+              <span className="mx-2">•</span>
+              <span>Total Quantity: </span>
+              <strong className="text-foreground">{totalQty}</strong>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Grand Total:</span>
+              <span className="text-base sm:text-lg font-bold text-foreground">
+                PKR {grandTotal.toLocaleString()}
+              </span>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="p-4 sm:p-6 pt-3 border-t bg-card/60 flex-col sm:flex-row gap-2">
+        {/* Footer Submit Buttons matching Frappe CRM */}
+        <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-border/40 bg-card">
           <Button
             type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
+            variant="outline"
+            size="sm"
+            onClick={() => handleSave(false)}
             disabled={isSaving}
-            className="w-full sm:w-auto h-9 text-xs order-2 sm:order-1"
+            className="h-8 text-xs border-border/60 cursor-pointer"
           >
-            Cancel
+            {isSaving ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : null}
+            <span>Save as Draft</span>
           </Button>
-          <div className="flex items-center gap-2 w-full sm:w-auto order-1 sm:order-2 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleSave(false)}
-              disabled={isSaving}
-              className="flex-1 sm:flex-initial h-9 text-xs"
-            >
-              {isSaving ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
-              <span>Save as Draft</span>
-            </Button>
-            <Button
-              type="button"
-              onClick={() => handleSave(true)}
-              disabled={isSaving}
-              className="flex-1 sm:flex-initial h-9 text-xs gap-1.5"
-            >
-              {isSaving ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="size-3.5" />
-              )}
-              <span>Submit Quotation</span>
-            </Button>
-          </div>
-        </DialogFooter>
+
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => handleSave(true)}
+            disabled={isSaving}
+            className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs gap-1.5"
+          >
+            {isSaving ? (
+              <Loader2 className="size-3.5 animate-spin mr-1" />
+            ) : (
+              <CheckCircle2 className="size-3.5 mr-1" />
+            )}
+            <span>Submit Quotation</span>
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,22 +1,29 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowUpDown,
+  Check,
+  ChevronDown,
+  Columns3,
+  Filter,
+  LayoutGrid,
+  LayoutList,
+  List,
   Plus,
   RefreshCw,
   Search,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Check,
-  Columns3,
-  LayoutGrid,
-  LayoutList,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +41,7 @@ import {
   quotationListOptions,
   type Quotation,
 } from "@/hooks/use-quotations";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 const KANBAN_PAGE_SIZE = 100;
@@ -45,7 +53,10 @@ interface QuotationSearch {
   q?: string | undefined;
   page?: number | undefined;
   view?: ViewMode | undefined;
+  status?: string | undefined;
 }
+
+const STATUS_FILTERS = ["Draft", "Open", "Replied", "Ordered", "Lost", "Cancelled"];
 
 function loadSavedView(): ViewMode {
   try {
@@ -66,6 +77,7 @@ function saveView(view: ViewMode) {
 }
 
 export const Route = createFileRoute("/_app/quotations")({
+  head: () => ({ meta: [{ title: "Quotations · AgroCRM" }] }),
   validateSearch: (search: Record<string, unknown>): QuotationSearch => {
     const s: QuotationSearch = {};
     if (typeof search["q"] === "string" && search["q"].trim()) {
@@ -77,6 +89,9 @@ export const Route = createFileRoute("/_app/quotations")({
     }
     if (search["view"] === "table" || search["view"] === "kanban" || search["view"] === "grid") {
       s.view = search["view"];
+    }
+    if (typeof search["status"] === "string") {
+      s.status = search["status"];
     }
     return s;
   },
@@ -93,6 +108,7 @@ function QuotationsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [localView, setLocalView] = useState<ViewMode>(search.view ?? "table");
+  const [pageSize, setPageSize] = useState<number>(20);
 
   useEffect(() => {
     if (!search.view) {
@@ -106,11 +122,16 @@ function QuotationsPage() {
 
   const activeView: ViewMode = search.view ?? localView;
 
+  const filters: Array<[string, string, string]> = [];
+  if (search.status && search.status !== "all") {
+    filters.push(["status", "=", search.status]);
+  }
+
   const listVariables = {
     search: q,
-    filters: [] as Array<[string, string, string]>,
-    limit: activeView === "kanban" ? KANBAN_PAGE_SIZE : PAGE_SIZE,
-    start: activeView === "kanban" ? 0 : (page - 1) * PAGE_SIZE,
+    filters,
+    limit: activeView === "kanban" ? KANBAN_PAGE_SIZE : pageSize,
+    start: activeView === "kanban" ? 0 : (page - 1) * pageSize,
     orderBy: "modified desc",
   };
 
@@ -121,9 +142,7 @@ function QuotationsPage() {
     refetch,
   } = useQuery(quotationListOptions(listVariables));
 
-  const { data: totalCount = 0 } = useQuery(quotationCountOptions(q));
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const { data: totalCount = 0 } = useQuery(quotationCountOptions(q, filters));
 
   function handleViewChange(mode: ViewMode) {
     setLocalView(mode);
@@ -141,14 +160,14 @@ function QuotationsPage() {
     if (term.trim()) nextSearch.q = term.trim();
     nextSearch.page = 1;
     if (activeView !== "table") nextSearch.view = activeView;
+    if (search.status) nextSearch.status = search.status;
     void navigate({ search: nextSearch });
   }
 
-  function handlePageChange(newPage: number) {
-    const nextSearch: QuotationSearch = {};
-    if (q) nextSearch.q = q;
-    if (newPage > 1) nextSearch.page = newPage;
-    if (activeView !== "table") nextSearch.view = activeView;
+  function handleStatusChange(statusVal: string) {
+    const nextSearch: QuotationSearch = { ...search };
+    nextSearch.status = statusVal === "all" ? undefined : statusVal;
+    nextSearch.page = 1;
     void navigate({ search: nextSearch });
   }
 
@@ -172,43 +191,76 @@ function QuotationsPage() {
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Quotations</h1>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {totalCount}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Create, track, and convert client price quotes into confirmed sales orders.
-          </p>
+    <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
+      {/* Top Banner Matching Frappe CRM */}
+      <div className="flex items-center justify-between border-b border-border px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+        {/* Breadcrumb: Quotations / ☰ List */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Link to="/quotations" className="hover:text-foreground transition-colors font-medium">
+            Quotations
+          </Link>
+          <span className="opacity-60">/</span>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-foreground font-semibold hover:text-foreground/80 cursor-pointer"
+          >
+            <List className="size-3.5" />
+            <span>List</span>
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => refetch()}
-            className="size-9 shrink-0"
-            title="Refresh list"
-            aria-label="Refresh list"
-          >
-            <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
-          </Button>
+        {/* Right Action: Solid Black "+ Create" Button matching Frappe CRM */}
+        <Button
+          size="sm"
+          onClick={handleOpenCreate}
+          className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+        >
+          <Plus className="size-3.5" />
+          <span>Create</span>
+        </Button>
+      </div>
+
+      {/* Filter Bar Matching Frappe CRM */}
+      <div className="border-b border-border/80 px-6 py-2 bg-card/20 flex flex-wrap items-center justify-between gap-3">
+        {/* Left Inputs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Customer / ID Search Input */}
+          <form onSubmit={handleSearchSubmit} className="relative w-40 sm:w-48">
+            <Input
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Customer / ID"
+              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
+            />
+          </form>
+
+          {/* Status Dropdown Filter */}
+          <Select value={search.status ?? "all"} onValueChange={handleStatusChange}>
+            <SelectTrigger className="h-7 text-xs w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs cursor-pointer">
+                Status: All
+              </SelectItem>
+              {STATUS_FILTERS.map((s) => (
+                <SelectItem key={s} value={s} className="text-xs cursor-pointer">
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* View Switcher Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2 text-xs">
-                <CurrentIcon className="size-4 text-muted-foreground" />
-                <span>View: {currentViewObj.label}</span>
-                <ChevronDown className="size-3.5 opacity-60" />
+              <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs text-muted-foreground border-border/60">
+                <CurrentIcon className="size-3.5 text-muted-foreground" />
+                <span>{currentViewObj.label}</span>
+                <ChevronDown className="size-3 opacity-60" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 text-xs">
+            <DropdownMenuContent align="start" className="w-44 text-xs">
               <DropdownMenuLabel>Switch View</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {viewOptions.map((opt) => {
@@ -221,7 +273,7 @@ function QuotationsPage() {
                     className="flex items-center justify-between cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-muted-foreground" />
+                      <Icon className="size-3.5 text-muted-foreground" />
                       <span>{opt.label}</span>
                     </div>
                     {isSelected && <Check className="size-3.5 text-primary" />}
@@ -230,88 +282,107 @@ function QuotationsPage() {
               })}
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
 
+        {/* Right Toolbar Actions */}
+        <div className="flex items-center gap-1">
           <Button
-            onClick={handleOpenCreate}
-            size="sm"
-            className="h-9 gap-1.5 text-xs font-semibold"
+            variant="ghost"
+            size="icon"
+            onClick={() => refetch()}
+            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Refresh"
           >
-            <Plus className="size-4" />
-            <span>New Quotation</span>
+            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+          >
+            <Filter className="size-3.5" />
+            <span>Filter</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+          >
+            <ArrowUpDown className="size-3.5" />
+            <span>Sort</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+          >
+            <Columns3 className="size-3.5" />
+            <span>Columns</span>
           </Button>
         </div>
       </div>
 
-      {/* Toolbar / Search */}
-      <div className="flex items-center justify-between gap-3">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search quotations by customer..."
-            className="pl-9 h-9 text-xs bg-card"
-            aria-label="Search quotations"
-          />
-        </form>
-      </div>
+      {/* Main Canvas Body */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {activeView === "table" ? (
+            <QuotationTable
+              rows={quotations}
+              loading={isLoading}
+              onEdit={handleEdit}
+              emptyAction={
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreate}
+                  className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5"
+                >
+                  <Plus className="size-3.5" />
+                  <span>Create Quotation</span>
+                </Button>
+              }
+            />
+          ) : activeView === "kanban" ? (
+            <QuotationKanban
+              rows={quotations}
+              onEdit={handleEdit}
+              onAddQuotation={handleOpenCreate}
+            />
+          ) : (
+            <QuotationGrid
+              rows={quotations}
+              loading={isLoading}
+              onEdit={handleEdit}
+            />
+          )}
+        </div>
 
-      {/* View Content Area */}
-      {activeView === "kanban" ? (
-        <QuotationKanban
-          rows={quotations}
-          loading={isLoading}
-          onEdit={handleEdit}
-          onAddQuotation={handleOpenCreate}
-        />
-      ) : activeView === "grid" ? (
-        <QuotationGrid
-          rows={quotations}
-          loading={isLoading}
-          onEdit={handleEdit}
-        />
-      ) : (
-        <QuotationTable
-          rows={quotations}
-          loading={isLoading}
-          onEdit={handleEdit}
-        />
-      )}
-
-      {/* Pagination Footer (Only for Table and Grid view) */}
-      {activeView !== "kanban" && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-          <div>
-            Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
-            {Math.min(page * PAGE_SIZE, totalCount)} of {totalCount} quotations
+        {/* Footer Pagination matching Frappe CRM */}
+        <div className="border-t border-border px-6 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-card/20 shrink-0">
+          {/* Page size toggle pills: 20 | 50 | 100 */}
+          <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
+            {[20, 50, 100].map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setPageSize(size)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
+                  pageSize === size
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {size}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              disabled={page <= 1}
-              onClick={() => handlePageChange(page - 1)}
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="px-2 font-medium">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              disabled={page >= totalPages}
-              onClick={() => handlePageChange(page + 1)}
-              aria-label="Next page"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
+
+          {/* Count e.g. "X of Y" */}
+          <div className="text-xs font-medium text-muted-foreground">
+            {quotations.length} of {totalCount}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Quotation Form Modal */}
       <QuotationFormModal

@@ -325,179 +325,174 @@ export function DealDataTab({
 
           <CollapsibleContent className="space-y-4 pt-1">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
-              {/* Column 1: Organization, Company Description, Industry, No. of Employees, Annual Revenue */}
-              <div className="flex flex-col gap-4">
-                {/* Organization */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Organization</label>
-                  <Input
-                    value={details.organization}
-                    onChange={(e) => handleDetailChange("organization", e.target.value)}
-                    placeholder="Organization"
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
-
-                {/* Company Description */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Company Description</label>
-                  <Textarea
-                    value={details.company_description}
-                    onChange={(e) => handleDetailChange("company_description", e.target.value)}
-                    placeholder="Company Description"
-                    rows={3}
-                    className="text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md resize-none"
-                  />
-                  <p className="text-[11px] text-muted-foreground/75 leading-tight">
-                    Company description discovered by Domain Enrichment.
-                  </p>
-                </div>
-
-                {/* Industry */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Industry</label>
-                  <Select
-                    value={details.industry || undefined}
-                    onValueChange={(val) => handleDetailChange("industry", val)}
-                  >
-                    <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                      <SelectValue placeholder="Industry" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-56">
-                      {INDUSTRIES.map((ind) => (
-                        <SelectItem key={ind} value={ind} className="text-xs cursor-pointer">
-                          {ind}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* No. of Employees */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">No. of Employees</label>
-                  <Select
-                    value={details.no_of_employees || undefined}
-                    onValueChange={(val) => handleDetailChange("no_of_employees", val)}
-                  >
-                    <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                      <SelectValue placeholder="1-10" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EMPLOYEE_RANGES.map((r) => (
-                        <SelectItem key={r} value={r} className="text-xs cursor-pointer">
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Annual Revenue */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Annual Revenue</label>
-                  <Input
-                    value={details.annual_revenue}
-                    onChange={(e) => handleDetailChange("annual_revenue", e.target.value)}
-                    placeholder="PKR 0.00"
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
+              {/* Row 1 */}
+              {/* Organization */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Organization</label>
+                <Input
+                  value={details.organization}
+                  onChange={(e) => handleDetailChange("organization", e.target.value)}
+                  placeholder="Organization"
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
               </div>
 
-              {/* Column 2: Website, Closed Date, Next Step */}
-              <div className="flex flex-col gap-4">
-                {/* Website */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Website</label>
-                  <Input
-                    value={details.website}
-                    onChange={(e) => handleDetailChange("website", e.target.value)}
-                    placeholder="Website"
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
-
-                {/* Closed Date */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Closed Date</label>
-                  <Input
-                    type="date"
-                    value={details.closed_date}
-                    onChange={(e) => handleDetailChange("closed_date", e.target.value)}
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
-
-                {/* Next Step */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Next Step</label>
-                  <Input
-                    value={details.next_step}
-                    onChange={(e) => handleDetailChange("next_step", e.target.value)}
-                    placeholder="Next Step"
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
+              {/* Website */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Website</label>
+                <Input
+                  value={details.website}
+                  onChange={(e) => handleDetailChange("website", e.target.value)}
+                  placeholder="Website"
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
               </div>
 
-              {/* Column 3: Territory, Probability, Deal Owner */}
-              <div className="flex flex-col gap-4">
-                {/* Territory */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Territory</label>
-                  <Select
-                    value={details.territory || undefined}
-                    onValueChange={(val) => handleDetailChange("territory", val)}
-                  >
-                    <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                      <SelectValue placeholder="Territory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TERRITORIES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Territory */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Territory</label>
+                <Select
+                  value={details.territory || undefined}
+                  onValueChange={(val) => handleDetailChange("territory", val)}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                    <SelectValue placeholder="Territory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TERRITORIES.map((t) => (
+                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Probability */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Probability</label>
-                  <Input
-                    value={details.probability}
-                    onChange={(e) => handleDetailChange("probability", e.target.value)}
-                    placeholder="10.000%"
-                    className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
-                  />
-                </div>
+              {/* Row 2 */}
+              {/* Company Description (spans down 2 rows on md) */}
+              <div className="space-y-1.5 md:row-span-2">
+                <label className="text-xs text-muted-foreground block">Company Description</label>
+                <Textarea
+                  value={details.company_description}
+                  onChange={(e) => handleDetailChange("company_description", e.target.value)}
+                  placeholder="Company Description"
+                  rows={4}
+                  className="text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md resize-none"
+                />
+                <p className="text-[11px] text-muted-foreground/75 leading-tight">
+                  Company description discovered by Domain Enrichment.
+                </p>
+              </div>
 
-                {/* Deal Owner */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block">Deal Owner</label>
-                  <Select
-                    value={details.deal_owner || undefined}
-                    onValueChange={(val) => handleDetailChange("deal_owner", val)}
-                  >
-                    <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                      <SelectValue placeholder="Deal Owner" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-56">
-                      {users.map((u) => (
-                        <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
-                          <div className="flex items-center gap-2">
-                            <div className="size-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
-                              {(u.full_name || u.name).charAt(0).toUpperCase()}
-                            </div>
-                            <span>{u.full_name || u.name}</span>
+              {/* Closed Date */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Closed Date</label>
+                <Input
+                  type="date"
+                  value={details.closed_date}
+                  onChange={(e) => handleDetailChange("closed_date", e.target.value)}
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
+              </div>
+
+              {/* Probability */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Probability</label>
+                <Input
+                  value={details.probability}
+                  onChange={(e) => handleDetailChange("probability", e.target.value)}
+                  placeholder="10.000%"
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
+              </div>
+
+              {/* Row 3 */}
+              {/* Next Step */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Next Step</label>
+                <Input
+                  value={details.next_step}
+                  onChange={(e) => handleDetailChange("next_step", e.target.value)}
+                  placeholder="Next Step"
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
+              </div>
+
+              {/* Deal Owner */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Deal Owner</label>
+                <Select
+                  value={details.deal_owner || undefined}
+                  onValueChange={(val) => handleDetailChange("deal_owner", val)}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                    <SelectValue placeholder="Deal Owner" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {users.map((u) => (
+                      <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <div className="size-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                            {(u.full_name || u.name).charAt(0).toUpperCase()}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                          <span>{u.full_name || u.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Row 4: Exact single row for Industry, No. of Employees, Annual Revenue */}
+              {/* Industry */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Industry</label>
+                <Select
+                  value={details.industry || undefined}
+                  onValueChange={(val) => handleDetailChange("industry", val)}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                    <SelectValue placeholder="Industry" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind} value={ind} className="text-xs cursor-pointer">
+                        {ind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* No. of Employees */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">No. of Employees</label>
+                <Select
+                  value={details.no_of_employees || undefined}
+                  onValueChange={(val) => handleDetailChange("no_of_employees", val)}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
+                    <SelectValue placeholder="1-10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEE_RANGES.map((r) => (
+                      <SelectItem key={r} value={r} className="text-xs cursor-pointer">
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Annual Revenue */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground block">Annual Revenue</label>
+                <Input
+                  value={details.annual_revenue}
+                  onChange={(e) => handleDetailChange("annual_revenue", e.target.value)}
+                  placeholder="PKR 0.00"
+                  className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                />
               </div>
             </div>
           </CollapsibleContent>

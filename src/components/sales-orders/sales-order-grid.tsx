@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Plus } from "lucide-react";
 import {
   useSubmitSalesOrder,
   type SalesOrder,
@@ -27,6 +28,8 @@ import {
 interface SalesOrderGridProps {
   rows: SalesOrder[];
   loading?: boolean;
+  onEdit?: (order: SalesOrder) => void;
+  onCreate?: () => void;
 }
 
 function SalesOrderStatusBadge({ status }: { status: string }) {
@@ -61,7 +64,7 @@ function SalesOrderStatusBadge({ status }: { status: string }) {
   );
 }
 
-export function SalesOrderGrid({ rows, loading }: SalesOrderGridProps) {
+export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGridProps) {
   const submitMutation = useSubmitSalesOrder();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
 
@@ -84,14 +87,24 @@ export function SalesOrderGrid({ rows, loading }: SalesOrderGridProps) {
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center bg-card/40">
-        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 p-12 text-center bg-card/30">
+        <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
           <ShoppingCart className="size-6" />
         </div>
-        <h3 className="text-sm font-semibold">No sales orders found</h3>
+        <h3 className="text-sm font-semibold text-foreground">No sales orders found</h3>
         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Sales orders are generated automatically when a customer accepts a quotation.
+          Confirmed customer purchase orders ready for fulfillment, delivery, and invoicing.
         </p>
+        {onCreate && (
+          <Button
+            size="sm"
+            onClick={onCreate}
+            className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+          >
+            <Plus className="size-3.5" />
+            <span>Create Sales Order</span>
+          </Button>
+        )}
       </div>
     );
   }
@@ -105,7 +118,8 @@ export function SalesOrderGrid({ rows, loading }: SalesOrderGridProps) {
         return (
           <div
             key={row.name}
-            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs hover:shadow-md transition-all border-border hover:border-primary/40 relative"
+            onClick={() => onEdit?.(row)}
+            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs hover:shadow-md transition-all border-border hover:border-primary/40 relative cursor-pointer"
           >
             {/* Header: Title, ID & Actions */}
             <div>

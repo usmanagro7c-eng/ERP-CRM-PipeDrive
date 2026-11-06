@@ -8,9 +8,12 @@ import {
   Loader2,
   Clock,
   Check,
+  Plus,
+  Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,9 +38,11 @@ import {
 interface SalesOrderTableProps {
   rows: SalesOrder[];
   loading?: boolean;
+  onEdit?: (order: SalesOrder) => void;
+  onCreate?: () => void;
 }
 
-function SalesOrderStatusBadge({ status }: { status: string }) {
+export function SalesOrderStatusBadge({ status }: { status: string }) {
   const s = (status || "Draft").toLowerCase();
   if (s.includes("completed")) {
     return (
@@ -69,9 +74,26 @@ function SalesOrderStatusBadge({ status }: { status: string }) {
   );
 }
 
-export function SalesOrderTable({ rows, loading }: SalesOrderTableProps) {
+export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderTableProps) {
   const submitMutation = useSubmitSalesOrder();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  const allSelected = rows.length > 0 && selectedRows.length === rows.length;
+
+  function toggleSelectAll(checked: boolean) {
+    if (checked) {
+      setSelectedRows(rows.map((r) => r.name));
+    } else {
+      setSelectedRows([]);
+    }
+  }
+
+  function toggleRow(name: string) {
+    setSelectedRows((prev) =>
+      prev.includes(name) ? prev.filter((id) => id !== name) : [...prev, name],
+    );
+  }
 
   async function handleSubmit(order: SalesOrder) {
     setActiveActionId(order.name);
@@ -92,29 +114,46 @@ export function SalesOrderTable({ rows, loading }: SalesOrderTableProps) {
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center bg-card/40">
-        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 p-12 text-center bg-card/30">
+        <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
           <ShoppingCart className="size-6" />
         </div>
-        <h3 className="text-sm font-semibold">No sales orders found</h3>
+        <h3 className="text-sm font-semibold text-foreground">No sales orders found</h3>
         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Sales orders are generated automatically when a customer accepts a quotation.
+          Confirmed customer purchase orders ready for fulfillment, delivery, and invoicing.
         </p>
+        {onCreate && (
+          <Button
+            size="sm"
+            onClick={onCreate}
+            className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+          >
+            <Plus className="size-3.5" />
+            <span>Create Sales Order</span>
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card shadow-2xs">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-2xs">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/30">
-            <TableHead className="w-[150px] text-xs font-semibold">Order ID</TableHead>
+          <TableRow className="bg-muted/30 hover:bg-muted/30">
+            <TableHead className="w-[40px] px-3">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+              />
+            </TableHead>
+            <TableHead className="w-[160px] text-xs font-semibold">Order ID</TableHead>
             <TableHead className="text-xs font-semibold">Customer</TableHead>
-            <TableHead className="hidden sm:table-cell text-xs font-semibold">Date</TableHead>
-            <TableHead className="hidden md:table-cell text-xs font-semibold">Delivery Date</TableHead>
-            <TableHead className="text-right text-xs font-semibold">Grand Total</TableHead>
             <TableHead className="text-center text-xs font-semibold">Status</TableHead>
+            <TableHead className="text-right text-xs font-semibold">Grand Total</TableHead>
+            <TableHead className="hidden md:table-cell text-xs font-semibold">Delivery Date</TableHead>
+            <TableHead className="hidden sm:table-cell text-xs font-semibold">Order Date</TableHead>
             <TableHead className="w-[70px] text-right text-xs font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -122,17 +161,39 @@ export function SalesOrderTable({ rows, loading }: SalesOrderTableProps) {
           {rows.map((row) => {
             const isRowBusy = activeActionId === row.name;
             const isDraft = row.docstatus === 0;
+            const isSelected = selectedRows.includes(row.name);
 
             return (
-              <TableRow key={row.name} className="hover:bg-muted/40 transition-colors">
-                <TableCell className="font-semibold text-xs text-primary">
+              <TableRow
+                key={row.name}
+                data-state={isSelected ? "selected" : undefined}
+                className="hover:bg-muted/40 transition-colors cursor-pointer"
+                onClick={() => onEdit?.(row)}
+              >
+                <TableCell className="px-3" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleRow(row.name)}
+                    aria-label={`Select ${row.name}`}
+                  />
+                </TableCell>
+                <TableCell className="font-semibold text-xs text-primary hover:underline">
                   {row.name}
                 </TableCell>
                 <TableCell className="text-xs">
                   <div className="flex items-center gap-1.5 font-medium">
                     <Building2 className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate max-w-[180px]">{row.customer}</span>
+                    <span className="truncate max-w-[200px]">{row.customer}</span>
                   </div>
+                </TableCell>
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                  <SalesOrderStatusBadge status={row.status} />
+                </TableCell>
+                <TableCell className="text-right font-semibold text-xs">
+                  PKR {Number(row.grand_total || 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                  {row.delivery_date || "—"}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
@@ -140,50 +201,48 @@ export function SalesOrderTable({ rows, loading }: SalesOrderTableProps) {
                     <span>{row.transaction_date}</span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                  {row.delivery_date || "—"}
-                </TableCell>
-                <TableCell className="text-right font-semibold text-xs">
-                  PKR {Number(row.grand_total || 0).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-center">
-                  <SalesOrderStatusBadge status={row.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {isDraft ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground"
-                          disabled={isRowBusy}
-                          aria-label={`Actions for sales order ${row.name}`}
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                        disabled={isRowBusy}
+                        aria-label={`Actions for sales order ${row.name}`}
+                      >
+                        {isRowBusy ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <MoreVertical className="size-3.5" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44 text-xs">
+                      <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+                        Actions ({row.name})
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {onEdit && (
+                        <DropdownMenuItem
+                          onClick={() => onEdit(row)}
+                          className="gap-2 cursor-pointer"
                         >
-                          {isRowBusy ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <MoreVertical className="size-4" />
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 text-xs">
-                        <DropdownMenuLabel className="text-[11px] text-muted-foreground">
-                          Actions ({row.name})
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                          <Edit className="size-3.5" />
+                          <span>View / Edit Details</span>
+                        </DropdownMenuItem>
+                      )}
+                      {isDraft && (
                         <DropdownMenuItem
                           onClick={() => handleSubmit(row)}
-                          className="gap-2 cursor-pointer text-blue-600"
+                          className="gap-2 cursor-pointer text-emerald-600 font-medium"
                         >
-                          <CheckCircle2 className="size-3.5" />
+                          <CheckCircle2 className="size-3.5 text-emerald-600" />
                           <span>Submit Order</span>
                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground pr-2">—</span>
-                  )}
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             );

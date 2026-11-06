@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   RefreshCw,
   Search,
-  ShoppingCart,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -12,6 +11,7 @@ import {
   Columns3,
   LayoutGrid,
   LayoutList,
+  Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SalesOrderTable } from "@/components/sales-orders/sales-order-table";
 import { SalesOrderKanban } from "@/components/sales-orders/sales-order-kanban";
 import { SalesOrderGrid } from "@/components/sales-orders/sales-order-grid";
+import { SalesOrderFormModal } from "@/components/sales-orders/sales-order-form-modal";
 import {
   salesOrderCountOptions,
   salesOrderListOptions,
+  type SalesOrder,
 } from "@/hooks/use-sales-orders";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 const KANBAN_PAGE_SIZE = 100;
@@ -42,7 +52,18 @@ interface SalesOrderSearch {
   q?: string | undefined;
   page?: number | undefined;
   view?: ViewMode | undefined;
+  status?: string | undefined;
 }
+
+const SALES_ORDER_STATUSES = [
+  "Draft",
+  "To Deliver and Bill",
+  "To Deliver",
+  "To Bill",
+  "Completed",
+  "Cancelled",
+  "Closed",
+];
 
 function loadSavedView(): ViewMode {
   try {
@@ -63,6 +84,7 @@ function saveView(view: ViewMode) {
 }
 
 export const Route = createFileRoute("/_app/sales-orders")({
+  head: () => ({ meta: [{ title: "Sales Orders · AgroCRM" }] }),
   validateSearch: (search: Record<string, unknown>): SalesOrderSearch => {
     const s: SalesOrderSearch = {};
     if (typeof search["q"] === "string" && search["q"].trim()) {
@@ -74,6 +96,9 @@ export const Route = createFileRoute("/_app/sales-orders")({
     }
     if (search["view"] === "table" || search["view"] === "kanban" || search["view"] === "grid") {
       s.view = search["view"];
+    }
+    if (typeof search["status"] === "string" && search["status"].trim()) {
+      s.status = search["status"].trim();
     }
     return s;
   },
@@ -88,6 +113,11 @@ function SalesOrdersPage() {
 
   const [term, setTerm] = useState(q);
   const [localView, setLocalView] = useState<ViewMode>(search.view ?? "table");
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE);
+  const [statusFilter, setStatusFilter] = useState<string>(search.status ?? "");
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
 
   useEffect(() => {
     if (!search.view) {
@@ -99,13 +129,25 @@ function SalesOrdersPage() {
     }
   }, [search.view, navigate]);
 
+  useEffect(() => {
+    setTerm(q);
+  }, [q]);
+
   const activeView: ViewMode = search.view ?? localView;
+
+  const filters: Array<[string, string, string]> = useMemo(() => {
+    const list: Array<[string, string, string]> = [];
+    if (statusFilter) {
+      list.push(["status", "=", statusFilter]);
+    }
+    return list;
+  }, [statusFilter]);
 
   const listVariables = {
     search: q,
-    filters: [] as Array<[string, string, string]>,
-    limit: activeView === "kanban" ? KANBAN_PAGE_SIZE : PAGE_SIZE,
-    start: activeView === "kanban" ? 0 : (page - 1) * PAGE_SIZE,
+    filters,
+    limit: activeView === "kanban" ? KANBAN_PAGE_SIZE : pageSize,
+    start: activeView === "kanban" ? 0 : (page - 1) * pageSize,
     orderBy: "modified desc",
   };
 
@@ -116,84 +158,80 @@ function SalesOrdersPage() {
     refetch,
   } = useQuery(salesOrderListOptions(listVariables));
 
-  const { data: totalCount = 0 } = useQuery(salesOrderCountOptions(q));
+  const { data: totalCount = 0 } = useQuery(salesOrderCountOptions(q, filters));
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const firstRow = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastRow = Math.min(page * pageSize, totalCount);
 
   function handleViewChange(mode: ViewMode) {
     setLocalView(mode);
     saveView(mode);
-    const nextSearch: SalesOrderSearch = {};
-    if (q) nextSearch.q = q;
-    if (page > 1 && mode === "table") nextSearch.page = page;
-    nextSearch.view = mode;
-    void navigate({ search: nextSearch });
+    void navigate({
+      search: (prev) => ({ ...prev, view: mode, page: undefined }),
+    });
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const nextSearch: SalesOrderSearch = {};
-    if (term.trim()) nextSearch.q = term.trim();
-    nextSearch.page = 1;
-    if (activeView !== "table") nextSearch.view = activeView;
-    void navigate({ search: nextSearch });
+    void navigate({
+      search: (prev) => ({ ...prev, q: term.trim() || undefined, page: undefined }),
+    });
+  }
+
+  function handleStatusChange(val: string) {
+    const nextStatus = val === "all" ? "" : val;
+    setStatusFilter(nextStatus);
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        status: nextStatus || undefined,
+        page: undefined,
+      }),
+    });
   }
 
   function handlePageChange(newPage: number) {
-    const nextSearch: SalesOrderSearch = {};
-    if (q) nextSearch.q = q;
-    if (newPage > 1) nextSearch.page = newPage;
-    if (activeView !== "table") nextSearch.view = activeView;
-    void navigate({ search: nextSearch });
+    void navigate({
+      search: (prev) => ({ ...prev, page: newPage > 1 ? newPage : undefined }),
+    });
+  }
+
+  function handleOpenCreate() {
+    setSelectedOrder(null);
+    setCreateOpen(true);
+  }
+
+  function handleEditOrder(order: SalesOrder) {
+    setSelectedOrder(order);
+    setCreateOpen(true);
   }
 
   const viewOptions = [
-    { mode: "table" as const, label: "Table View", icon: LayoutList },
-    { mode: "kanban" as const, label: "Kanban Pipeline", icon: Columns3 },
-    { mode: "grid" as const, label: "Grid Cards", icon: LayoutGrid },
-  ];
+    { mode: "table" as const, label: "List", icon: LayoutList },
+    { mode: "kanban" as const, label: "Kanban", icon: Columns3 },
+    { mode: "grid" as const, label: "Cards", icon: LayoutGrid },
+  ] as const;
 
-  const currentViewObj = viewOptions.find((v) => v.mode === activeView) ?? viewOptions[0]!;
+  const currentViewObj = viewOptions.find((v) => v.mode === activeView) ?? viewOptions[0];
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Sales Orders</h1>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {totalCount}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Confirmed customer purchase orders ready for fulfillment, delivery, and invoicing.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => refetch()}
-            className="size-9 shrink-0"
-            title="Refresh list"
-            aria-label="Refresh list"
-          >
-            <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
-          </Button>
-
-          {/* View Switcher Dropdown */}
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      {/* Top Banner Matching Frappe CRM */}
+      <div className="border-b border-border bg-card/40 px-6 py-2.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium text-foreground">Sales Orders</span>
+          <span className="text-muted-foreground/60">/</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2 text-xs">
-                <CurrentIcon className="size-4 text-muted-foreground" />
-                <span>View: {currentViewObj.label}</span>
-                <ChevronDown className="size-3.5 opacity-60" />
-              </Button>
+              <button className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-sm">
+                <CurrentIcon className="size-3.5 text-muted-foreground" />
+                <span>{currentViewObj.label}</span>
+                <ChevronDown className="size-3 text-muted-foreground" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 text-xs">
+            <DropdownMenuContent align="start" className="w-44 text-xs">
               <DropdownMenuLabel>Switch View</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {viewOptions.map((opt) => {
@@ -216,65 +254,145 @@ function SalesOrdersPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleOpenCreate}
+            className="h-8 text-xs font-medium px-3.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+          >
+            <Plus className="size-3.5" />
+            <span>Create</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Toolbar / Search */}
-      <div className="flex items-center justify-between gap-3">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search orders by customer..."
-            className="pl-9 h-9 text-xs bg-card"
-            aria-label="Search sales orders"
+      {/* Secondary Filter Toolbar Matching Frappe CRM */}
+      <div className="border-b border-border bg-background px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Search Input */}
+          <form onSubmit={handleSearchSubmit} className="relative w-56">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Customer / ID..."
+              className="h-7 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-md"
+            />
+          </form>
+
+          {/* Status Quick Filter */}
+          <Select
+            value={statusFilter || "all"}
+            onValueChange={handleStatusChange}
+          >
+            <SelectTrigger className="h-7 text-xs px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[120px]">
+              <span className="text-muted-foreground">Status:</span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+              {SALES_ORDER_STATUSES.map((s) => (
+                <SelectItem key={s} value={s} className="text-xs">
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {activeView === "kanban" ? (
+          <SalesOrderKanban
+            rows={orders}
+            loading={isLoading}
+            onEdit={handleEditOrder}
+            onAddOrder={handleOpenCreate}
           />
-        </form>
+        ) : activeView === "grid" ? (
+          <SalesOrderGrid
+            rows={orders}
+            loading={isLoading}
+            onEdit={handleEditOrder}
+            onCreate={handleOpenCreate}
+          />
+        ) : (
+          <SalesOrderTable
+            rows={orders}
+            loading={isLoading}
+            onEdit={handleEditOrder}
+            onCreate={handleOpenCreate}
+          />
+        )}
       </div>
 
-      {/* View Content Area */}
-      {activeView === "kanban" ? (
-        <SalesOrderKanban rows={orders} loading={isLoading} />
-      ) : activeView === "grid" ? (
-        <SalesOrderGrid rows={orders} loading={isLoading} />
-      ) : (
-        <SalesOrderTable rows={orders} loading={isLoading} />
-      )}
+      {/* Footer Pagination Matching Frappe CRM */}
+      <div className="border-t border-border px-6 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-card/20 shrink-0">
+        <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
+          {[20, 50, 100].map((size) => (
+            <button
+              key={size}
+              type="button"
+              className={cn(
+                "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
+                pageSize === size
+                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setPageSize(size)}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
 
-      {/* Pagination Footer (Only for Table and Grid view) */}
-      {activeView !== "kanban" && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-          <div>
-            Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
-            {Math.min(page * PAGE_SIZE, totalCount)} of {totalCount} orders
-          </div>
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-3">
+          <span>
+            {totalCount === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${totalCount}`}
+          </span>
+          <div className="flex items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="size-8"
+              className="size-6 text-muted-foreground hover:text-foreground"
               disabled={page <= 1}
               onClick={() => handlePageChange(page - 1)}
-              aria-label="Previous page"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-3.5" />
             </Button>
-            <span className="px-2 font-medium">
-              Page {page} of {totalPages}
-            </span>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="size-8"
+              className="size-6 text-muted-foreground hover:text-foreground"
               disabled={page >= totalPages}
               onClick={() => handlePageChange(page + 1)}
-              aria-label="Next page"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-3.5" />
             </Button>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Create / Edit Sales Order Modal */}
+      <SalesOrderFormModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        order={selectedOrder}
+      />
     </div>
   );
 }

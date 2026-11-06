@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 interface SalesOrderKanbanProps {
   rows: SalesOrder[];
   loading?: boolean;
+  onEdit?: (order: SalesOrder) => void;
+  onAddOrder?: () => void;
 }
 
 const SALES_ORDER_STAGES = [
@@ -37,7 +39,7 @@ const SALES_ORDER_STAGES = [
   { key: "Cancelled", label: "Cancelled / Closed", color: "bg-red-500/10 text-red-700 border-red-300" },
 ] as const;
 
-export function SalesOrderKanban({ rows, loading }: SalesOrderKanbanProps) {
+export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrderKanbanProps) {
   const submitMutation = useSubmitSalesOrder();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
 
@@ -122,11 +124,12 @@ export function SalesOrderKanban({ rows, loading }: SalesOrderKanbanProps) {
                   return (
                     <div
                       key={order.name}
-                      className="group relative flex flex-col justify-between rounded-md border bg-card p-3 shadow-xs hover:shadow-md transition-all border-border"
+                      onClick={() => onEdit?.(order)}
+                      className="group relative flex flex-col justify-between rounded-md border bg-card p-3 shadow-xs hover:shadow-md transition-all border-border cursor-pointer hover:border-primary/40"
                     >
                       <div className="flex items-start justify-between gap-1 mb-2">
                         <div className="flex-1 truncate">
-                          <h4 className="font-semibold text-xs text-foreground truncate">
+                          <h4 className="font-semibold text-xs text-foreground truncate hover:underline">
                             {order.customer}
                           </h4>
                           <span className="font-mono text-[10px] text-muted-foreground">
@@ -135,36 +138,38 @@ export function SalesOrderKanban({ rows, loading }: SalesOrderKanbanProps) {
                         </div>
 
                         {isDraft && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-6 text-muted-foreground"
-                                disabled={isRowBusy}
-                                aria-label={`Actions for sales order ${order.name}`}
-                              >
-                                {isRowBusy ? (
-                                  <Loader2 className="size-3 animate-spin" />
-                                ) : (
-                                  <MoreVertical className="size-3.5" />
-                                )}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44 text-xs">
-                              <DropdownMenuLabel className="text-[11px] text-muted-foreground">
-                                Actions ({order.name})
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleSubmit(order)}
-                                className="gap-2 cursor-pointer text-blue-600"
-                              >
-                                <CheckCircle2 className="size-3.5" />
-                                <span>Submit Order</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-6 text-muted-foreground"
+                                  disabled={isRowBusy}
+                                  aria-label={`Actions for sales order ${order.name}`}
+                                >
+                                  {isRowBusy ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                  ) : (
+                                    <MoreVertical className="size-3.5" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44 text-xs">
+                                <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+                                  Actions ({order.name})
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleSubmit(order)}
+                                  className="gap-2 cursor-pointer text-emerald-600 font-medium"
+                                >
+                                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                  <span>Submit Order</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         )}
                       </div>
 

@@ -1038,6 +1038,7 @@ export interface CrmNote {
   reference_doctype?: string;
   reference_docname?: string;
   is_pinned?: number | boolean;
+  owner?: string;
   creation?: string;
   modified?: string;
 }
@@ -1052,8 +1053,21 @@ export async function listNotes(params: {
     if (params.search) {
       filters.push(["title", "like", `%${params.search}%`]);
     }
+    if (params.reference_doctype && params.reference_docname) {
+      filters.push(["reference_doctype", "=", params.reference_doctype]);
+      filters.push(["reference_docname", "=", params.reference_docname]);
+    }
     const query = new URLSearchParams({
-      fields: JSON.stringify(["name", "title", "content", "creation", "modified"]),
+      fields: JSON.stringify([
+        "name",
+        "title",
+        "content",
+        "reference_doctype",
+        "reference_docname",
+        "owner",
+        "creation",
+        "modified",
+      ]),
       order_by: "modified desc",
       limit_page_length: "50",
     });

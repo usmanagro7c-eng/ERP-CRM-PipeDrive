@@ -26,6 +26,7 @@ import { Route as AppDealsDealIdRouteImport } from './routes/_app.deals_.$dealId
 import { Route as AppLeadsLeadIdRouteImport } from './routes/_app.leads_.$leadId'
 import { Route as AppOrganizationsIndexRouteImport } from './routes/_app.organizations.index'
 import { Route as AppOrganizationsOrgIdRouteImport } from './routes/_app.organizations.$orgId'
+import { Route as AppQuotationsQuotationIdRouteImport } from './routes/_app.quotations_.$quotationId'
 import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
@@ -115,6 +116,12 @@ const AppOrganizationsOrgIdRoute = AppOrganizationsOrgIdRouteImport.update({
   path: '/organizations/$orgId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppQuotationsQuotationIdRoute =
+  AppQuotationsQuotationIdRouteImport.update({
+    id: '/quotations_/$quotationId',
+    path: '/quotations/$quotationId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
   id: '/api/auth/login',
   path: '/api/auth/login',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
+  '/quotations/$quotationId': typeof AppQuotationsQuotationIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
   '/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
+  '/quotations/$quotationId': typeof AppQuotationsQuotationIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/_app/deals_/$dealId': typeof AppDealsDealIdRoute
   '/_app/leads_/$leadId': typeof AppLeadsLeadIdRoute
   '/_app/organizations/$orgId': typeof AppOrganizationsOrgIdRoute
+  '/_app/quotations_/$quotationId': typeof AppQuotationsQuotationIdRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/deals/$dealId'
     | '/leads/$leadId'
     | '/organizations/$orgId'
+    | '/quotations/$quotationId'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/deals/$dealId'
     | '/leads/$leadId'
     | '/organizations/$orgId'
+    | '/quotations/$quotationId'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
     | '/_app/deals_/$dealId'
     | '/_app/leads_/$leadId'
     | '/_app/organizations/$orgId'
+    | '/_app/quotations_/$quotationId'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrganizationsOrgIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/quotations_/$quotationId': {
+      id: '/_app/quotations_/$quotationId'
+      path: '/quotations/$quotationId'
+      fullPath: '/quotations/$quotationId'
+      preLoaderRoute: typeof AppQuotationsQuotationIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/login': {
       id: '/api/auth/login'
       path: '/api/auth/login'
@@ -450,6 +470,7 @@ interface AppRouteChildren {
   AppDealsDealIdRoute: typeof AppDealsDealIdRoute
   AppLeadsLeadIdRoute: typeof AppLeadsLeadIdRoute
   AppOrganizationsOrgIdRoute: typeof AppOrganizationsOrgIdRoute
+  AppQuotationsQuotationIdRoute: typeof AppQuotationsQuotationIdRoute
   AppOrganizationsIndexRoute: typeof AppOrganizationsIndexRoute
 }
 
@@ -467,6 +488,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDealsDealIdRoute: AppDealsDealIdRoute,
   AppLeadsLeadIdRoute: AppLeadsLeadIdRoute,
   AppOrganizationsOrgIdRoute: AppOrganizationsOrgIdRoute,
+  AppQuotationsQuotationIdRoute: AppQuotationsQuotationIdRoute,
   AppOrganizationsIndexRoute: AppOrganizationsIndexRoute,
 }
 

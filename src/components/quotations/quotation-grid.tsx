@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Building2,
   Calendar,
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   Trash2,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -147,13 +149,21 @@ export function QuotationGrid({
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
-                  <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+                  <Link
+                    to="/quotations/$quotationId"
+                    params={{ quotationId: row.name }}
+                    className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:underline hover:text-primary transition-colors cursor-pointer"
+                  >
                     <Building2 className="size-4 text-primary shrink-0" />
                     <span className="truncate max-w-[200px]">{row.party_name}</span>
-                  </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">
+                  </Link>
+                  <Link
+                    to="/quotations/$quotationId"
+                    params={{ quotationId: row.name }}
+                    className="font-mono text-[11px] text-muted-foreground hover:underline hover:text-foreground inline-block cursor-pointer"
+                  >
                     {row.name}
-                  </span>
+                  </Link>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -179,6 +189,16 @@ export function QuotationGrid({
                         Actions ({row.name})
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/quotations/$quotationId"
+                          params={{ quotationId: row.name }}
+                          className="gap-2 cursor-pointer font-medium flex items-center"
+                        >
+                          <Eye className="size-3.5 text-muted-foreground" />
+                          <span>View Quotation Detail</span>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleCreateSalesOrder(row)}
                         className="gap-2 cursor-pointer font-medium text-primary"

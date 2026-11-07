@@ -639,6 +639,7 @@ export interface QuotationItem {
   name?: string;
   item_code: string;
   item_name?: string;
+  description?: string;
   qty: number;
   rate: number;
   amount?: number;

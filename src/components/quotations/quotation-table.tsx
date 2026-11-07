@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   MoreVertical,
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   Calendar,
   Building2,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +72,7 @@ export function QuotationTable({
   onConvertToSalesOrder,
   emptyAction,
 }: QuotationTableProps) {
+  const navigate = useNavigate();
   const submitMutation = useSubmitQuotation();
   const deleteMutation = useDeleteQuotation();
   const createOrderMutation = useCreateSalesOrderFromQuotation();
@@ -183,7 +186,7 @@ export function QuotationTable({
             return (
               <TableRow
                 key={row.name}
-                onClick={() => onEdit?.(row)}
+                onClick={() => void navigate({ to: "/quotations/$quotationId", params: { quotationId: row.name } })}
                 className={cn(
                   "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
                   isSelected && "bg-muted/30",
@@ -196,7 +199,13 @@ export function QuotationTable({
 
                 {/* Quotation ID */}
                 <TableCell className="text-xs font-mono font-medium text-foreground py-2 truncate">
-                  <span className="hover:underline">{row.name}</span>
+                  <Link
+                    to="/quotations/$quotationId"
+                    params={{ quotationId: row.name }}
+                    className="hover:underline text-foreground font-semibold hover:text-primary"
+                  >
+                    {row.name}
+                  </Link>
                 </TableCell>
 
                 {/* Customer */}
@@ -270,6 +279,13 @@ export function QuotationTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 text-xs">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => void navigate({ to: "/quotations/$quotationId", params: { quotationId: row.name } })}
+                          className="font-medium cursor-pointer"
+                        >
+                          <Eye className="size-3.5 mr-1.5 text-muted-foreground" />
+                          View Quotation Detail
+                        </DropdownMenuItem>
                         {onEdit && (
                           <DropdownMenuItem onClick={() => onEdit(row)}>
                             Edit Quotation

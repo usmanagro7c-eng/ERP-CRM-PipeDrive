@@ -453,17 +453,6 @@ function DealDetailPage() {
             <span>Convert to Quotation</span>
           </Button>
 
-          {/* Convert to Sales Order Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleConvertToSalesOrder()}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-secondary/80 hover:bg-secondary text-foreground shadow-2xs gap-1 border-border/80"
-          >
-            <ShoppingCart className="size-3.5 text-primary" />
-            <span>Convert to Sales Order</span>
-          </Button>
-
           {/* Won Button */}
           <Button
             size="sm"

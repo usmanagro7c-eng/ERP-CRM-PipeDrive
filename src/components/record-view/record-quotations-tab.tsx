@@ -1,4 +1,5 @@
 import { FileText, Plus, ExternalLink, ShoppingCart } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,13 @@ export function RecordQuotationsTab({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground truncate">{q.name}</span>
+                      <Link
+                        to="/quotations/$quotationId"
+                        params={{ quotationId: q.name }}
+                        className="font-semibold text-foreground truncate hover:underline hover:text-primary cursor-pointer"
+                      >
+                        {q.name}
+                      </Link>
                       {getStatusBadge(q.status)}
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">
@@ -118,13 +125,14 @@ export function RecordQuotationsTab({
                       <span>Convert to Sales Order</span>
                     </Button>
                   )}
-                  <a
-                    href={`/quotations?q=${encodeURIComponent(q.name)}`}
+                  <Link
+                    to="/quotations/$quotationId"
+                    params={{ quotationId: q.name }}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer rounded hover:bg-secondary/50"
-                    title="View Quotation"
+                    title="View Quotation Detail"
                   >
                     <ExternalLink className="size-3.5" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             );

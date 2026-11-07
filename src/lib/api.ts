@@ -778,15 +778,36 @@ export async function updateQuotation(
   name: string,
   values: Record<string, unknown>,
 ): Promise<Quotation> {
-  const payload = await proxyRequest(
-    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
-    {
-      method: "PUT",
-      body: values,
-    },
-  );
-  const data = unwrapResourceData<unknown>(payload);
-  return (data ?? {}) as Quotation;
+  try {
+    const payload = await proxyRequest(
+      `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
+      {
+        method: "PUT",
+        body: values,
+      },
+    );
+    const data = unwrapResourceData<unknown>(payload);
+    return (data ?? {}) as Quotation;
+  } catch (err) {
+    // If standard PUT fails (e.g. status change on submitted quotation), use frappe.client.set_value
+    if (typeof values["status"] === "string") {
+      try {
+        await proxyRequest("api/method/frappe.client.set_value", {
+          method: "POST",
+          body: {
+            doctype: QUOTATION_DOCTYPE,
+            name,
+            fieldname: "status",
+            value: values["status"],
+          },
+        });
+        return await getQuotation(name);
+      } catch {
+        // rethrow original
+      }
+    }
+    throw err;
+  }
 }
 
 export async function submitQuotation(name: string): Promise<Quotation> {
@@ -797,6 +818,15 @@ export async function submitQuotation(name: string): Promise<Quotation> {
       body: { docstatus: 1 },
     },
   );
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as Quotation;
+}
+
+export async function cancelQuotation(name: string): Promise<Quotation> {
+  const payload = await proxyRequest("api/method/frappe.client.cancel", {
+    method: "POST",
+    body: { doctype: QUOTATION_DOCTYPE, name },
+  });
   const data = unwrapResourceData<unknown>(payload);
   return (data ?? {}) as Quotation;
 }

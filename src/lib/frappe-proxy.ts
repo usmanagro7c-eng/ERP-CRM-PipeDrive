@@ -92,6 +92,9 @@ export function classifyRequest(
   if (method === "POST") {
     if (path === "api/method/uploadfile") return { kind: "upload" };
     if (
+      path === "api/method/frappe.client.set_value" ||
+      path === "api/method/frappe.client.cancel" ||
+      path === "api/method/erpnext.selling.doctype.quotation.quotation.declare_order_lost" ||
       path === "api/method/frappe.desk.form.utils.add_comment" ||
       path === "api/method/frappe.core.doctype.communication.email.make" ||
       path === "api/method/crm.api.dashboard.get_dashboard" ||

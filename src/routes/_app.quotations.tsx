@@ -366,8 +366,10 @@ function QuotationsPage() {
           ) : activeView === "kanban" ? (
             <QuotationKanban
               rows={quotations}
+              loading={isLoading}
               onEdit={handleEdit}
               onAddQuotation={handleOpenCreate}
+              onConvertToSalesOrder={handleConvertToSalesOrder}
             />
           ) : (
             <QuotationGrid

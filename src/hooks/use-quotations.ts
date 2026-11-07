@@ -106,6 +106,20 @@ export function useSubmitQuotation() {
   });
 }
 
+export function useCancelQuotation() {
+  const invalidate = useInvalidateQuotations();
+  return useMutation({
+    mutationFn: (name: string) => api.cancelQuotation(name),
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("Quotation cancelled / marked as lost");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Could not cancel quotation");
+    },
+  });
+}
+
 export function useDeleteQuotation() {
   const invalidate = useInvalidateQuotations();
   return useMutation({

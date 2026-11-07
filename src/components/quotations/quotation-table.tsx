@@ -41,6 +41,7 @@ interface QuotationTableProps {
   loading?: boolean;
   onEdit?: (quotation: Quotation) => void;
   onViewOrder?: (orderName: string) => void;
+  onConvertToSalesOrder?: (quotation: Quotation) => void;
   emptyAction?: React.ReactNode;
 }
 
@@ -62,7 +63,13 @@ function QuotationStatusBadge({ status }: { status?: string }) {
   );
 }
 
-export function QuotationTable({ rows, loading, onEdit, emptyAction }: QuotationTableProps) {
+export function QuotationTable({
+  rows,
+  loading,
+  onEdit,
+  onConvertToSalesOrder,
+  emptyAction,
+}: QuotationTableProps) {
   const submitMutation = useSubmitQuotation();
   const deleteMutation = useDeleteQuotation();
   const createOrderMutation = useCreateSalesOrderFromQuotation();
@@ -108,6 +115,10 @@ export function QuotationTable({ rows, loading, onEdit, emptyAction }: Quotation
   }
 
   async function handleCreateSalesOrder(q: Quotation) {
+    if (onConvertToSalesOrder) {
+      onConvertToSalesOrder(q);
+      return;
+    }
     setActiveActionId(q.name);
     try {
       await createOrderMutation.mutateAsync({ quotation: q });
@@ -227,56 +238,67 @@ export function QuotationTable({ rows, loading, onEdit, emptyAction }: Quotation
                   )}
                 </TableCell>
 
-                {/* Actions Menu */}
-                <TableCell className="text-right pr-2 py-2" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
-                        disabled={isRowBusy}
-                        aria-label={`Actions for quotation ${row.name}`}
-                      >
-                        {isRowBusy ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <MoreVertical className="size-3.5 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 text-xs">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Quotation
-                        </DropdownMenuItem>
-                      )}
-                      {isDraft && (
-                        <DropdownMenuItem
-                          onClick={() => handleSubmit(row)}
-                          className="text-primary font-medium"
+                {/* Actions Menu & Quick Convert */}
+                <TableCell className="text-right pr-3 py-1.5" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Button
+                      size="sm"
+                      onClick={() => handleCreateSalesOrder(row)}
+                      disabled={isRowBusy}
+                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-2xs"
+                      title="Convert this quotation to a Sales Order"
+                    >
+                      <ShoppingCart className="size-3" />
+                      <span className="hidden sm:inline">Convert to Order</span>
+                    </Button>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 opacity-70 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                          disabled={isRowBusy}
+                          aria-label={`Actions for quotation ${row.name}`}
                         >
-                          <CheckCircle2 className="size-3.5 mr-1.5" />
-                          Submit Quotation
-                        </DropdownMenuItem>
-                      )}
-                      {row.docstatus === 1 && (
+                          {isRowBusy ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <MoreVertical className="size-3.5 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 text-xs">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        {onEdit && (
+                          <DropdownMenuItem onClick={() => onEdit(row)}>
+                            Edit Quotation
+                          </DropdownMenuItem>
+                        )}
+                        {isDraft && (
+                          <DropdownMenuItem
+                            onClick={() => handleSubmit(row)}
+                            className="text-primary font-medium"
+                          >
+                            <CheckCircle2 className="size-3.5 mr-1.5" />
+                            Submit Quotation
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => handleCreateSalesOrder(row)}>
                           <ShoppingCart className="size-3.5 mr-1.5 text-emerald-600" />
-                          Create Sales Order
+                          Convert to Sales Order
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => handleDelete(row)}
-                      >
-                        <Trash2 className="size-3.5 mr-1.5" />
-                        Delete Quotation
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleDelete(row)}
+                        >
+                          <Trash2 className="size-3.5 mr-1.5" />
+                          Delete Quotation
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             );

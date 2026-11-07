@@ -37,6 +37,10 @@ import { QuotationTable } from "@/components/quotations/quotation-table";
 import { QuotationKanban } from "@/components/quotations/quotation-kanban";
 import { QuotationGrid } from "@/components/quotations/quotation-grid";
 import {
+  SalesOrderFormModal,
+  type SalesOrderInitialValues,
+} from "@/components/sales-orders/sales-order-form-modal";
+import {
   quotationCountOptions,
   quotationListOptions,
   type Quotation,
@@ -107,6 +111,8 @@ function QuotationsPage() {
   const [term, setTerm] = useState(q);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
+  const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
+  const [salesOrderInitialValues, setSalesOrderInitialValues] = useState<SalesOrderInitialValues | null>(null);
   const [localView, setLocalView] = useState<ViewMode>(search.view ?? "table");
   const [pageSize, setPageSize] = useState<number>(20);
 
@@ -179,6 +185,21 @@ function QuotationsPage() {
   function handleEdit(quotation: Quotation) {
     setEditingQuotation(quotation);
     setModalOpen(true);
+  }
+
+  function handleConvertToSalesOrder(quotation: Quotation) {
+    setSalesOrderInitialValues({
+      customer: quotation.party_name,
+      items: quotation.items?.map((item) => ({
+        item_code: item.item_code,
+        item_name: item.item_name || item.item_code,
+        qty: item.qty,
+        rate: item.rate,
+        amount: item.amount ?? (item.qty * item.rate),
+      })),
+      quotation_ref: quotation.name,
+    });
+    setSalesOrderModalOpen(true);
   }
 
   const viewOptions = [
@@ -330,6 +351,7 @@ function QuotationsPage() {
               rows={quotations}
               loading={isLoading}
               onEdit={handleEdit}
+              onConvertToSalesOrder={handleConvertToSalesOrder}
               emptyAction={
                 <Button
                   size="sm"
@@ -352,6 +374,7 @@ function QuotationsPage() {
               rows={quotations}
               loading={isLoading}
               onEdit={handleEdit}
+              onConvertToSalesOrder={handleConvertToSalesOrder}
             />
           )}
         </div>
@@ -389,6 +412,14 @@ function QuotationsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         quotation={editingQuotation}
+        onConvertToSalesOrder={handleConvertToSalesOrder}
+      />
+
+      {/* Sales Order Creation Modal from Quotation */}
+      <SalesOrderFormModal
+        open={salesOrderModalOpen}
+        onOpenChange={setSalesOrderModalOpen}
+        initialValues={salesOrderInitialValues}
       />
     </div>
   );

@@ -27,13 +27,17 @@ import {
 } from "@/hooks/use-sales-orders";
 import type { QuotationItem } from "@/lib/api";
 
-interface SalesOrderFormModalProps {
+export interface SalesOrderInitialValues {
+  customer?: string | undefined;
+  items?: QuotationItem[] | undefined;
+  quotation_ref?: string | undefined;
+}
+
+export interface SalesOrderFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order?: SalesOrder | null;
-  initialValues?: {
-    customer?: string;
-  } | null;
+  initialValues?: SalesOrderInitialValues | null | undefined;
 }
 
 export function SalesOrderFormModal({
@@ -85,7 +89,9 @@ export function SalesOrderFormModal({
       setDeliveryDate(nextWeek);
       setOrderType("Sales");
 
-      if (catalogItems.length > 0) {
+      if (initialValues?.items && initialValues.items.length > 0) {
+        setItems(initialValues.items);
+      } else if (catalogItems.length > 0) {
         const item = catalogItems[0]!;
         setItems([
           {
@@ -176,7 +182,11 @@ export function SalesOrderFormModal({
               <ShoppingCart className="size-4 text-muted-foreground" />
             </div>
             <DialogTitle className="text-base font-semibold text-foreground">
-              {order ? `Edit Sales Order: ${order.name}` : "Create Sales Order"}
+              {order
+                ? `Edit Sales Order: ${order.name}`
+                : initialValues?.quotation_ref
+                ? `Convert to Sales Order (${initialValues.quotation_ref})`
+                : "Create Sales Order"}
             </DialogTitle>
           </div>
           <div className="flex items-center gap-1">

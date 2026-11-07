@@ -21,6 +21,7 @@ import {
   UserPlus,
   Zap,
   Plus,
+  ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,6 +47,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
+import {
+  SalesOrderFormModal,
+  type SalesOrderInitialValues,
+} from "@/components/sales-orders/sales-order-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import {
@@ -163,6 +168,24 @@ function DealDetailPage() {
   const [quotationModalOpen, setQuotationModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [lostModalOpen, setLostModalOpen] = useState(false);
+  const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
+  const [salesOrderInitialValues, setSalesOrderInitialValues] = useState<SalesOrderInitialValues | null>(null);
+
+  function handleConvertToSalesOrder(quotation?: any) {
+    if (quotation) {
+      setSalesOrderInitialValues({
+        customer: String(quotation.party_name || sidebarValues.organization || ""),
+        items: quotation.items,
+        quotation_ref: quotation.name,
+      });
+    } else {
+      setSalesOrderInitialValues({
+        customer: sidebarValues.organization || undefined,
+        quotation_ref: undefined,
+      });
+    }
+    setSalesOrderModalOpen(true);
+  }
 
   // Hash tab router sync
   useEffect(() => {
@@ -420,6 +443,27 @@ function DealDetailPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Convert to Quotation Button */}
+          <Button
+            size="sm"
+            onClick={() => setQuotationModalOpen(true)}
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1"
+          >
+            <FileText className="size-3.5" />
+            <span>Convert to Quotation</span>
+          </Button>
+
+          {/* Convert to Sales Order Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleConvertToSalesOrder()}
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-secondary/80 hover:bg-secondary text-foreground shadow-2xs gap-1 border-border/80"
+          >
+            <ShoppingCart className="size-3.5 text-primary" />
+            <span>Convert to Sales Order</span>
+          </Button>
+
           {/* Won Button */}
           <Button
             size="sm"
@@ -555,6 +599,7 @@ function DealDetailPage() {
                   dealId={dealId}
                   customerName={sidebarValues.organization}
                   onNewQuotation={() => setQuotationModalOpen(true)}
+                  onConvertToSalesOrder={(q) => handleConvertToSalesOrder(q)}
                 />
               )}
             </div>
@@ -964,6 +1009,14 @@ function DealDetailPage() {
         onOpenChange={setQuotationModalOpen}
         quotation={null}
         initialValues={{ party_name: sidebarValues.organization }}
+      />
+
+      {/* Create / Convert to Sales Order Modal */}
+      <SalesOrderFormModal
+        open={salesOrderModalOpen}
+        onOpenChange={setSalesOrderModalOpen}
+        order={null}
+        initialValues={salesOrderInitialValues}
       />
     </div>
   );

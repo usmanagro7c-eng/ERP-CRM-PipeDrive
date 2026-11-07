@@ -1,4 +1,4 @@
-import { FileText, Plus, ExternalLink } from "lucide-react";
+import { FileText, Plus, ExternalLink, ShoppingCart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,14 @@ interface RecordQuotationsTabProps {
   dealId: string;
   customerName?: string;
   onNewQuotation?: () => void;
+  onConvertToSalesOrder?: (quotation: Quotation) => void;
 }
 
 export function RecordQuotationsTab({
   dealId,
   customerName,
   onNewQuotation,
+  onConvertToSalesOrder,
 }: RecordQuotationsTabProps) {
   const { data: quotations = [], isLoading } = useQuery(
     quotationListOptions({
@@ -105,8 +107,19 @@ export function RecordQuotationsTab({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {onConvertToSalesOrder && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onConvertToSalesOrder(q)}
+                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-2xs"
+                    >
+                      <ShoppingCart className="size-3" />
+                      <span>Convert to Sales Order</span>
+                    </Button>
+                  )}
                   <a
-                    href={`/quotations?search=${encodeURIComponent(q.name)}`}
+                    href={`/quotations?q=${encodeURIComponent(q.name)}`}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer rounded hover:bg-secondary/50"
                     title="View Quotation"
                   >

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, CheckCircle2, Maximize2, Minimize2, X } from "lucide-react";
+import { Loader2, CheckCircle2, Maximize2, Minimize2, X, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -37,6 +37,7 @@ interface QuotationFormModalProps {
     party_name?: string;
     crm_deal?: string;
   } | null;
+  onConvertToSalesOrder?: (quotation: Quotation) => void;
 }
 
 export function QuotationFormModal({
@@ -44,6 +45,7 @@ export function QuotationFormModal({
   onOpenChange,
   quotation,
   initialValues,
+  onConvertToSalesOrder,
 }: QuotationFormModalProps) {
   const { data: customerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
@@ -293,6 +295,22 @@ export function QuotationFormModal({
 
         {/* Footer Submit Buttons matching Frappe CRM */}
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-border/40 bg-card">
+          {quotation && onConvertToSalesOrder ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onOpenChange(false);
+                onConvertToSalesOrder(quotation);
+              }}
+              className="mr-auto h-8 text-xs font-semibold border-emerald-500/30 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-400 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 shadow-xs"
+            >
+              <ShoppingCart className="size-3.5" />
+              <span>Convert to Sales Order</span>
+            </Button>
+          ) : null}
+
           <Button
             type="button"
             variant="outline"

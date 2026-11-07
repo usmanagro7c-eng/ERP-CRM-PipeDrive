@@ -30,6 +30,7 @@ interface QuotationGridProps {
   rows: Quotation[];
   loading?: boolean;
   onEdit?: (quotation: Quotation) => void;
+  onConvertToSalesOrder?: (quotation: Quotation) => void;
   emptyAction?: React.ReactNode;
 }
 
@@ -67,6 +68,7 @@ export function QuotationGrid({
   rows,
   loading,
   onEdit,
+  onConvertToSalesOrder,
   emptyAction,
 }: QuotationGridProps) {
   const submitMutation = useSubmitQuotation();
@@ -95,6 +97,10 @@ export function QuotationGrid({
   }
 
   async function handleCreateSalesOrder(q: Quotation) {
+    if (onConvertToSalesOrder) {
+      onConvertToSalesOrder(q);
+      return;
+    }
     setActiveActionId(q.name);
     try {
       await createOrderMutation.mutateAsync({ quotation: q });
@@ -248,6 +254,18 @@ export function QuotationGrid({
                 <span className="text-base font-bold text-primary">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </span>
+              </div>
+
+              <div className="pt-2 border-t border-border/40">
+                <Button
+                  size="sm"
+                  onClick={() => handleCreateSalesOrder(row)}
+                  disabled={isRowBusy}
+                  className="w-full h-7 text-xs font-semibold gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+                >
+                  <ShoppingCart className="size-3.5" />
+                  <span>Convert to Sales Order</span>
+                </Button>
               </div>
             </div>
           </div>

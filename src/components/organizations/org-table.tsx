@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
+import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -226,9 +227,11 @@ export function OrgTable({
                   <TableCell key={field.fieldname} className="max-w-64 truncate">
                     <span className="flex items-center gap-2">
                       {field.fieldname === titleField && !imageField && (
-                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                          {initialsOf(row[field.fieldname])}
-                        </span>
+                        <AvatarGradient
+                          name={String(row[field.fieldname] || orgName)}
+                          size="sm"
+                          rounded="md"
+                        />
                       )}
                       {field.fieldname === titleField &&
                       imageField &&

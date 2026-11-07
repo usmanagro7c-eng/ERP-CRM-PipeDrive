@@ -64,6 +64,7 @@ import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
 import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
 import { DealDataTab } from "@/components/deals/deal-data-tab";
 import { RecordQuotationsTab } from "@/components/record-view/record-quotations-tab";
+import { triggerConfetti } from "@/lib/confetti";
 import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -251,6 +252,9 @@ function DealDetailPage() {
 
   async function handleStageChange(newStage: string) {
     if (!deal) return;
+    if (newStage.toLowerCase().includes("won")) {
+      triggerConfetti();
+    }
     try {
       await saveMutation.mutateAsync({
         name: dealId,
@@ -264,6 +268,7 @@ function DealDetailPage() {
 
   async function handleMarkWon() {
     if (!deal) return;
+    triggerConfetti();
     try {
       await saveMutation.mutateAsync({
         name: dealId,

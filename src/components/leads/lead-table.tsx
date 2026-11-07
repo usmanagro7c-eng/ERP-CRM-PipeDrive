@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LeadStatusBadge, LeadTemperatureBadge } from "@/components/leads/lead-stage-badge";
+import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import { useSaveLead, useDeleteLead, type FrappeDocTypeMeta } from "@/hooks/use-leads";
 import {
   fieldsByNames,
@@ -130,11 +131,9 @@ function LeadCellValue({
       (row["lead_name"] as string) ||
       `${String(row["first_name"] ?? "")} ${String(row["last_name"] ?? "")}`.trim();
     return (
-      <div className="flex items-center gap-2 font-medium text-foreground">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-          {initialsOf(row["first_name"], row["last_name"])}
-        </span>
-        <span className="truncate max-w-[180px]">{fullName || "—"}</span>
+      <div className="flex items-center gap-2.5 font-medium text-foreground">
+        <AvatarGradient name={fullName || "Lead"} size="sm" />
+        <span className="truncate max-w-[180px] font-semibold">{fullName || "—"}</span>
       </div>
     );
   }
@@ -143,7 +142,7 @@ function LeadCellValue({
     if (!value) return <span className="text-muted-foreground">—</span>;
     return (
       <div className="flex items-center gap-1.5 font-medium text-foreground">
-        <Building2 className="size-3.5 text-muted-foreground shrink-0" />
+        <AvatarGradient name={String(value)} size="xs" rounded="md" />
         <span className="truncate max-w-[180px]">{String(value)}</span>
       </div>
     );
@@ -192,8 +191,8 @@ function LeadCellValue({
     if (!value) return <span className="text-muted-foreground">—</span>;
     return (
       <div className="flex items-center gap-1.5 text-xs">
-        <User className="size-3 text-muted-foreground shrink-0" />
-        <span className="truncate">{String(value)}</span>
+        <AvatarGradient name={String(value)} size="xs" />
+        <span className="truncate max-w-[140px] text-muted-foreground">{String(value)}</span>
       </div>
     );
   }

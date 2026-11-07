@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ContactStatusBadge } from "@/components/contacts/contact-badge";
+import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import {
   useSaveContact,
   useDeleteContact,
@@ -409,9 +410,7 @@ export function ContactTable({
                       onClick={() => (onRowClick ? onRowClick(name) : onEdit?.(contact))}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold shrink-0">
-                          {initialsOf(firstName, lastName)}
-                        </div>
+                        <AvatarGradient name={fullName} size="sm" />
                         <div className="truncate">
                           <span className="text-sm font-medium text-foreground hover:underline">
                             {fullName}
@@ -462,7 +461,7 @@ export function ContactTable({
                     <TableCell>
                       {company ? (
                         <span className="inline-flex items-center gap-1.5 text-xs text-foreground truncate max-w-[180px]">
-                          <Building2 className="size-3 text-muted-foreground shrink-0" />
+                          <AvatarGradient name={company} size="xs" rounded="md" />
                           <span className="truncate">{company}</span>
                         </span>
                       ) : (

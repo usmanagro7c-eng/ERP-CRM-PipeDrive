@@ -41,6 +41,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -216,9 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {!collapsed && (
               <div className="flex flex-1 items-center justify-between">
                 <span>Search</span>
-                <kbd className="text-[10px] text-muted-foreground/80 font-mono bg-muted/60 px-1 py-0.2 rounded border border-border/60">
-                  Ctrl K
-                </kbd>
+                <Kbd>Ctrl K</Kbd>
               </div>
             )}
           </button>

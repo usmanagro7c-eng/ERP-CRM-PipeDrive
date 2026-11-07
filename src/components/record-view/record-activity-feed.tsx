@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import { getRecordActivities, type CrmActivityEvent } from "@/lib/api";
 
 interface RecordActivityFeedProps {
@@ -111,17 +112,17 @@ export function RecordActivityFeed({
       </div>
 
       {/* Timeline Stream */}
-      <div className="relative pl-6 space-y-5 border-l-2 border-border/60 ml-3 mt-3 pb-8">
+      <div className="relative pl-6 space-y-5 border-l-2 border-border/60 ml-3.5 mt-3 pb-8">
         {/* Creation Event Node (Always shown matching Frappe CRM) */}
-        <div className="relative group">
-          <div className="absolute -left-[33px] top-0 flex size-6 items-center justify-center rounded-full bg-secondary text-foreground ring-4 ring-background">
-            <UserIcon className="size-3" />
+        <div className="relative group p-1 -ml-1 rounded-xl transition-colors hover:bg-muted/20">
+          <div className="absolute -left-[35px] top-0 ring-4 ring-background rounded-full">
+            <AvatarGradient name={authorName(owner)} size="xs" />
           </div>
           <div className="text-xs">
             <span className="font-semibold text-foreground">{authorName(owner)}</span>{" "}
             <span className="text-muted-foreground">created this {referenceDoctype.toLowerCase().replace("crm ", "")}</span>
             {creation && (
-              <span className="text-[11px] text-muted-foreground ml-2">
+              <span className="text-[11px] text-muted-foreground/70 ml-2">
                 {timeAgo(creation)}
               </span>
             )}
@@ -150,17 +151,15 @@ export function RecordActivityFeed({
           const author = authorName(event.owner);
           const subject =
             event.activity_type === "creation"
-              ? "created this lead"
+              ? "created this record"
               : event.activity_type === "changed" && eventData.field_label
               ? `updated ${eventData.field_label}`
               : event.activity_type || "updated";
 
           return (
-            <div key={idx} className="relative group">
-              <div className="absolute -left-[33px] top-0 flex size-6 items-center justify-center rounded-full bg-secondary text-foreground ring-4 ring-background">
-                <span className="text-[10px] font-bold">
-                  {author.charAt(0).toUpperCase()}
-                </span>
+            <div key={idx} className="relative group p-1 -ml-1 rounded-xl transition-colors hover:bg-muted/20">
+              <div className="absolute -left-[35px] top-0 ring-4 ring-background rounded-full">
+                <AvatarGradient name={author} size="xs" />
               </div>
 
               <div className="space-y-1 text-xs">

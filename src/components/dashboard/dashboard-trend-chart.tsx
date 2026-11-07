@@ -24,6 +24,40 @@ interface DashboardTrendChartProps {
   data: DashboardAxisChartData;
 }
 
+interface TooltipPayloadItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string;
+}
+
+function CustomGlassTooltip({ active, payload, label }: CustomTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-3 shadow-xl text-xs space-y-1.5 min-w-[150px]">
+      <div className="font-semibold text-foreground border-b border-border/40 pb-1 text-[11px] uppercase tracking-wide">
+        {label}
+      </div>
+      {payload.map((item, i) => (
+        <div key={i} className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+            <span className="text-muted-foreground truncate max-w-[100px]">{item.name}</span>
+          </div>
+          <span className="font-mono font-bold text-foreground">
+            {Number(item.value).toLocaleString("en-PK")}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
   const seriesNames = useMemo(
     () => (data.series || []).map((s) => s.name),
@@ -86,14 +120,7 @@ export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
                 className="text-[11px] text-muted-foreground"
                 allowDecimals={false}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--color-card, #1e1e24)",
-                  borderColor: "var(--color-border, #333)",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                }}
-              />
+              <Tooltip content={<CustomGlassTooltip />} />
               {data.series?.map((s, idx) => {
                 if (!activeSeries[s.name]) return null;
                 const stroke = SERIES_COLORS[s.name] || DEFAULT_COLORS[idx % DEFAULT_COLORS.length];

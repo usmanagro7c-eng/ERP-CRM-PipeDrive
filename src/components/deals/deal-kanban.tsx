@@ -33,9 +33,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency, getStageStyle } from "@/components/deals/deal-stage-badge";
+import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
+import { triggerConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 interface DealKanbanProps {
@@ -197,6 +199,12 @@ export function DealKanban({
     }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
     setMovingDeals((prev) => ({ ...prev, [dealName]: targetColKey }));
+    
+    // Check if target stage is "Won"
+    if (targetColKey.toLowerCase().includes("won")) {
+      triggerConfetti();
+    }
+
     try {
       await saveMutation.mutateAsync({ name: dealName, values: patch });
     } finally {
@@ -375,14 +383,17 @@ export function DealKanban({
                           </div>
                         )}
                         {/* Top row: Organization Name & 3-dots */}
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="flex-1 truncate">
-                            <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
-                              {orgName}
-                            </h4>
-                            <span className="font-mono text-[10px] text-muted-foreground">
-                              {name}
-                            </span>
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <AvatarGradient name={orgName} size="xs" rounded="md" />
+                            <div className="flex-1 truncate">
+                              <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+                                {orgName}
+                              </h4>
+                              <span className="font-mono text-[10px] text-muted-foreground">
+                                {name}
+                              </span>
+                            </div>
                           </div>
 
                           <div
@@ -487,7 +498,7 @@ export function DealKanban({
                               className="flex items-center gap-1 font-medium"
                               title={`Owner: ${String(owner)}`}
                             >
-                              <User className="size-3 opacity-70" />
+                              <AvatarGradient name={String(owner)} size="xs" />
                               <span className="truncate max-w-[90px]">{String(owner)}</span>
                             </div>
                           )}

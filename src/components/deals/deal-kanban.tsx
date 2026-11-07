@@ -276,12 +276,12 @@ export function DealKanban({
                 setDraggedDealName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
-                isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
+                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs",
+                isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
               )}
             >
               {/* Column Header */}
-              <div className="border-b bg-card/60 p-3 rounded-t-lg">
+              <div className="border-b bg-card/70 p-3 rounded-t-xl backdrop-blur-xs">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
@@ -298,7 +298,7 @@ export function DealKanban({
                       variant="ghost"
                       size="icon"
                       onClick={() => onAddInStage(col.key)}
-                      className="size-6 text-muted-foreground hover:text-foreground"
+                      className="size-6 text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
                       title={`Add deal in ${col.label}`}
                     >
                       <Plus className="size-3.5" />
@@ -312,7 +312,7 @@ export function DealKanban({
                     {formatCurrency(totalValue, currency)}
                   </span>
                   {col.probability !== undefined && (
-                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-medium">
+                    <span className="text-[10px] bg-muted/80 px-1.5 py-0.5 rounded-full text-muted-foreground font-medium">
                       {col.probability}% prob
                     </span>
                   )}
@@ -323,8 +323,8 @@ export function DealKanban({
               <div className="flex flex-col gap-2.5 p-2.5 min-h-[160px] max-h-[calc(100vh-270px)] overflow-y-auto">
                 {loading && rows.length === 0 ? (
                   <div className="space-y-2">
-                    <Skeleton className="h-24 w-full rounded-md" />
-                    <Skeleton className="h-24 w-full rounded-md" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
                 ) : deals.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
@@ -361,8 +361,8 @@ export function DealKanban({
                         }}
                         onClick={() => onRowClick?.(name)}
                         className={cn(
-                          "group relative overflow-hidden rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
-                          draggedDealName === name ? "opacity-40 border-dashed" : "border-border",
+                          "group relative overflow-hidden rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-foreground/20 cursor-grab active:cursor-grabbing active:scale-[0.98]",
+                          draggedDealName === name ? "opacity-40 border-dashed" : "border-border/80",
                           isMoving && "pointer-events-none ring-2 ring-primary/40",
                         )}
                       >

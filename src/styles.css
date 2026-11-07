@@ -142,7 +142,96 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Sleek modern minimalist scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--color-muted-foreground) 25%, transparent);
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--color-muted-foreground) 45%, transparent);
+  }
+}
+
+/* Custom smooth animations & micro-interactions */
+@keyframes enter-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-fade-up {
+  animation: enter-fade-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: enter-scale 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.card-interactive {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
+.dark .card-interactive:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
 }
 
 /* Custom smooth loading animations */

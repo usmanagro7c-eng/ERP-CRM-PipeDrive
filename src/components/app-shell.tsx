@@ -82,14 +82,19 @@ function NavLinks({
             title={collapsed ? item.label : undefined}
             onClick={onItemClick}
             className={cn(
-              "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+              "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer active:scale-[0.98]",
               collapsed ? "justify-center px-1.5" : "",
               active
-                ? "bg-neutral-200/80 dark:bg-neutral-800 text-foreground font-semibold shadow-2xs"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                ? "bg-neutral-200/90 dark:bg-neutral-800 text-foreground font-semibold shadow-2xs"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
             )}
           >
-            <item.icon className="size-4 shrink-0 opacity-80" />
+            <item.icon
+              className={cn(
+                "size-4 shrink-0 transition-transform duration-150 group-hover:scale-110",
+                active ? "opacity-100 text-foreground" : "opacity-75",
+              )}
+            />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );

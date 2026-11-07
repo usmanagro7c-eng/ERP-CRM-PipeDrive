@@ -166,7 +166,7 @@ function ActivitiesPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
+    <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
       <div className="flex items-center justify-between border-b border-border px-6 py-2.5 bg-card/60 backdrop-blur-xs">
         {/* Breadcrumb: Tasks / ☰ List */}

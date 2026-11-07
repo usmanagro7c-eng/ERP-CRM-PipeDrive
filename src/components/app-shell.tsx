@@ -2,19 +2,26 @@ import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Bell,
   Building2,
   CalendarClock,
+  ChevronDown,
   Columns3,
   FileText,
+  HelpCircle,
   LayoutDashboard,
-  Leaf,
+  LogOut,
+  Menu,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   PhoneCall,
   Search,
   ShoppingCart,
   StickyNote,
+  Sun,
   Target,
+  User,
   Users,
 } from "lucide-react";
 
@@ -27,6 +34,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { CommandPalette } from "@/components/command-palette";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -39,78 +53,71 @@ const NAV_ITEMS = [
   { label: "Sales Orders", to: "/sales-orders", icon: ShoppingCart },
   { label: "Organizations", to: "/organizations", icon: Building2 },
   { label: "Contacts", to: "/contacts", icon: Users },
-  { label: "Activities", to: "/activities", icon: CalendarClock },
   { label: "Notes", to: "/notes", icon: StickyNote },
+  { label: "Tasks", to: "/activities", icon: CalendarClock },
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
 ] as const;
 
 function NavLinks({
-  vertical,
   collapsed,
+  onItemClick,
 }: {
-  vertical?: boolean;
   collapsed?: boolean;
+  onItemClick?: () => void;
 }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
   return (
-    <>
+    <div className="flex flex-col gap-0.5 px-2">
       {NAV_ITEMS.map((item) => {
         const active =
           item.to === "/dashboard"
             ? pathname === "/dashboard"
             : pathname.startsWith(item.to);
+
         return (
           <Link
             key={item.to}
             to={item.to}
             title={collapsed ? item.label : undefined}
+            onClick={onItemClick}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              vertical ? "" : "shrink-0",
-              collapsed && "justify-center px-2",
+              "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+              collapsed ? "justify-center px-1.5" : "",
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                ? "bg-neutral-200/80 dark:bg-neutral-800 text-foreground font-semibold shadow-2xs"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
-            <item.icon className="size-4 shrink-0" />
+            <item.icon className="size-4 shrink-0 opacity-80" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );
       })}
-    </>
+    </div>
   );
 }
 
-function CommandSearchTrigger({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative flex items-center justify-between w-full max-w-[180px] sm:max-w-md h-9 px-3 text-xs rounded-full border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors cursor-pointer"
-      aria-label="Open global search (Ctrl+K)"
-    >
-      <div className="flex items-center gap-2 truncate">
-        <Search className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="truncate">Search CRM or modules...</span>
-      </div>
-      <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">
-        <span className="text-xs">Ctrl</span> K
-      </kbd>
-    </button>
-  );
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
-  return parts.map((part) => part.charAt(0).toUpperCase()).join("") || "?";
-}
-
-function UserMenu() {
+function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useQuery(sessionQueryOptions());
-  const name = session?.name ?? "";
+  const name = session?.name || "Usman";
+  const email = session?.user || "usman@example.com";
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
+
+  function toggleTheme() {
+    if (typeof document !== "undefined") {
+      const isCurrentlyDark = document.documentElement.classList.toggle("dark");
+      setIsDark(isCurrentlyDark);
+    }
+  }
 
   async function signOut() {
     await logout();
@@ -123,20 +130,47 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-ring cursor-pointer"
-          aria-label="Account menu"
+          type="button"
+          className={cn(
+            "flex items-center gap-2.5 w-full rounded-md p-2 text-left hover:bg-muted/60 transition-colors cursor-pointer",
+            collapsed && "justify-center p-1.5",
+          )}
         >
-          {initialsOf(name)}
+          {/* Brand Icon */}
+          <div className="flex size-7 items-center justify-center rounded-lg bg-pink-600 text-white shrink-0 shadow-xs">
+            <svg
+              className="size-4 fill-current"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+
+          {!collapsed && (
+            <div className="flex flex-1 items-center justify-between min-w-0">
+              <div className="min-w-0 leading-tight">
+                <div className="text-xs font-semibold text-foreground truncate">CRM</div>
+                <div className="text-[11px] text-muted-foreground truncate">{name}</div>
+              </div>
+              <ChevronDown className="size-3 text-muted-foreground opacity-60 ml-1 shrink-0" />
+            </div>
+          )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 text-xs">
-        <DropdownMenuLabel className="truncate">{name || "Signed in"}</DropdownMenuLabel>
-        {session?.user && session.user !== name && (
-          <p className="truncate px-2 pb-1.5 text-xs text-muted-foreground">{session.user}</p>
-        )}
+      <DropdownMenuContent align="start" className="w-56 text-xs">
+        <DropdownMenuLabel className="flex flex-col gap-0.5">
+          <span className="font-semibold text-foreground truncate">{name}</span>
+          <span className="font-normal text-[11px] text-muted-foreground truncate">{email}</span>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => void signOut()} className="cursor-pointer">
-          Sign out
+        <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer gap-2">
+          {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+          <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => void signOut()} className="cursor-pointer gap-2 text-destructive">
+          <LogOut className="size-3.5" />
+          <span>Sign Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -146,100 +180,147 @@ function UserMenu() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      <div className="flex min-h-screen w-full">
-        {/* Desktop Sidebar */}
-        <aside
-          className={cn(
-            "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200 md:flex",
-            collapsed ? "w-16" : "w-60",
-          )}
-        >
-          {/* Logo & Brand */}
-          <div className={cn("flex items-center gap-2.5 px-4 py-5", collapsed && "justify-center px-2")}>
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-              <Leaf className="size-5" />
-            </span>
-            {!collapsed && (
-              <span className="font-display text-lg font-semibold tracking-tight text-foreground truncate">
-                AgroCRM
-              </span>
+    <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
+      {/* Desktop Sidebar Matching Frappe CRM */}
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-[#fafafa] dark:bg-[#141416] transition-all duration-200 md:flex",
+          collapsed ? "w-14" : "w-56",
+        )}
+      >
+        {/* Workspace Switcher Header */}
+        <div className="px-2 pt-2.5 pb-1">
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+
+        {/* Quick Actions (Search & Notifications) */}
+        <div className="px-2 py-1 space-y-0.5">
+          <button
+            type="button"
+            onClick={() => setCommandOpen(true)}
+            title={collapsed ? "Search (Ctrl+K)" : undefined}
+            className={cn(
+              "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-1.5",
             )}
+          >
+            <Search className="size-3.5 shrink-0 opacity-80" />
+            {!collapsed && (
+              <div className="flex flex-1 items-center justify-between">
+                <span>Search</span>
+                <kbd className="text-[10px] text-muted-foreground/80 font-mono bg-muted/60 px-1 py-0.2 rounded border border-border/60">
+                  Ctrl K
+                </kbd>
+              </div>
+            )}
+          </button>
+
+          <button
+            type="button"
+            title={collapsed ? "Notifications" : undefined}
+            className={cn(
+              "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-1.5",
+            )}
+          >
+            <Bell className="size-3.5 shrink-0 opacity-80" />
+            {!collapsed && <span>Notifications</span>}
+          </button>
+        </div>
+
+        <div className="h-px bg-border/60 mx-3 my-1.5" />
+
+        {/* Navigation Links */}
+        <nav className="flex-1 overflow-y-auto scrollbar-none py-1" aria-label="Main">
+          <NavLinks collapsed={collapsed} />
+        </nav>
+
+        {/* Sidebar Footer with Help and Collapse */}
+        <div className="border-t border-border/60 p-2 space-y-0.5 shrink-0">
+          <button
+            type="button"
+            title={collapsed ? "Help" : undefined}
+            className={cn(
+              "flex items-center gap-2.5 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-1.5",
+            )}
+          >
+            <HelpCircle className="size-3.5 shrink-0 opacity-80" />
+            {!collapsed && <span>Help</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "flex items-center gap-2.5 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-1.5",
+            )}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-3.5 shrink-0" />
+            ) : (
+              <>
+                <PanelLeftClose className="size-3.5 shrink-0" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main App Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
+        {/* Mobile Header (Only visible on screens < md) */}
+        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background px-4 py-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8">
+                  <Menu className="size-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64 flex flex-col bg-[#fafafa] dark:bg-[#141416]">
+                <SheetHeader className="p-3 border-b border-border">
+                  <SheetTitle className="sr-only">Navigation</SheetTitle>
+                  <WorkspaceSwitcher />
+                </SheetHeader>
+                <nav className="flex-1 overflow-y-auto py-3">
+                  <NavLinks onItemClick={() => setMobileOpen(false)} />
+                </nav>
+              </SheetContent>
+            </Sheet>
+
+            <div className="flex items-center gap-1.5">
+              <div className="flex size-6 items-center justify-center rounded-md bg-pink-600 text-white font-bold text-xs">
+                C
+              </div>
+              <span className="text-xs font-semibold">AgroCRM</span>
+            </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex flex-1 flex-col gap-1 px-3 overflow-y-auto" aria-label="Main">
-            <NavLinks vertical collapsed={collapsed} />
-          </nav>
-
-          {/* Sidebar Footer with Collapse Toggle */}
-          <div className="border-t border-sidebar-border p-3">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => setCollapsed(!collapsed)}
-              className={cn(
-                "w-full text-xs text-muted-foreground hover:text-foreground justify-start gap-2 h-9",
-                collapsed && "justify-center px-0",
-              )}
-              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              size="icon"
+              onClick={() => setCommandOpen(true)}
+              className="size-8 text-muted-foreground"
             >
-              {collapsed ? (
-                <PanelLeftOpen className="size-4 shrink-0" />
-              ) : (
-                <>
-                  <PanelLeftClose className="size-4 shrink-0" />
-                  <span>Collapse</span>
-                </>
-              )}
+              <Search className="size-4" />
             </Button>
           </div>
-        </aside>
+        </header>
 
-        {/* Main Content Area */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:px-6">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground md:hidden shadow-xs">
-              <Leaf className="size-5" />
-            </span>
-            <CommandSearchTrigger onClick={() => setCommandOpen(true)} />
-            <div className="flex-1" />
-            <UserMenu />
-          </header>
-
-          {/* Mobile Navigation Bar */}
-          <nav
-            className="flex gap-1 overflow-x-auto border-b bg-background px-4 py-2 md:hidden scrollbar-none"
-            aria-label="Main mobile"
-          >
-            <NavLinks />
-          </nav>
-
-          <main className="min-w-0 flex-1">{children}</main>
-        </div>
+        {/* Page Children (Starts directly at page top without redundant desktop header) */}
+        <main className="min-w-0 flex-1 h-full overflow-hidden flex flex-col">{children}</main>
       </div>
 
       {/* Global Command Palette Dialog */}
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
-    </div>
-  );
-}
-
-export function ModulePlaceholder({ module }: { module: string }) {
-  return (
-    <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-24 text-center">
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
-        <Building2 className="size-7" />
-      </span>
-      <h1 className="font-display text-2xl font-semibold">{module} is coming soon</h1>
-      <p className="text-sm text-muted-foreground">
-        {module} will plug into the Frappe CRM backend and metadata-driven architecture.
-      </p>
-      <Button asChild size="sm">
-        <Link to="/leads">Go to Leads</Link>
-      </Button>
     </div>
   );
 }

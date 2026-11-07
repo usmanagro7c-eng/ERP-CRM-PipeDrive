@@ -112,11 +112,13 @@ function DashboardPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto bg-background text-foreground">
-      {/* Top Banner & Control Bar */}
-      <div className="border-b border-border bg-card/40 px-6 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">Dashboard</h1>
+      {/* Top Banner Matching Frappe CRM */}
+      <div className="border-b border-border bg-card/40 px-6 py-2.5 shrink-0">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium text-foreground">Dashboard</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-muted-foreground font-medium">Overview</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -126,20 +128,10 @@ function DashboardPage() {
               size="sm"
               onClick={() => void refetch()}
               disabled={isFetching}
-              className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+              className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
             >
-              <RotateCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+              <RotateCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
               <span>Refresh</span>
-            </Button>
-
-            {/* Edit Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
-            >
-              <Edit className="h-3.5 w-3.5" />
-              <span>Edit</span>
             </Button>
 
             {/* Date Range Preset Dropdown */}
@@ -148,9 +140,9 @@ function DashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+                  className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
                 >
-                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Calendar className="h-3 w-3 text-muted-foreground" />
                   <span>{preset}</span>
                   <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
                 </Button>
@@ -174,9 +166,9 @@ function DashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+                  className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
                 >
-                  <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <UserIcon className="h-3 w-3 text-muted-foreground" />
                   <span>{selectedUserLabel}</span>
                   <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
                 </Button>

@@ -192,7 +192,7 @@ function ContactDetailPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
+    <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 py-2.5 bg-card/60 backdrop-blur-xs">
         {/* Breadcrumb: Contacts / ☰ List / {contactName} */}

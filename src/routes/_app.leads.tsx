@@ -34,6 +34,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   leadCountOptions,
   leadListOptions,
   leadMetaOptions,
@@ -216,14 +223,25 @@ function LeadsPage() {
   const page = search.page ?? 1;
   const q = search.q ?? "";
 
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+
+  const filters: Array<[string, string, string]> = useMemo(() => {
+    const list: Array<[string, string, string]> = [];
+    if (statusFilter) {
+      list.push(["status", "=", statusFilter]);
+    }
+    return list;
+  }, [statusFilter]);
+
   // Kanban and Grid views load more items to populate columns properly
-  const fetchLimit = activeView === "table" ? PAGE_SIZE : KANBAN_PAGE_SIZE;
-  const fetchStart = activeView === "table" ? (page - 1) * PAGE_SIZE : 0;
+  const fetchLimit = activeView === "table" ? pageSize : KANBAN_PAGE_SIZE;
+  const fetchStart = activeView === "table" ? (page - 1) * pageSize : 0;
 
   const listQuery = useQuery({
     ...leadListOptions({
       search: q,
-      filters: [],
+      filters,
       limit: fetchLimit,
       start: fetchStart,
       orderBy: sort ? `${sort.field} ${sort.direction}` : undefined,
@@ -231,12 +249,12 @@ function LeadsPage() {
     enabled: Boolean(meta),
   });
 
-  const countQuery = useQuery({ ...leadCountOptions(q), enabled: Boolean(meta) });
+  const countQuery = useQuery({ ...leadCountOptions(q, filters), enabled: Boolean(meta) });
 
   const total = countQuery.data ?? 0;
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const lastRow = Math.min(page * PAGE_SIZE, total);
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const firstRow = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastRow = Math.min(page * pageSize, total);
 
   const error = metaQuery.error ?? listQuery.error;
   const loading = metaQuery.isPending || (listQuery.isPending && Boolean(meta));
@@ -281,84 +299,117 @@ function LeadsPage() {
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Top action bar */}
-      <div className="border-b bg-background px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Leads</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Prospecting pipeline, lead qualification, and conversion tracking.
-            </p>
-          </div>
+    <div className="flex h-full flex-col bg-background">
+      {/* Top Banner Matching Frappe CRM */}
+      <div className="border-b border-border bg-card/40 px-6 py-2.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium text-foreground">Leads</span>
+          <span className="text-muted-foreground/60">/</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-sm">
+                <CurrentIcon className="size-3.5 text-muted-foreground" />
+                <span>{currentViewObj.label}</span>
+                <ChevronDown className="size-3 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 text-xs">
+              <DropdownMenuLabel>Switch View</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {viewOptions.map((opt) => {
+                const Icon = opt.icon;
+                const isSelected = activeView === opt.mode;
+                return (
+                  <DropdownMenuItem
+                    key={opt.mode}
+                    onClick={() => handleViewChange(opt.mode)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="size-4 text-muted-foreground" />
+                      <span>{opt.label}</span>
+                    </div>
+                    {isSelected && <Check className="size-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* Search Input */}
-            <form onSubmit={submitSearch} className="relative w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search leads..."
-                className="h-9 pl-9 text-xs"
-              />
-            </form>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleOpenCreateModal}
+            disabled={!meta}
+            className="h-8 text-xs font-medium px-3.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+          >
+            <Plus className="size-3.5" />
+            <span>Create</span>
+          </Button>
+        </div>
+      </div>
 
-            {/* View Switcher Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2 text-xs">
-                  <CurrentIcon className="size-4 text-muted-foreground" />
-                  <span>View: {currentViewObj.label}</span>
-                  <ChevronDown className="size-3.5 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 text-xs">
-                <DropdownMenuLabel>Switch View</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {viewOptions.map((opt) => {
-                  const Icon = opt.icon;
-                  const isSelected = activeView === opt.mode;
-                  return (
-                    <DropdownMenuItem
-                      key={opt.mode}
-                      onClick={() => handleViewChange(opt.mode)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="size-4 text-muted-foreground" />
-                        <span>{opt.label}</span>
-                      </div>
-                      {isSelected && <Check className="size-3.5 text-primary" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+      {/* Secondary Filter Toolbar Matching Frappe CRM */}
+      <div className="border-b border-border bg-background px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Search Input */}
+          <form onSubmit={submitSearch} className="relative w-52">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search leads..."
+              className="h-7 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-md"
+            />
+          </form>
 
-            {/* Column chooser only in table view */}
-            {activeView === "table" && meta && (
-              <ColumnChooser
-                meta={meta}
-                selected={columns}
-                onChange={(next) => {
-                  setSavedColumns(next);
-                  saveColumns(next);
-                }}
-              />
-            )}
+          {/* Status Quick Filter */}
+          <Select
+            value={statusFilter}
+            onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
+          >
+            <SelectTrigger className="h-7 text-xs px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[110px]">
+              <span className="text-muted-foreground">Status:</span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+              {statuses.map((s) => (
+                <SelectItem key={s.name} value={s.name} className="text-xs">
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-            {/* Create Lead Button */}
-            <Button
-              size="sm"
-              onClick={handleOpenCreateModal}
-              disabled={!meta}
-              className="h-9 gap-1.5 text-xs font-semibold"
-            >
-              <Plus className="size-4" />
-              <span>Lead</span>
-            </Button>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void metaQuery.refetch();
+              void listQuery.refetch();
+              void countQuery.refetch();
+            }}
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className="size-3.5" />
+          </Button>
+
+          {/* Column chooser only in table view */}
+          {activeView === "table" && meta && (
+            <ColumnChooser
+              meta={meta}
+              selected={columns}
+              onChange={(next) => {
+                setSavedColumns(next);
+                saveColumns(next);
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -455,45 +506,59 @@ function LeadsPage() {
                 />
               </div>
 
-              {/* Pagination for Table view */}
+              {/* Pagination for Table view matching Frappe CRM */}
               {total > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground px-2">
-                  <div>
-                    Showing <span className="font-medium text-foreground">{firstRow}</span> to{" "}
-                    <span className="font-medium text-foreground">{lastRow}</span> of{" "}
-                    <span className="font-medium text-foreground">{total}</span> leads
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground px-2 pt-2">
+                  <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
+                    {[20, 50, 100].map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        className={cn(
+                          "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
+                          pageSize === size
+                            ? "bg-background text-foreground shadow-xs font-semibold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => setPageSize(size)}
+                      >
+                        {size}
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="size-8"
-                      disabled={page <= 1}
-                      onClick={() =>
-                        void navigate({
-                          search: (prev) => ({ ...prev, page: Math.max(1, page - 1) }),
-                        })
-                      }
-                    >
-                      <ChevronLeft className="size-4" />
-                    </Button>
-                    <span className="px-2 text-xs font-medium">
-                      Page {page} of {pageCount}
+                  <div className="flex items-center gap-3">
+                    <span>
+                      {total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="size-8"
-                      disabled={page >= pageCount}
-                      onClick={() =>
-                        void navigate({
-                          search: (prev) => ({ ...prev, page: page + 1 }),
-                        })
-                      }
-                    >
-                      <ChevronRight className="size-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-foreground"
+                        disabled={page <= 1}
+                        onClick={() =>
+                          void navigate({
+                            search: (prev) => ({ ...prev, page: Math.max(1, page - 1) }),
+                          })
+                        }
+                      >
+                        <ChevronLeft className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-foreground"
+                        disabled={page >= pageCount}
+                        onClick={() =>
+                          void navigate({
+                            search: (prev) => ({ ...prev, page: page + 1 }),
+                          })
+                        }
+                      >
+                        <ChevronRight className="size-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

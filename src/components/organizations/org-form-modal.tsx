@@ -94,7 +94,7 @@ const defaultFormState: FormState = {
   company_description: "",
   annual_revenue: "",
   territory: "",
-  no_of_employees: "1-10",
+  no_of_employees: "",
   industry: "",
   address: "",
 };
@@ -122,7 +122,7 @@ export function OrgFormModal({
           company_description: String(organization["company_description"] || ""),
           annual_revenue: String(organization["annual_revenue"] || ""),
           territory: String(organization["territory"] || ""),
-          no_of_employees: String(organization["no_of_employees"] || "1-10"),
+          no_of_employees: String(organization["no_of_employees"] || ""),
           industry: String(organization["industry"] || ""),
           address: String(organization["address"] || ""),
         });
@@ -134,7 +134,7 @@ export function OrgFormModal({
           company_description: String(initialValues["company_description"] || ""),
           annual_revenue: String(initialValues["annual_revenue"] || ""),
           territory: String(initialValues["territory"] || ""),
-          no_of_employees: String(initialValues["no_of_employees"] || "1-10"),
+          no_of_employees: String(initialValues["no_of_employees"] || ""),
           industry: String(initialValues["industry"] || ""),
           address: String(initialValues["address"] || ""),
         });
@@ -320,7 +320,7 @@ export function OrgFormModal({
                   onValueChange={(val) => handleChange("no_of_employees", val)}
                 >
                   <SelectTrigger className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                    <SelectValue placeholder="1-10" />
+                    <SelectValue placeholder="Select range..." />
                   </SelectTrigger>
                   <SelectContent>
                     {EMPLOYEE_RANGES.map((r) => (

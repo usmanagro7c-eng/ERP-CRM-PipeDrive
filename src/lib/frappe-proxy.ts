@@ -3,7 +3,8 @@
  * Kept free of runtime/env access so it can be unit tested.
  *
  * Rules:
- *  - Only the CRM Organization DocType can be read/written.
+ *  - Only CRM Organization, CRM Deal, CRM Lead, CRM Task, Contact, Note, etc. can be read/written on CRM site (dev03).
+ *  - Quotation, Sales Order, Item, Customer, and related ERPNext DocTypes route to ERPNext site (dev06).
  *  - Other DocTypes can only be read as a list of `name`s, and only when they are
  *    the target of a Link field on CRM Organization (resolved from its metadata).
  *  - Path traversal ("..") and encoded slashes are rejected.
@@ -23,6 +24,7 @@ export const FILE_DOCTYPE = "File";
 export const COMMENT_DOCTYPE = "Comment";
 export const COMMUNICATION_DOCTYPE = "Communication";
 export const CRM_PRODUCTS_DOCTYPE = "CRM Products";
+
 export const MAIN_DOCTYPES = new Set([
   ORG_DOCTYPE,
   DEAL_DOCTYPE,
@@ -39,6 +41,66 @@ export const MAIN_DOCTYPES = new Set([
   COMMUNICATION_DOCTYPE,
   CRM_PRODUCTS_DOCTYPE,
 ]);
+
+/** DocTypes and transactions that live on the ERPNext instance (dev06) */
+export const ERPNEXT_DOCTYPES = new Set([
+  QUOTATION_DOCTYPE,
+  SALES_ORDER_DOCTYPE,
+  ITEM_DOCTYPE,
+  "Customer",
+  "Item Group",
+  "UOM",
+  "Price List",
+  "Company",
+  "Sales Taxes and Charges Template",
+  "Quotation Item",
+  "Sales Order Item",
+  "Payment Terms Template",
+  "Tax Category",
+]);
+
+export const DEFAULT_LINK_TARGETS = new Set([
+  "Currency",
+  "CRM Territory",
+  "CRM Industry",
+  "Address",
+  "Country",
+  "User",
+  "Contact",
+  "CRM Organization",
+  "CRM Deal",
+  "CRM Deal Status",
+  "CRM Lead",
+  "CRM Lead Status",
+  "CRM Lead Source",
+  "CRM Task",
+  "Salutation",
+  "Gender",
+  "CRM Service Level Agreement",
+  "CRM Communication Status",
+  "CRM Lost Reason",
+  "Quotation",
+  "Sales Order",
+  "Item",
+  "Item Group",
+  "UOM",
+  "Price List",
+  "Company",
+  "Customer",
+  "Sales Taxes and Charges Template",
+  "Quotation Item",
+  "Sales Order Item",
+  "Tax Category",
+  "Payment Terms Template",
+  "Note",
+  "CRM Note",
+  "CRM Call Log",
+  "File",
+  "Comment",
+  "Communication",
+  "CRM Products",
+]);
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
 
@@ -115,6 +177,38 @@ export function classifyRequest(
   }
 
   return null;
+}
+
+/** Check if a request belongs to ERPNext (dev06) instead of Frappe CRM (dev03) */
+export function isErpNextRequest(
+  path: string,
+  searchParams?: URLSearchParams,
+  bodyDocType?: string,
+): boolean {
+  if (!path) return false;
+
+  // 1. Specific erpnext methods
+  if (path.startsWith("api/method/erpnext.")) return true;
+
+  // 2. Resource endpoints: api/resource/<DocType> or api/resource/<DocType>/<Name>
+  const match = /^api\/resource\/([^/]+)/.exec(path);
+  if (match?.[1]) {
+    const dt = decodeURIComponent(match[1]);
+    if (ERPNEXT_DOCTYPES.has(dt)) return true;
+  }
+
+  // 3. Methods using ?doctype= query param (e.g. frappe.client.get_count, frappe.desk.form.load.getdoctype)
+  if (searchParams) {
+    const dt = searchParams.get("doctype");
+    if (dt && ERPNEXT_DOCTYPES.has(dt)) return true;
+  }
+
+  // 4. Methods using doctype in JSON body (e.g. frappe.client.set_value, frappe.client.cancel)
+  if (bodyDocType && ERPNEXT_DOCTYPES.has(bodyDocType)) {
+    return true;
+  }
+
+  return false;
 }
 
 /** Collect the DocTypes that Link fields of the given metadata point to. */

@@ -42,7 +42,7 @@ export function RecordCallsTab({
   const [showLogModal, setShowLogModal] = useState(false);
   const [callType, setCallType] = useState<string>("Outbound");
   const [callStatus, setCallStatus] = useState<string>("Connected");
-  const [durationSec, setDurationSec] = useState<string>("120");
+  const [durationSec, setDurationSec] = useState<string>("0");
   const [summary, setSummary] = useState<string>("");
 
   async function handleSaveCall() {
@@ -50,8 +50,8 @@ export function RecordCallsTab({
       await saveMutation.mutateAsync({
         type: callType,
         status: callStatus,
-        duration: Number(durationSec) || 60,
-        to: phoneNumber || "Customer",
+        duration: Number(durationSec) || 0,
+        to: phoneNumber || "",
         summary: summary.trim(),
         reference_doctype: referenceDoctype,
         reference_docname: referenceName,

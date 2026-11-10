@@ -108,7 +108,7 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
       website: String(data["website"] || ""),
       territory: String(data["territory"] || ""),
       industry: String(data["industry"] || ""),
-      no_of_employees: String(data["no_of_employees"] || "1-10"),
+      no_of_employees: String(data["no_of_employees"] || ""),
       job_title: String(data["job_title"] || ""),
       source: String(data["source"] || ""),
       lead_owner: String(data["lead_owner"] || data["owner"] || ""),

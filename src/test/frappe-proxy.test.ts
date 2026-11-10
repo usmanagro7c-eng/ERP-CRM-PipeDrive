@@ -4,6 +4,7 @@ import {
   buildLinkQuery,
   classifyRequest,
   hasUnsafeSegments,
+  isErpNextRequest,
   linkTargetsFromMeta,
 } from "@/lib/frappe-proxy";
 
@@ -208,5 +209,57 @@ describe("link targets", () => {
     expect(query.get("fields")).toBe('["name"]');
     expect(query.get("limit_page_length")).toBe("1000");
     expect(query.get("filters")).toBeNull();
+  });
+});
+
+describe("isErpNextRequest", () => {
+  it("routes Quotation, Sales Order, Item and Customer to ERPNext", () => {
+    expect(isErpNextRequest("api/resource/Quotation")).toBe(true);
+    expect(isErpNextRequest("api/resource/Quotation/SAL-QTN-2026-00001")).toBe(true);
+    expect(isErpNextRequest("api/resource/Sales Order")).toBe(true);
+    expect(isErpNextRequest("api/resource/Item")).toBe(true);
+    expect(isErpNextRequest("api/resource/Customer")).toBe(true);
+    expect(isErpNextRequest("api/resource/Company")).toBe(true);
+  });
+
+  it("routes CRM entities to Frappe CRM (not ERPNext)", () => {
+    expect(isErpNextRequest("api/resource/CRM Deal")).toBe(false);
+    expect(isErpNextRequest("api/resource/CRM Lead")).toBe(false);
+    expect(isErpNextRequest("api/resource/CRM Organization")).toBe(false);
+    expect(isErpNextRequest("api/resource/CRM Task")).toBe(false);
+    expect(isErpNextRequest("api/resource/Contact")).toBe(false);
+    expect(isErpNextRequest("api/resource/Note")).toBe(false);
+  });
+
+  it("handles get_count and getdoctype query parameters", () => {
+    expect(
+      isErpNextRequest(
+        "api/method/frappe.client.get_count",
+        new URLSearchParams({ doctype: "Quotation" }),
+      ),
+    ).toBe(true);
+    expect(
+      isErpNextRequest(
+        "api/method/frappe.client.get_count",
+        new URLSearchParams({ doctype: "CRM Deal" }),
+      ),
+    ).toBe(false);
+  });
+
+  it("handles doctype in JSON body for methods like frappe.client.set_value", () => {
+    expect(
+      isErpNextRequest("api/method/frappe.client.set_value", undefined, "Quotation"),
+    ).toBe(true);
+    expect(
+      isErpNextRequest("api/method/frappe.client.set_value", undefined, "CRM Deal"),
+    ).toBe(false);
+  });
+
+  it("routes erpnext.* method calls to ERPNext", () => {
+    expect(
+      isErpNextRequest(
+        "api/method/erpnext.selling.doctype.quotation.quotation.declare_order_lost",
+      ),
+    ).toBe(true);
   });
 });

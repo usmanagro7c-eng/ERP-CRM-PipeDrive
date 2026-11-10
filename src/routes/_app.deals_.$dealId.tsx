@@ -229,7 +229,7 @@ function DealDetailPage() {
         website: String(deal["website"] || ""),
         territory: String(deal["territory"] || ""),
         industry: String(deal["industry"] || ""),
-        no_of_employees: String(deal["no_of_employees"] || "1-10"),
+        no_of_employees: String(deal["no_of_employees"] || ""),
         annual_revenue: String(deal["annual_revenue"] || deal["deal_value"] || ""),
         closed_date: String(deal["closed_date"] || deal["expected_closing"] || ""),
         probability: String(deal["probability"] || ""),

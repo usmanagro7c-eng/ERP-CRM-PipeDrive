@@ -2,6 +2,7 @@ import { SESSION_COOKIE, parseCookies, verifySession, type SessionPayload } from
 
 /** Server-only configuration. Read inside handlers: on the deployed worker env is injected per request. */
 export const DEFAULT_FRAPPE_BASE_URL = "https://dev03.agrovisions.pk";
+export const DEFAULT_ERPNEXT_BASE_URL = "https://dev06.agrovisions.pk";
 
 export function readEnv(name: string): string | undefined {
   const value = process.env[name];
@@ -10,6 +11,18 @@ export function readEnv(name: string): string | undefined {
 
 export function frappeBaseUrl(): string {
   return (readEnv("FRAPPE_BASE_URL") ?? DEFAULT_FRAPPE_BASE_URL).replace(/\/$/, "");
+}
+
+export function erpnextBaseUrl(): string {
+  return (readEnv("ERPNEXT_BASE_URL") ?? DEFAULT_ERPNEXT_BASE_URL).replace(/\/$/, "");
+}
+
+export function erpnextApiKey(): string | undefined {
+  return readEnv("ERPNEXT_API_KEY") ?? "fb08190ef15316d";
+}
+
+export function erpnextApiSecret(): string | undefined {
+  return readEnv("ERPNEXT_API_SECRET") ?? "97b9180839ad767";
 }
 
 export function sessionSecret(): string | undefined {

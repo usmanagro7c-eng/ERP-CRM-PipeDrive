@@ -75,6 +75,7 @@ export interface SaveQuotationInput {
 
 export function useSaveQuotation() {
   const invalidate = useInvalidateQuotations();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ name, values }: SaveQuotationInput) => {
       if (name) {
@@ -84,6 +85,8 @@ export function useSaveQuotation() {
     },
     onSuccess: async (_doc, variables) => {
       await invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["deals"] });
+      await queryClient.invalidateQueries({ queryKey: ["deal"] });
       toast.success(variables.name ? "Quotation updated" : "Quotation created as draft");
     },
     onError: (error) => {

@@ -222,7 +222,7 @@ function LeadDetailPage() {
         website: String(lead["website"] || ""),
         territory: String(lead["territory"] || ""),
         industry: String(lead["industry"] || ""),
-        no_of_employees: String(lead["no_of_employees"] || "1-10"),
+        no_of_employees: String(lead["no_of_employees"] || ""),
         job_title: String(lead["job_title"] || ""),
         source: String(lead["source"] || ""),
         lead_owner: String(lead["lead_owner"] || lead["owner"] || ""),

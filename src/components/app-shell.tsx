@@ -108,8 +108,8 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useQuery(sessionQueryOptions());
-  const name = session?.name || "Usman";
-  const email = session?.user || "usman@example.com";
+  const name = session?.name || (session?.user ? session.user.split("@")[0] : "User");
+  const email = session?.user || "";
 
   const [isDark, setIsDark] = useState(() => {
     if (typeof document !== "undefined") {

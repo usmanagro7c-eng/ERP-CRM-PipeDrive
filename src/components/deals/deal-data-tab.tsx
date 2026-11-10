@@ -130,7 +130,7 @@ export function DealDataTab({
       organization: String(deal["organization_name"] || deal["organization"] || ""),
       company_description: String(deal["company_description"] || ""),
       industry: String(deal["industry"] || ""),
-      no_of_employees: String(deal["no_of_employees"] || "1-10"),
+      no_of_employees: String(deal["no_of_employees"] || ""),
       annual_revenue: revStr,
       website: String(deal["website"] || ""),
       closed_date: String(deal["closed_date"] || deal["expected_closing"] || ""),
@@ -494,7 +494,7 @@ export function DealDataTab({
                   onValueChange={(val) => handleDetailChange("no_of_employees", val)}
                 >
                   <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                    <SelectValue placeholder="1-10" />
+                    <SelectValue placeholder="Select Range..." />
                   </SelectTrigger>
                   <SelectContent>
                     {EMPLOYEE_RANGES.map((r) => (

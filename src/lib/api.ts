@@ -507,6 +507,19 @@ export const CONTACT_STATUSES: ContactStatus[] = [
 ];
 
 export async function getContactStatuses(): Promise<ContactStatus[]> {
+  try {
+    const meta = await getDocTypeMeta(CONTACT_DOCTYPE);
+    const field = meta.fields?.find((f) => f.fieldname === "status");
+    if (field && typeof field.options === "string" && field.options.trim()) {
+      return field.options
+        .split("\n")
+        .map((opt) => opt.trim())
+        .filter(Boolean)
+        .map((opt) => ({ name: opt, label: opt }));
+    }
+  } catch {
+    // fallback
+  }
   return CONTACT_STATUSES;
 }
 
@@ -782,16 +795,37 @@ export async function syncDealProductsFromQuotation(
   }
 }
 
+let defaultCompanyCache: { company: string; currency: string } | null = null;
+
+export async function getDefaultCompany(): Promise<{ company: string; currency: string }> {
+  if (defaultCompanyCache) return defaultCompanyCache;
+  try {
+    const payload = await proxyRequest("api/resource/Company?fields=[\"name\",\"default_currency\"]&limit_page_length=1");
+    const data = unwrapResourceData<Array<{ name: string; default_currency?: string }>>(payload);
+    if (Array.isArray(data) && data[0]?.name) {
+      defaultCompanyCache = {
+        company: data[0].name,
+        currency: data[0].default_currency || "PKR",
+      };
+      return defaultCompanyCache;
+    }
+  } catch {
+    // fallback
+  }
+  return { company: "AGROVISIONS", currency: "PKR" };
+}
+
 export async function createQuotation(
   values: Record<string, unknown>,
 ): Promise<Quotation> {
+  const { company, currency } = await getDefaultCompany();
   const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}`, {
     method: "POST",
     body: {
       quotation_to: "Customer",
-      company: "Usman",
+      company: values["company"] || company,
       order_type: "Sales",
-      currency: "PKR",
+      currency: values["currency"] || currency,
       selling_price_list: "Standard Selling",
       conversion_rate: 1.0,
       plc_conversion_rate: 1.0,
@@ -915,14 +949,15 @@ export async function getSalesOrder(name: string): Promise<SalesOrder> {
 export async function createSalesOrder(
   values: Record<string, unknown>,
 ): Promise<SalesOrder> {
+  const { company, currency } = await getDefaultCompany();
   const today = new Date().toISOString().split("T")[0];
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
   const payload = await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}`, {
     method: "POST",
     body: {
-      company: "Usman",
+      company: values["company"] || company,
       order_type: "Sales",
-      currency: "PKR",
+      currency: values["currency"] || currency,
       selling_price_list: "Standard Selling",
       transaction_date: today,
       delivery_date: nextWeek,
@@ -954,6 +989,7 @@ export async function createSalesOrderFromQuotation(
       ? quotation
       : await getQuotation(quotation.name);
 
+  const { company, currency } = await getDefaultCompany();
   const today = new Date().toISOString().split("T")[0];
   const delDate = deliveryDate || new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
@@ -969,11 +1005,11 @@ export async function createSalesOrderFromQuotation(
 
   const payload = await createSalesOrder({
     customer: fullQuotation.party_name,
-    company: fullQuotation.company || "Usman",
+    company: fullQuotation.company || company,
     transaction_date: today,
     delivery_date: delDate,
     order_type: "Sales",
-    currency: fullQuotation.currency || "PKR",
+    currency: fullQuotation.currency || currency,
     selling_price_list: fullQuotation.selling_price_list || "Standard Selling",
     items,
   });
@@ -1021,6 +1057,7 @@ export async function addComment(args: {
   referenceName: string;
   content: string;
   commentBy?: string;
+  commentEmail?: string;
 }): Promise<CrmComment> {
   const payload = await proxyRequest("api/method/frappe.desk.form.utils.add_comment", {
     method: "POST",
@@ -1028,8 +1065,8 @@ export async function addComment(args: {
       reference_doctype: args.referenceDoctype,
       reference_name: args.referenceName,
       content: args.content,
-      comment_by: args.commentBy || "User",
-      comment_email: "user@example.com",
+      ...(args.commentBy ? { comment_by: args.commentBy } : {}),
+      ...(args.commentEmail ? { comment_email: args.commentEmail } : {}),
     },
   });
   const data = (message(payload) ?? {}) as CrmComment;
@@ -1233,7 +1270,7 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
     body: {
       type: values.type || "Outbound",
       status: values.status || "Connected",
-      duration: values.duration ?? 60,
+      duration: values.duration ?? 0,
       to: values.to || "",
       from: values.from || "",
       note: values.summary || values.note || "",

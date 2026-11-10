@@ -28,6 +28,9 @@ interface CallFormModalProps {
   initialValues?: {
     reference_doctype?: string;
     reference_docname?: string;
+    from?: string;
+    to?: string;
+    duration?: number;
   } | null;
   onSuccess?: () => void;
 }
@@ -56,7 +59,7 @@ export function CallFormModal({
   const [callStatus, setCallStatus] = useState<string>("Connected");
   const [fromNumber, setFromNumber] = useState<string>("");
   const [toNumber, setToNumber] = useState<string>("");
-  const [duration, setDuration] = useState<string>("60");
+  const [duration, setDuration] = useState<string>("0");
   const [summary, setSummary] = useState<string>("");
   const [referenceDoctype, setReferenceDoctype] = useState<string>("");
   const [referenceDocname, setReferenceDocname] = useState<string>("");
@@ -77,9 +80,9 @@ export function CallFormModal({
       } else {
         setCallType("Outbound");
         setCallStatus("Connected");
-        setFromNumber("Agent");
-        setToNumber("");
-        setDuration("60");
+        setFromNumber(initialValues?.from || "");
+        setToNumber(initialValues?.to || "");
+        setDuration(initialValues?.duration ? String(initialValues.duration) : "0");
         setSummary("");
         setReferenceDoctype(initialValues?.reference_doctype || "");
         setReferenceDocname(initialValues?.reference_docname || "");

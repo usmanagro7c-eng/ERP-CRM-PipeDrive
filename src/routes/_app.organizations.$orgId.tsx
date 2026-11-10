@@ -95,7 +95,7 @@ const initialSidebarState: SidebarState = {
   website: "",
   territory: "",
   industry: "",
-  no_of_employees: "1-10",
+  no_of_employees: "",
   address: "",
 };
 
@@ -133,7 +133,7 @@ function OrganizationDetailPage() {
         website: String(organization["website"] || ""),
         territory: String(organization["territory"] || ""),
         industry: String(organization["industry"] || ""),
-        no_of_employees: String(organization["no_of_employees"] || "1-10"),
+        no_of_employees: String(organization["no_of_employees"] || ""),
         address: String(organization["address"] || ""),
       });
     }
@@ -419,7 +419,7 @@ function OrganizationDetailPage() {
                   }}
                 >
                   <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
-                    <SelectValue placeholder="1-10" />
+                    <SelectValue placeholder="Select range..." />
                   </SelectTrigger>
                   <SelectContent>
                     {EMPLOYEE_RANGES.map((r) => (

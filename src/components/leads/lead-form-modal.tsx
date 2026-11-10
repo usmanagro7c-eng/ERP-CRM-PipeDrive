@@ -96,9 +96,9 @@ const defaultFormData: FormDataState = {
   organization: "",
   territory: "",
   website: "",
-  annual_revenue: "0",
+  annual_revenue: "",
   company_description: "",
-  no_of_employees: "1-10",
+  no_of_employees: "",
   industry: "",
   status: "New",
   lead_owner: "",
@@ -136,7 +136,7 @@ export function LeadFormModal({
           website: String(lead["website"] || ""),
           annual_revenue: String(lead["annual_revenue"] || "0"),
           company_description: String(lead["company_description"] || ""),
-          no_of_employees: String(lead["no_of_employees"] || "1-10"),
+          no_of_employees: String(lead["no_of_employees"] || ""),
           industry: String(lead["industry"] || ""),
           status: String(lead["status"] || "New"),
           lead_owner: String(lead["lead_owner"] || lead["owner"] || ""),
@@ -176,7 +176,7 @@ export function LeadFormModal({
       website: formData.website.trim() || null,
       annual_revenue: Number(formData.annual_revenue) || 0,
       company_description: formData.company_description.trim() || null,
-      no_of_employees: formData.no_of_employees || "1-10",
+      no_of_employees: formData.no_of_employees || null,
       industry: formData.industry || null,
       status: formData.status || "New",
       lead_owner: formData.lead_owner || null,
@@ -381,11 +381,11 @@ export function LeadFormModal({
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-foreground">No. of Employees</Label>
               <Select
-                value={formData.no_of_employees || "1-10"}
+                value={formData.no_of_employees || undefined}
                 onValueChange={(val) => handleChange("no_of_employees", val)}
               >
                 <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
-                  <SelectValue placeholder="1-10" />
+                  <SelectValue placeholder="Select range..." />
                 </SelectTrigger>
                 <SelectContent>
                   {EMPLOYEE_RANGES.map((rng) => (

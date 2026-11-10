@@ -36,6 +36,7 @@ interface QuotationFormModalProps {
   initialValues?: {
     party_name?: string;
     crm_deal?: string;
+    items?: QuotationItem[];
   } | null;
   onConvertToSalesOrder?: (quotation: Quotation) => void;
 }
@@ -77,25 +78,14 @@ export function QuotationFormModal({
       const defaultParty =
         initialValues?.party_name ||
         customerOptions[0]?.name ||
-        "West View Software Ltd.";
+        "";
       setPartyName(defaultParty);
       setCrmDeal(initialValues?.crm_deal || "");
       setTransactionDate(today);
       setValidTill(in30Days);
 
-      // Default with 1 item from catalog if available
-      if (catalogItems.length > 0) {
-        const item = catalogItems[0]!;
-        setItems([
-          {
-            item_code: item.name,
-            item_name: item.item_name || item.name,
-            qty: 1,
-            rate: Number(item.standard_rate) || 1500,
-            amount: Number(item.standard_rate) || 1500,
-            discount_percentage: 0,
-          },
-        ]);
+      if (initialValues?.items && initialValues.items.length > 0) {
+        setItems(initialValues.items);
       } else {
         setItems([]);
       }

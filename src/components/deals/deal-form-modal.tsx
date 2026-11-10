@@ -101,9 +101,9 @@ const defaultFormData: FormDataState = {
   organization: "",
   website: "",
   territory: "",
-  annual_revenue: "PKR 0.00",
+  annual_revenue: "",
   company_description: "",
-  no_of_employees: "1-10",
+  no_of_employees: "",
   industry: "",
   salutation: "",
   first_name: "",
@@ -150,9 +150,9 @@ export function DealFormModal({
           organization: String(deal["organization_name"] || deal["organization"] || ""),
           website: String(deal["website"] || ""),
           territory: String(deal["territory"] || ""),
-          annual_revenue: deal["annual_revenue"] ? `PKR ${Number(deal["annual_revenue"]).toLocaleString()}` : "PKR 0.00",
+          annual_revenue: deal["annual_revenue"] ? `PKR ${Number(deal["annual_revenue"]).toLocaleString()}` : "",
           company_description: String(deal["company_description"] || ""),
-          no_of_employees: String(deal["no_of_employees"] || "1-10"),
+          no_of_employees: String(deal["no_of_employees"] || ""),
           industry: String(deal["industry"] || ""),
           salutation: String(deal["salutation"] || ""),
           first_name: String(deal["first_name"] || ""),
@@ -202,7 +202,7 @@ export function DealFormModal({
       annual_revenue: cleanRevenue,
       territory: formData.territory || null,
       industry: formData.industry || null,
-      no_of_employees: formData.no_of_employees || "1-10",
+      no_of_employees: formData.no_of_employees || null,
       website: formData.website || null,
       company_description: formData.company_description || null,
     };
@@ -339,11 +339,11 @@ export function DealFormModal({
                 <div className="space-y-1.5">
                   <Label className="text-xs font-normal text-muted-foreground">No. of Employees</Label>
                   <Select
-                    value={formData.no_of_employees || "1-10"}
+                    value={formData.no_of_employees || undefined}
                     onValueChange={(val) => handleChange("no_of_employees", val)}
                   >
                     <SelectTrigger className="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md">
-                      <SelectValue placeholder="1-10" />
+                      <SelectValue placeholder="Select range..." />
                     </SelectTrigger>
                     <SelectContent>
                       {EMPLOYEE_RANGES.map((r) => (

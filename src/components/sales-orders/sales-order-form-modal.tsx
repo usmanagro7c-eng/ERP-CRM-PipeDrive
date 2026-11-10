@@ -91,7 +91,7 @@ export function SalesOrderFormModal({
       );
     } else {
       const defaultCustomer =
-        initialValues?.customer || customerOptions[0]?.name || "Pak Agri Traders 1793703963";
+        initialValues?.customer || customerOptions[0]?.name || "";
       setCustomer(defaultCustomer);
       setTransactionDate(today);
       setDeliveryDate(nextWeek);
@@ -99,18 +99,6 @@ export function SalesOrderFormModal({
 
       if (initialValues?.items && initialValues.items.length > 0) {
         setItems(initialValues.items);
-      } else if (catalogItems.length > 0) {
-        const item = catalogItems[0]!;
-        setItems([
-          {
-            item_code: item.name,
-            item_name: item.item_name || item.name,
-            qty: 1,
-            rate: Number(item.standard_rate) || 1500,
-            amount: Number(item.standard_rate) || 1500,
-            discount_percentage: 0,
-          },
-        ]);
       } else {
         setItems([]);
       }

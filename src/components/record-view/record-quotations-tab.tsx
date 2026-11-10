@@ -35,8 +35,8 @@ export function RecordQuotationsTab({
     const raw = q as Record<string, unknown>;
     const crmDeal = String(raw["crm_deal"] || "");
     const party = String(q.party_name || "");
-    if (crmDeal && crmDeal === dealId) return true;
-    if (customerName && party.toLowerCase() === customerName.toLowerCase()) return true;
+    if (crmDeal) return crmDeal === dealId;
+    if (customerName && party && party.toLowerCase() === customerName.toLowerCase()) return true;
     return false;
   });
 

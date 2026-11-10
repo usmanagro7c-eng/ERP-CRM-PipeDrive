@@ -26,9 +26,9 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
       item_code: firstItem?.name || "",
       item_name: firstItem?.item_name || firstItem?.name || "",
       qty: 1,
-      rate: Number(firstItem?.standard_rate) || 1000,
+      rate: Number(firstItem?.standard_rate) || 0,
       discount_percentage: 0,
-      amount: Number(firstItem?.standard_rate) || 1000,
+      amount: Number(firstItem?.standard_rate) || 0,
     };
     onChange([...items, newItem]);
   }

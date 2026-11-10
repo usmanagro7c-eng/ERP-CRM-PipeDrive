@@ -997,7 +997,10 @@ function DealDetailPage() {
         open={quotationModalOpen}
         onOpenChange={setQuotationModalOpen}
         quotation={null}
-        initialValues={{ party_name: sidebarValues.organization }}
+        initialValues={{
+          party_name: sidebarValues.organization,
+          crm_deal: dealId,
+        }}
       />
 
       {/* Create / Convert to Sales Order Modal */}

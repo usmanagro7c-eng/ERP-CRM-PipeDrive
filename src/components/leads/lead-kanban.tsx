@@ -170,6 +170,13 @@ export function LeadKanban({
   // Move lead to new column
   async function handleMove(leadName: string, targetColKey: string) {
     if (targetColKey === UNASSIGNED_KEY) return;
+    if (groupBy === "status" && targetColKey === "Converted") {
+      const lead = rows.find((r) => r["name"] === leadName);
+      if (lead && onConvert) {
+        onConvert(lead);
+        return;
+      }
+    }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
     await saveMutation.mutateAsync({ name: leadName, values: patch });
   }

@@ -151,7 +151,7 @@ export function DealDataTab({
 
     return raw.map((item, idx) => ({
       id: String(item["name"] || item["id"] || `item-${idx}`),
-      item: String(item["item"] || item["item_code"] || item["item_name"] || ""),
+      item: String(item["product_code"] || item["product_name"] || item["item"] || item["item_code"] || item["item_name"] || ""),
       rate: Number(item["rate"] || item["price_list_rate"] || 0),
       qty: Number(item["qty"] || 1),
     }));
@@ -243,12 +243,21 @@ export function DealDataTab({
         territory: details.territory,
         probability: details.probability ? Number(details.probability) || details.probability : 0,
         deal_owner: details.deal_owner,
-        products: products.map((p) => ({
-          item: p.item,
-          rate: p.rate,
-          qty: p.qty,
-          amount: p.rate * p.qty,
-        })),
+        deal_value:
+          products.length > 0
+            ? products.reduce((sum, p) => sum + (Number(p.rate) || 0) * (Number(p.qty) || 1), 0)
+            : Number(deal["deal_value"] || 0),
+        products: products.map((p) => {
+          const amt = (Number(p.rate) || 0) * (Number(p.qty) || 1);
+          return {
+            product_code: p.item,
+            product_name: p.item,
+            rate: Number(p.rate) || 0,
+            qty: Number(p.qty) || 1,
+            amount: amt,
+            net_amount: amt,
+          };
+        }),
       };
       await onSave(payload);
       toast.success("Deal data saved successfully");

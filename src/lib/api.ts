@@ -753,6 +753,33 @@ export async function getQuotation(name: string): Promise<Quotation> {
   return data as Quotation;
 }
 
+export async function syncDealProductsFromQuotation(
+  dealName: string,
+  items: Array<Record<string, unknown>>,
+): Promise<void> {
+  if (!dealName || !Array.isArray(items) || items.length === 0) return;
+  try {
+    const total = items.reduce(
+      (sum, it) => sum + (Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0))),
+      0,
+    );
+    const products = items.map((it) => ({
+      product_code: String(it["item_code"] || it["product_code"] || ""),
+      product_name: String(it["item_name"] || it["product_name"] || it["item_code"] || ""),
+      qty: Number(it["qty"]) || 1,
+      rate: Number(it["rate"]) || 0,
+      amount: Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0)),
+      net_amount: Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0)),
+    }));
+    await updateDeal(dealName, {
+      deal_value: total,
+      products,
+    });
+  } catch (err) {
+    console.warn("Could not sync deal products:", err);
+  }
+}
+
 export async function createQuotation(
   values: Record<string, unknown>,
 ): Promise<Quotation> {
@@ -771,7 +798,13 @@ export async function createQuotation(
     },
   });
   const data = unwrapResourceData<unknown>(payload);
-  return (data ?? {}) as Quotation;
+  const quotation = (data ?? {}) as Quotation;
+
+  if (values["crm_deal"] && Array.isArray(values["items"]) && values["items"].length > 0) {
+    await syncDealProductsFromQuotation(String(values["crm_deal"]), values["items"] as Array<Record<string, unknown>>);
+  }
+
+  return quotation;
 }
 
 export async function updateQuotation(
@@ -787,7 +820,13 @@ export async function updateQuotation(
       },
     );
     const data = unwrapResourceData<unknown>(payload);
-    return (data ?? {}) as Quotation;
+    const quotation = (data ?? {}) as Quotation;
+
+    if (values["crm_deal"] && Array.isArray(values["items"]) && values["items"].length > 0) {
+      await syncDealProductsFromQuotation(String(values["crm_deal"]), values["items"] as Array<Record<string, unknown>>);
+    }
+
+    return quotation;
   } catch (err) {
     // If standard PUT fails (e.g. status change on submitted quotation), use frappe.client.set_value
     if (typeof values["status"] === "string") {

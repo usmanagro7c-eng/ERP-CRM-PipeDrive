@@ -23,6 +23,7 @@ import { customersListOptions, itemsListOptions } from "@/hooks/use-quotations";
 import {
   useSaveSalesOrder,
   useSubmitSalesOrder,
+  salesOrderDetailOptions,
   type SalesOrder,
 } from "@/hooks/use-sales-orders";
 import type { QuotationItem } from "@/lib/api";
@@ -49,6 +50,13 @@ export function SalesOrderFormModal({
   const { data: customerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
 
+  const orderName = order?.name;
+  const { data: fullOrder } = useQuery({
+    ...salesOrderDetailOptions(orderName || ""),
+    enabled: Boolean(open && orderName),
+  });
+  const activeOrder = fullOrder || order;
+
   const saveMutation = useSaveSalesOrder();
   const submitMutation = useSubmitSalesOrder();
 
@@ -66,13 +74,13 @@ export function SalesOrderFormModal({
     const today = new Date().toISOString().split("T")[0]!;
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]!;
 
-    if (order) {
-      setCustomer(order.customer || "");
-      setTransactionDate(order.transaction_date || today);
-      setDeliveryDate(order.delivery_date || nextWeek);
-      setOrderType(order.order_type || "Sales");
+    if (activeOrder) {
+      setCustomer(activeOrder.customer || "");
+      setTransactionDate(activeOrder.transaction_date || today);
+      setDeliveryDate(activeOrder.delivery_date || nextWeek);
+      setOrderType(activeOrder.order_type || "Sales");
       setItems(
-        (order.items || []).map((i) => ({
+        (activeOrder.items || []).map((i) => ({
           item_code: i.item_code,
           item_name: i.item_name || i.item_code,
           qty: i.qty || 1,
@@ -107,7 +115,7 @@ export function SalesOrderFormModal({
         setItems([]);
       }
     }
-  }, [open, order, initialValues, customerOptions, catalogItems]);
+  }, [open, activeOrder, initialValues, customerOptions, catalogItems]);
 
   const grandTotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -138,7 +146,9 @@ export function SalesOrderFormModal({
         qty: Number(item.qty) || 1,
         rate: Number(item.rate) || 0,
         discount_percentage: Number(item.discount_percentage) || 0,
-        amount: Number(item.amount) || 0,
+        amount: Number(item.amount) || (Number(item.qty || 1) * Number(item.rate || 0)),
+        delivery_date: deliveryDate,
+        ...(initialValues?.quotation_ref ? { prevdoc_docname: initialValues.quotation_ref } : {}),
       })),
     };
 

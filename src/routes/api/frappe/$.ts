@@ -62,6 +62,7 @@ const DEFAULT_LINK_TARGETS = new Set([
   "File",
   "Comment",
   "Communication",
+  "CRM Products",
 ]);
 
 let linkTargetsCache: { targets: Set<string>; expires: number } | undefined;

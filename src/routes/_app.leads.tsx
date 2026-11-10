@@ -224,11 +224,15 @@ function LeadsPage() {
   const q = search.q ?? "";
 
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE);
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
 
   const filters: Array<[string, string, string]> = useMemo(() => {
     const list: Array<[string, string, string]> = [];
-    if (statusFilter) {
+    if (statusFilter === "active") {
+      list.push(["converted", "=", "0"]);
+    } else if (statusFilter === "converted") {
+      list.push(["converted", "=", "1"]);
+    } else if (statusFilter && statusFilter !== "all") {
       list.push(["status", "=", statusFilter]);
     }
     return list;
@@ -367,14 +371,16 @@ function LeadsPage() {
           {/* Status Quick Filter */}
           <Select
             value={statusFilter}
-            onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
+            onValueChange={(val) => setStatusFilter(val)}
           >
-            <SelectTrigger className="h-7 text-xs px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[110px]">
-              <span className="text-muted-foreground">Status:</span>
-              <SelectValue placeholder="All" />
+            <SelectTrigger className="h-7 text-xs px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[130px]">
+              <span className="text-muted-foreground">View:</span>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+              <SelectItem value="active" className="text-xs">Active Leads</SelectItem>
+              <SelectItem value="converted" className="text-xs">Converted Leads</SelectItem>
+              <SelectItem value="all" className="text-xs">All Leads</SelectItem>
               {statuses.map((s) => (
                 <SelectItem key={s.name} value={s.name} className="text-xs">
                   {s.name}

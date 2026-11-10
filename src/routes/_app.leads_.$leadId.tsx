@@ -159,6 +159,15 @@ function LeadDetailPage() {
   const { data: statuses = [] } = useQuery(leadStatusesOptions());
   const { data: users = [] } = useCrmUsers();
 
+  const isConverted = Boolean(lead?.["converted"] || lead?.["status"] === "Converted");
+  const { data: linkedDeals } = useQuery({
+    queryKey: ["lead-deal", leadId],
+    queryFn: () => api.listDeals({ filters: [["lead", "=", leadId]], limit: 1, start: 0 }),
+    enabled: Boolean(isConverted),
+  });
+  const rawLinkedDeal = linkedDeals?.[0];
+  const linkedDealName = typeof rawLinkedDeal?.["name"] === "string" ? String(rawLinkedDeal["name"]) : undefined;
+
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
 
@@ -411,15 +420,34 @@ function LeadDetailPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Convert to Deal Button */}
-          <Button
-            size="sm"
-            onClick={() => setConvertModalOpen(true)}
-            className="h-7 gap-1.5 text-xs font-semibold shadow-xs cursor-pointer bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            <Sparkles className="size-3" />
-            <span>Convert to Deal</span>
-          </Button>
+          {/* Convert to Deal Button or Converted Badge */}
+          {isConverted ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="size-3.5" />
+                <span>Converted to Deal</span>
+              </span>
+              {linkedDealName ? (
+                <Link
+                  to="/deals/$dealId"
+                  params={{ dealId: linkedDealName }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900 shadow-xs cursor-pointer transition-colors"
+                >
+                  <ExternalLink className="size-3" />
+                  <span>View Deal ({linkedDealName})</span>
+                </Link>
+              ) : null}
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => setConvertModalOpen(true)}
+              className="h-7 gap-1.5 text-xs font-semibold shadow-xs cursor-pointer bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900"
+            >
+              <Sparkles className="size-3" />
+              <span>Convert to Deal</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -632,6 +660,28 @@ function LeadDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Converted Deal Banner */}
+          {isConverted && linkedDealName ? (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs flex flex-col gap-1.5">
+              <div className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="size-3.5" />
+                <span>Converted to Deal</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                This lead has been converted into deal{" "}
+                <span className="font-mono font-medium text-foreground">{linkedDealName}</span>.
+              </p>
+              <Link
+                to="/deals/$dealId"
+                params={{ dealId: linkedDealName }}
+                className="mt-1 inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                <span>Open Deal</span>
+                <ExternalLink className="size-3" />
+              </Link>
+            </div>
+          ) : null}
 
           {/* First Response & Status */}
           <div className="space-y-2 border-t pt-3 text-xs">

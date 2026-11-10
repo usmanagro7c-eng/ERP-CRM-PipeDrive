@@ -211,9 +211,9 @@ export function OrgKanban({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Group by:
@@ -240,7 +240,7 @@ export function OrgKanban({
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-thin">
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full scrollbar-thin">
         {loading && rows.length === 0 ? (
           // Skeleton loader for Kanban columns
           Array.from({ length: 4 }).map((_, i) => (
@@ -277,13 +277,13 @@ export function OrgKanban({
                   void handleCardDrop(col.key);
                 }}
                 className={cn(
-                  "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150",
+                  "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
                   colorClass,
                   isOver && "border-primary/60 bg-accent/40 ring-2 ring-primary/20",
                 )}
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between border-b bg-card/60 px-3.5 py-2.5 backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b bg-card/60 px-3.5 py-2.5 backdrop-blur-xs shrink-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-foreground truncate max-w-[170px]" title={col.label}>
                       {col.label}
@@ -306,9 +306,9 @@ export function OrgKanban({
                 </div>
 
                 {/* Cards Container */}
-                <div className="flex flex-1 flex-col gap-2.5 p-2.5 min-h-[300px]">
+                <div className="flex flex-1 min-h-0 flex-col gap-2.5 p-2.5 overflow-y-auto">
                   {orgs.length === 0 ? (
-                    <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                    <div className="flex flex-1 items-center justify-center rounded-lg border-2 border-dashed border-border/40 p-6 text-center text-xs text-muted-foreground m-1">
                       <span>No organizations here</span>
                     </div>
                   ) : (

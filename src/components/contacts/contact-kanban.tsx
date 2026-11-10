@@ -171,9 +171,9 @@ export function ContactKanban({
   );
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
       {/* Kanban Header / Controls */}
-      <div className="flex items-center justify-between gap-3 text-xs">
+      <div className="flex items-center justify-between gap-3 text-xs shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground font-medium">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
@@ -192,7 +192,7 @@ export function ContactKanban({
       </div>
 
       {/* Kanban Columns */}
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[500px]">
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
         {columns.map((col) => {
           const items = grouped.get(col.key) ?? [];
           if (col.key === UNASSIGNED_KEY && items.length === 0) return null;
@@ -212,12 +212,12 @@ export function ContactKanban({
                 handleDrop(col.key);
               }}
               className={cn(
-                "flex flex-col w-[82vw] sm:w-72 shrink-0 rounded-lg border bg-muted/30 transition-colors",
+                "flex flex-col w-[82vw] sm:w-72 shrink-0 rounded-lg border bg-muted/30 transition-colors h-full max-h-full overflow-hidden",
                 isOver && "border-primary bg-primary/5",
               )}
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between p-3 border-b bg-muted/50 rounded-t-lg">
+              <div className="flex items-center justify-between p-3 border-b bg-muted/50 rounded-t-lg shrink-0">
                 <div className="flex items-center gap-2 truncate">
                   <div
                     className={cn(
@@ -245,13 +245,13 @@ export function ContactKanban({
               </div>
 
               {/* Cards List */}
-              <div className="p-2 space-y-2 flex-1 min-h-[200px]">
+              <div className="p-2 space-y-2 flex-1 min-h-0 overflow-y-auto">
                 {loading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-28 w-full rounded-md" />
                   ))
                 ) : items.length === 0 ? (
-                  <div className="h-24 flex items-center justify-center text-[11px] text-muted-foreground italic border border-dashed rounded-md">
+                  <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground italic border-2 border-dashed border-border/40 rounded-md m-1 py-8">
                     No contacts
                   </div>
                 ) : (

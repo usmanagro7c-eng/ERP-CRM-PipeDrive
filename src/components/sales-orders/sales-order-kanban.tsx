@@ -82,7 +82,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[500px]">
+    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
       {SALES_ORDER_STAGES.map((col) => {
         const list = grouped.get(col.key) ?? [];
         const totalAmount = list.reduce(
@@ -93,10 +93,10 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
         return (
           <div
             key={col.key}
-            className="flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 border-border"
+            className="flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 border-border h-full max-h-full overflow-hidden"
           >
             {/* Stage Column Header */}
-            <div className="flex items-center justify-between border-b bg-card/50 p-3 rounded-t-lg">
+            <div className="flex items-center justify-between border-b bg-card/50 p-3 rounded-t-lg shrink-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-xs text-foreground">
                   {col.label}
@@ -111,9 +111,9 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
             </div>
 
             {/* Stage Cards Container */}
-            <div className="flex flex-col gap-2.5 p-2.5 min-h-[160px] max-h-[calc(100vh-270px)] overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
               {list.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground italic">
+                <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1 italic">
                   No orders in this stage
                 </div>
               ) : (
@@ -125,7 +125,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                     <div
                       key={order.name}
                       onClick={() => onEdit?.(order)}
-                      className="group relative flex flex-col justify-between rounded-md border bg-card p-3 shadow-xs hover:shadow-md transition-all border-border cursor-pointer hover:border-primary/40"
+                      className="group relative flex flex-col justify-between rounded-md border bg-card p-3 shadow-xs hover:shadow-md transition-all border-border cursor-pointer hover:border-primary/40 shrink-0"
                     >
                       <div className="flex items-start justify-between gap-1 mb-2">
                         <div className="flex-1 truncate">

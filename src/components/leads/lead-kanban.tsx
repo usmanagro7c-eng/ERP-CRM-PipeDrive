@@ -182,9 +182,9 @@ export function LeadKanban({
   }
 
   return (
-    <div className="flex h-full flex-col space-y-4">
+    <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
       {/* Top controls: Group By selector & Pipeline Summary */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1 shrink-0">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Leads Board:</span>
           <span>Showing {rows.length} total leads</span>
@@ -211,7 +211,7 @@ export function LeadKanban({
       </div>
 
       {/* Kanban Board Horizontal Scroll */}
-      <div className="flex flex-1 gap-4 overflow-x-auto pb-4 pt-1 items-start">
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch">
         {columns.map((col) => {
           const leads = groupedLeads.get(col.key) ?? [];
           const isOver = dragOverCol === col.key;
@@ -243,12 +243,12 @@ export function LeadKanban({
                 setDraggedLeadName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
+                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
               )}
             >
               {/* Column Header */}
-              <div className="border-b bg-card/60 p-3 rounded-t-lg">
+              <div className="border-b bg-card/60 p-3 rounded-t-lg shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
@@ -275,14 +275,14 @@ export function LeadKanban({
               </div>
 
               {/* Column Cards List */}
-              <div className="flex flex-col gap-2.5 p-2.5 min-h-[160px] max-h-[calc(100vh-270px)] overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
                 {loading && rows.length === 0 ? (
                   <div className="space-y-2">
                     <Skeleton className="h-24 w-full rounded-md" />
                     <Skeleton className="h-24 w-full rounded-md" />
                   </div>
                 ) : leads.length === 0 ? (
-                  <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
+                  <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                     <p className="italic">No leads here</p>
                     <p className="text-[10px] opacity-75">Drag leads to move</p>
                   </div>
@@ -315,7 +315,7 @@ export function LeadKanban({
                         }}
                         onClick={() => onRowClick?.(name)}
                         className={cn(
-                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
+                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing shrink-0",
                           draggedLeadName === name ? "opacity-40 border-dashed" : "border-border",
                         )}
                       >

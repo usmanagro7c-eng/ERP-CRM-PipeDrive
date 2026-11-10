@@ -210,7 +210,7 @@ export function QuotationKanban({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[550px]">
+    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
       {QUOTATION_STAGES.map((col) => {
         const list = grouped.get(col.key) ?? [];
         const isOver = dragOverCol === col.key;
@@ -240,12 +240,12 @@ export function QuotationKanban({
               setDraggedQuotationName(null);
             }}
             className={cn(
-              "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs",
+              "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
               isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
             )}
           >
             {/* Stage Column Header */}
-            <div className="flex items-center justify-between border-b bg-card/60 backdrop-blur-xs p-3 rounded-t-xl border-border/70">
+            <div className="flex items-center justify-between border-b bg-card/60 backdrop-blur-xs p-3 rounded-t-xl border-border/70 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-xs text-foreground">
                   {col.label}
@@ -273,7 +273,7 @@ export function QuotationKanban({
             </div>
 
             {/* Stage Cards Container */}
-            <div className="flex flex-col gap-2.5 p-2.5 min-h-[180px] max-h-[calc(100vh-270px)] overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
               {list.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                   <span>Drop quotations here</span>
@@ -299,7 +299,7 @@ export function QuotationKanban({
                       }}
                       onClick={() => handleCardClick(q.name)}
                       className={cn(
-                        "group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 active:scale-[0.99]",
+                        "group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 active:scale-[0.99] shrink-0",
                         draggedQuotationName === q.name ? "opacity-40 border-dashed" : "border-border/80",
                         isMoving && "pointer-events-none ring-2 ring-primary/40",
                       )}

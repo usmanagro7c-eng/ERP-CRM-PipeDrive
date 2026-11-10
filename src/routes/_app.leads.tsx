@@ -420,7 +420,12 @@ function LeadsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto p-4 sm:p-6">
+      <div
+        className={cn(
+          "flex-1 min-h-0 flex flex-col",
+          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-auto p-4 sm:p-6",
+        )}
+      >
         {error ? (
           <Alert variant="destructive" className="mb-6">
             <TriangleAlert className="size-4" />

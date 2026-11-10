@@ -217,9 +217,9 @@ export function DealKanban({
   }
 
   return (
-    <div className="flex h-full flex-col space-y-4">
+    <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
       {/* Top controls: Group By selector & Pipeline Summary */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1 shrink-0">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Pipeline View:</span>
           <span>Showing {rows.length} total deals</span>
@@ -246,7 +246,7 @@ export function DealKanban({
       </div>
 
       {/* Kanban Board Horizontal Scroll */}
-      <div className="flex flex-1 gap-4 overflow-x-auto pb-4 pt-1 items-start">
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch">
         {columns.map((col) => {
           const deals = groupedDeals.get(col.key) ?? [];
           const isOver = dragOverCol === col.key;
@@ -284,12 +284,12 @@ export function DealKanban({
                 setDraggedDealName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs",
+                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
               )}
             >
               {/* Column Header */}
-              <div className="border-b bg-card/70 p-3 rounded-t-xl backdrop-blur-xs">
+              <div className="border-b bg-card/70 p-3 rounded-t-xl backdrop-blur-xs shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
@@ -328,14 +328,14 @@ export function DealKanban({
               </div>
 
               {/* Column Cards List */}
-              <div className="flex flex-col gap-2.5 p-2.5 min-h-[160px] max-h-[calc(100vh-270px)] overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
                 {loading && rows.length === 0 ? (
                   <div className="space-y-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
                     <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
                 ) : deals.length === 0 ? (
-                  <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
+                  <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                     <p className="italic">No deals here</p>
                     <p className="text-[10px] opacity-75">Drag deals to move</p>
                   </div>
@@ -369,7 +369,7 @@ export function DealKanban({
                         }}
                         onClick={() => onRowClick?.(name)}
                         className={cn(
-                          "group relative overflow-hidden rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-foreground/20 cursor-grab active:cursor-grabbing active:scale-[0.98]",
+                          "group relative overflow-hidden rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 cursor-grab active:cursor-grabbing active:scale-[0.98] shrink-0",
                           draggedDealName === name ? "opacity-40 border-dashed" : "border-border/80",
                           isMoving && "pointer-events-none ring-2 ring-primary/40",
                         )}

@@ -357,7 +357,7 @@ function OrganizationDetailPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-normal text-muted-foreground">Territory</label>
                 <Select
-                  value={sidebarValues.territory || undefined}
+                  value={sidebarValues.territory || ""}
                   onValueChange={(val) => {
                     handleFieldChange("territory", val);
                     void saveMutation.mutateAsync({
@@ -383,7 +383,7 @@ function OrganizationDetailPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-normal text-muted-foreground">Industry</label>
                 <Select
-                  value={sidebarValues.industry || undefined}
+                  value={sidebarValues.industry || ""}
                   onValueChange={(val) => {
                     handleFieldChange("industry", val);
                     void saveMutation.mutateAsync({
@@ -409,7 +409,7 @@ function OrganizationDetailPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-normal text-muted-foreground">No. of Employees</label>
                 <Select
-                  value={sidebarValues.no_of_employees || undefined}
+                  value={sidebarValues.no_of_employees || ""}
                   onValueChange={(val) => {
                     handleFieldChange("no_of_employees", val);
                     void saveMutation.mutateAsync({

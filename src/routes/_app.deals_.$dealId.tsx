@@ -825,7 +825,7 @@ function DealDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Industry</span>
                 <Select
-                  value={sidebarValues.industry || undefined}
+                  value={sidebarValues.industry || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, industry: val }));
                     void handleFieldSave("industry", val);
@@ -848,7 +848,7 @@ function DealDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">No. of Employe...</span>
                 <Select
-                  value={sidebarValues.no_of_employees || undefined}
+                  value={sidebarValues.no_of_employees || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, no_of_employees: val }));
                     void handleFieldSave("no_of_employees", val);
@@ -883,7 +883,7 @@ function DealDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Territory</span>
                 <Select
-                  value={sidebarValues.territory || undefined}
+                  value={sidebarValues.territory || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, territory: val }));
                     void handleFieldSave("territory", val);
@@ -954,7 +954,7 @@ function DealDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Deal Owner</span>
                 <Select
-                  value={sidebarValues.deal_owner || undefined}
+                  value={sidebarValues.deal_owner || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, deal_owner: val }));
                     void handleFieldSave("deal_owner", val);

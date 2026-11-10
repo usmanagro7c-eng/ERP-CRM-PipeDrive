@@ -228,6 +228,13 @@ export function DealDataTab({
 
   const handleSave = async () => {
     if (!onSave || !isDirty) return;
+
+    const validProducts = products.filter((p) => typeof p.item === "string" && p.item.trim().length > 0);
+    if (products.length > 0 && validProducts.length !== products.length) {
+      toast.error("Please select a product for each line or delete empty rows.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -244,14 +251,19 @@ export function DealDataTab({
         probability: details.probability ? Number(details.probability) || details.probability : 0,
         deal_owner: details.deal_owner,
         deal_value:
-          products.length > 0
-            ? products.reduce((sum, p) => sum + (Number(p.rate) || 0) * (Number(p.qty) || 1), 0)
+          validProducts.length > 0
+            ? validProducts.reduce((sum, p) => sum + (Number(p.rate) || 0) * (Number(p.qty) || 1), 0)
             : Number(deal["deal_value"] || 0),
-        products: products.map((p) => {
+        products: validProducts.map((p) => {
+          const matched = availableItems.find(
+            (it) => it.item_code === p.item || it.item_name === p.item || it.name === p.item,
+          );
+          const pCode = matched?.name || matched?.item_code || p.item.trim();
+          const pName = matched?.item_name || matched?.name || p.item.trim();
           const amt = (Number(p.rate) || 0) * (Number(p.qty) || 1);
           return {
-            product_code: p.item,
-            product_name: p.item,
+            product_code: pCode,
+            product_name: pName,
             rate: Number(p.rate) || 0,
             qty: Number(p.qty) || 1,
             amount: amt,
@@ -261,8 +273,9 @@ export function DealDataTab({
       };
       await onSave(payload);
       toast.success("Deal data saved successfully");
-    } catch {
-      toast.error("Failed to save deal data");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save deal data";
+      toast.error(msg);
     } finally {
       setIsSaving(false);
     }
@@ -553,7 +566,7 @@ export function DealDataTab({
                       <div>
                         {availableItems.length > 0 ? (
                           <Select
-                            value={row.item || undefined}
+                            value={row.item || ""}
                             onValueChange={(val) => handleProductRowChange(row.id, "item", val)}
                           >
                             <SelectTrigger className="h-7 text-xs bg-background">
@@ -561,7 +574,7 @@ export function DealDataTab({
                             </SelectTrigger>
                             <SelectContent className="max-h-56">
                               {availableItems.map((it) => (
-                                <SelectItem key={it.name} value={it.item_code || it.name || ""} className="text-xs">
+                                <SelectItem key={it.name} value={it.name} className="text-xs">
                                   {it.item_name || it.item_code || it.name}
                                 </SelectItem>
                               ))}

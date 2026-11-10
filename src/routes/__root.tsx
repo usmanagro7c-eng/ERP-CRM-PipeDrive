@@ -9,6 +9,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import { TopLoadingBar } from "@/components/ui/loading";
 import appCss from "../styles.css?url";
@@ -115,6 +116,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <TopLoadingBar />
+      <Toaster richColors position="top-right" closeButton />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

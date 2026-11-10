@@ -276,7 +276,7 @@ function ContactDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Salutation</span>
                 <Select
-                  value={sidebarValues.salutation || undefined}
+                  value={sidebarValues.salutation || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, salutation: val }));
                     void handleFieldSave("salutation", val);
@@ -371,7 +371,7 @@ function ContactDetailPage() {
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Gender</span>
                 <Select
-                  value={sidebarValues.gender || undefined}
+                  value={sidebarValues.gender || ""}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, gender: val }));
                     void handleFieldSave("gender", val);

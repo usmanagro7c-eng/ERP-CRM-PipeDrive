@@ -160,6 +160,7 @@ describe("classifyRequest", () => {
   });
 
   it("allows uploads and whitelisted methods (further validated by the proxy)", () => {
+    expect(classifyRequest("POST", "api/method/upload_file", none)?.kind).toBe("upload");
     expect(classifyRequest("POST", "api/method/uploadfile", none)?.kind).toBe("upload");
     expect(
       classifyRequest("POST", "api/method/frappe.desk.form.utils.add_comment", none)?.kind,

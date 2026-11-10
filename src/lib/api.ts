@@ -605,16 +605,18 @@ export async function getLinkOptions(doctype: string): Promise<{ name: string }[
 export async function uploadAttachment(args: {
   doctype: string;
   docname: string;
-  fieldname: string;
+  fieldname?: string;
   file: File;
 }): Promise<string> {
   const formData = new FormData();
   formData.set("doctype", args.doctype);
   formData.set("docname", args.docname);
-  formData.set("fieldname", args.fieldname);
+  if (args.fieldname) {
+    formData.set("fieldname", args.fieldname);
+  }
   formData.set("is_private", "0");
   formData.set("file", args.file, args.file.name);
-  const payload = await proxyRequest("api/method/uploadfile", {
+  const payload = await proxyRequest("api/method/upload_file", {
     method: "POST",
     formData,
   });

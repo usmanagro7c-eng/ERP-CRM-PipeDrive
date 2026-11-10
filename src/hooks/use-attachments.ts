@@ -19,7 +19,6 @@ export function useUploadAttachment(doctype: string, docname: string) {
       api.uploadAttachment({
         doctype,
         docname,
-        fieldname: "attachment",
         file,
       }),
     onSuccess: () => {

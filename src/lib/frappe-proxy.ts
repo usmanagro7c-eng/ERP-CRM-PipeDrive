@@ -48,7 +48,7 @@ export type ProxyKind =
   | "link-read" // GET api/resource/<LinkedDocType>
   | "meta" // GET api/method/frappe.desk.form.load.getdoctype
   | "count" // GET api/method/frappe.client.get_count
-  | "upload"; // POST api/method/uploadfile
+  | "upload"; // POST api/method/upload_file or api/method/uploadfile
 
 export interface Classification {
   kind: ProxyKind;
@@ -92,7 +92,7 @@ export function classifyRequest(
   }
 
   if (method === "POST") {
-    if (path === "api/method/uploadfile") return { kind: "upload" };
+    if (path === "api/method/upload_file" || path === "api/method/uploadfile") return { kind: "upload" };
     if (
       path === "api/method/frappe.client.set_value" ||
       path === "api/method/frappe.client.cancel" ||

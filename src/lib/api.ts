@@ -1270,12 +1270,62 @@ export async function deleteCallLog(name: string): Promise<void> {
 // ---------------------------------------------------------------------------
 // Email / Communication API
 // ---------------------------------------------------------------------------
+export interface RecordEmail {
+  name: string;
+  subject: string;
+  content: string;
+  sender: string;
+  sender_full_name?: string;
+  recipients: string;
+  communication_date: string;
+  sent_or_received: "Sent" | "Received";
+  delivery_status?: string;
+  creation: string;
+}
+
+export async function getRecordEmails(
+  referenceDoctype: string,
+  referenceName: string,
+): Promise<RecordEmail[]> {
+  const query = new URLSearchParams();
+  query.set(
+    "filters",
+    JSON.stringify([
+      ["reference_doctype", "=", referenceDoctype],
+      ["reference_name", "=", referenceName],
+      ["communication_medium", "=", "Email"],
+    ]),
+  );
+  query.set(
+    "fields",
+    JSON.stringify([
+      "name",
+      "subject",
+      "content",
+      "sender",
+      "sender_full_name",
+      "recipients",
+      "communication_date",
+      "sent_or_received",
+      "delivery_status",
+      "creation",
+    ]),
+  );
+  query.set("order_by", "creation desc");
+  query.set("limit_page_length", "100");
+
+  const payload = await proxyRequest(`api/resource/${COMMUNICATION_DOCTYPE}?${query.toString()}`);
+  const data = unwrapResourceData<unknown>(payload);
+  return Array.isArray(data) ? (data as RecordEmail[]) : [];
+}
+
 export async function sendEmail(args: {
   recipients: string;
   subject: string;
   content: string;
   doctype?: string;
   docname?: string;
+  now?: boolean;
 }): Promise<void> {
   try {
     await proxyRequest("api/method/frappe.core.doctype.communication.email.make", {
@@ -1287,9 +1337,10 @@ export async function sendEmail(args: {
         doctype: args.doctype,
         name: args.docname,
         send_email: 1,
+        now: 1,
       },
     });
-  } catch {
+  } catch (err) {
     // If outgoing email is not configured on Frappe bench, fallback to creating Communication entry
     try {
       await proxyRequest(`api/resource/${COMMUNICATION_DOCTYPE}`, {
@@ -1306,9 +1357,15 @@ export async function sendEmail(args: {
         },
       });
     } catch {
-      // handled
+      throw err;
     }
   }
+}
+
+export async function deleteEmail(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${COMMUNICATION_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
 }
 
 export interface DashboardFilter {

@@ -31,18 +31,22 @@ function devAbortHandler(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   resolve: {
     tsconfigPaths: true,
   },
   plugins: [
-    cloudflare({
-      viteEnvironment: { name: "ssr" },
-    }),
+    ...(command === "build"
+      ? [
+          cloudflare({
+            viteEnvironment: { name: "ssr" },
+          }),
+        ]
+      : []),
     devAbortHandler(),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
   ],
-});
+}));
 

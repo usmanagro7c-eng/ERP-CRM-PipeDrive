@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pipedrive-crm",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-02-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "FRAPPE_BASE_URL": "https://dev03.agrovisions.pk",
+    "ERPNEXT_BASE_URL": "https://dev06.agrovisions.pk",
+    "ALLOWED_USERS": "usman.agro7c@gmail.com"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -255,10 +255,10 @@ export function LeadTable({
 
   return (
     <div className="relative overflow-x-auto">
-      <Table className="min-w-[650px]">
+      <Table className="min-w-[850px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[140px]">
+            <TableHead className="w-[200px] min-w-[190px]">
               <SortButton
                 field="name"
                 label="Lead ID"
@@ -290,7 +290,7 @@ export function LeadTable({
                 onClick={() => onRowClick?.(name)}
                 className="group cursor-pointer hover:bg-muted/50"
               >
-                <TableCell className="font-mono text-xs font-semibold text-primary">
+                <TableCell className="font-mono text-xs font-semibold text-primary whitespace-nowrap min-w-[190px]">
                   {name}
                 </TableCell>
                 {activeFields.map((field) => (

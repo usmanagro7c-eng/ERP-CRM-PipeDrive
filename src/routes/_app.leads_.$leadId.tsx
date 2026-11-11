@@ -346,7 +346,7 @@ function LeadDetailPage() {
             <span>List</span>
           </Link>
           <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[140px] sm:max-w-[240px]">
+          <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-[320px]">
             {leadName}
           </span>
         </div>

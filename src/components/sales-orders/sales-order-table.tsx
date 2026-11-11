@@ -138,7 +138,7 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-2xs">
-      <Table>
+      <Table className="min-w-[850px]">
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30">
             <TableHead className="w-[40px] px-3">
@@ -148,12 +148,12 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead className="w-[160px] text-xs font-semibold">Order ID</TableHead>
+            <TableHead className="w-[200px] min-w-[190px] text-xs font-semibold">Order ID</TableHead>
             <TableHead className="text-xs font-semibold">Customer</TableHead>
-            <TableHead className="text-center text-xs font-semibold">Status</TableHead>
-            <TableHead className="text-right text-xs font-semibold">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell text-xs font-semibold">Delivery Date</TableHead>
-            <TableHead className="hidden sm:table-cell text-xs font-semibold">Order Date</TableHead>
+            <TableHead className="text-center text-xs font-semibold whitespace-nowrap">Status</TableHead>
+            <TableHead className="text-right text-xs font-semibold whitespace-nowrap">Grand Total</TableHead>
+            <TableHead className="hidden md:table-cell text-xs font-semibold whitespace-nowrap">Delivery Date</TableHead>
+            <TableHead className="hidden sm:table-cell text-xs font-semibold whitespace-nowrap">Order Date</TableHead>
             <TableHead className="w-[70px] text-right text-xs font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -177,7 +177,7 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                     aria-label={`Select ${row.name}`}
                   />
                 </TableCell>
-                <TableCell className="font-semibold text-xs text-primary hover:underline">
+                <TableCell className="font-mono text-xs font-semibold text-primary hover:underline whitespace-nowrap min-w-[190px]">
                   {row.name}
                 </TableCell>
                 <TableCell className="text-xs">
@@ -186,16 +186,16 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                     <span className="truncate max-w-[200px]">{row.customer}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                <TableCell className="text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <SalesOrderStatusBadge status={row.status} />
                 </TableCell>
-                <TableCell className="text-right font-semibold text-xs">
+                <TableCell className="text-right font-semibold text-xs whitespace-nowrap">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">
                   {row.delivery_date || "—"}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     <Calendar className="size-3 text-muted-foreground" />
                     <span>{row.transaction_date}</span>

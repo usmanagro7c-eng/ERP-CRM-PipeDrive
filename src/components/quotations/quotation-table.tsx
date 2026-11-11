@@ -166,12 +166,12 @@ export function QuotationTable({
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead className="w-[15%]">Quotation ID</TableHead>
-            <TableHead className="w-[25%]">Customer / Party</TableHead>
-            <TableHead className="w-[12%]">Status</TableHead>
-            <TableHead className="w-[15%] text-right">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell w-[12%]">Valid Till</TableHead>
-            <TableHead className="w-[10%]">Date</TableHead>
+            <TableHead className="w-[200px] min-w-[190px]">Quotation ID</TableHead>
+            <TableHead className="w-[25%] min-w-[180px]">Customer / Party</TableHead>
+            <TableHead className="w-[12%] whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-[15%] text-right whitespace-nowrap">Grand Total</TableHead>
+            <TableHead className="hidden md:table-cell w-[12%] whitespace-nowrap">Valid Till</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap">Date</TableHead>
             <TableHead className="hidden lg:table-cell w-[11%]">CRM Deal</TableHead>
             <TableHead className="w-[40px] text-right pr-2" />
           </TableRow>
@@ -198,7 +198,7 @@ export function QuotationTable({
                 </TableCell>
 
                 {/* Quotation ID */}
-                <TableCell className="text-xs font-mono font-medium text-foreground py-2 truncate">
+                <TableCell className="text-xs font-mono font-medium text-foreground py-2 whitespace-nowrap min-w-[190px]">
                   <Link
                     to="/quotations/$quotationId"
                     params={{ quotationId: row.name }}

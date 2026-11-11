@@ -125,8 +125,11 @@ export const BLOCKED_LINK_TARGETS = new Set([
   "Scheduled Job Type",
 ]);
 
-/** Parent DocTypes a user may read attachments / comments / emails for. */
-export const ALLOWED_REFERENCE_DOCTYPES = new Set([
+/**
+ * DocTypes a user may comment on / email from / attach to through the generic
+ * methods, and that a File / Comment / Communication list may be scoped to.
+ */
+export const RECORD_DOCTYPES = new Set([
   LEAD_DOCTYPE,
   DEAL_DOCTYPE,
   TASK_DOCTYPE,
@@ -135,6 +138,9 @@ export const ALLOWED_REFERENCE_DOCTYPES = new Set([
   QUOTATION_DOCTYPE,
   SALES_ORDER_DOCTYPE,
 ]);
+
+/** Alias of RECORD_DOCTYPES. */
+export const ALLOWED_REFERENCE_DOCTYPES = RECORD_DOCTYPES;
 
 /**
  * DocTypes whose list reads are only allowed when the request is scoped to a
@@ -149,8 +155,12 @@ export const REFERENCE_FILTERED_DOCTYPES = new Map<
   [COMMUNICATION_DOCTYPE, { doctypeField: "reference_doctype", nameField: "reference_name" }],
 ]);
 
-/** DocTypes a file may be attached to (uploads). */
-export const UPLOAD_DOCTYPES = new Set([...MAIN_DOCTYPES, CUSTOMER_DOCTYPE]);
+/**
+ * DocTypes a file may be attached to (uploads): the CRM records, the sales
+ * documents and the two ERPNext masters. Nothing else is a valid parent for
+ * an attachment (File, Comment, Communication, ... are not).
+ */
+export const UPLOAD_DOCTYPES = new Set([...RECORD_DOCTYPES, ITEM_DOCTYPE, CUSTOMER_DOCTYPE]);
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
@@ -412,7 +422,7 @@ export function referenceScopeFor(
     if (field === spec.nameField) refName = value;
   }
   if (!refDoctype || !refName) return null;
-  if (!ALLOWED_REFERENCE_DOCTYPES.has(refDoctype)) return null;
+  if (!RECORD_DOCTYPES.has(refDoctype)) return null;
   if (!isPlausibleDocName(refName)) return null;
   return { doctype: refDoctype, name: refName };
 }
@@ -543,14 +553,17 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isScalar(value: unknown): boolean {
-  return (
-    typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    value === null
-  );
-}
+/**
+ * The RPC methods whose JSON body is validated (and rewritten) before the
+ * request is forwarded. Single source of truth for the proxy route and for
+ * `validateMethodBody`, so the two can never drift apart.
+ */
+export const VALIDATED_METHODS = new Set([
+  "api/method/frappe.client.set_value",
+  "api/method/frappe.client.cancel",
+  "api/method/frappe.desk.form.utils.add_comment",
+  "api/method/frappe.core.doctype.communication.email.make",
+]);
 
 /**
  * Validate (and sanitize) the JSON body of the allow-listed RPC methods.
@@ -566,19 +579,21 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
 
   switch (path) {
     case "api/method/frappe.client.set_value": {
+      // The app only uses this to change a Quotation's status.
       const doctype = body["doctype"];
       const name = body["name"];
       const fieldname = body["fieldname"];
-      if (typeof doctype !== "string" || !MAIN_DOCTYPES.has(doctype)) {
-        return { ok: false, reason: "set_value: unsupported doctype" };
+      const value = body["value"];
+      if (doctype !== QUOTATION_DOCTYPE || fieldname !== "status") {
+        return {
+          ok: false,
+          reason: "set_value is only allowed for the status of a Quotation",
+        };
       }
       if (!isPlausibleDocName(name)) {
         return { ok: false, reason: "set_value: invalid document name" };
       }
-      if (typeof fieldname !== "string" || !fieldname.trim() || fieldname.length > 140) {
-        return { ok: false, reason: "set_value: invalid fieldname" };
-      }
-      if (!("value" in body) || !isScalar(body["value"])) {
+      if (typeof value !== "string" || !value.trim() || value.length > 140) {
         return { ok: false, reason: "set_value: invalid value" };
       }
       return {
@@ -586,8 +601,8 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
         body: {
           doctype,
           name: (name as string).trim(),
-          fieldname: fieldname.trim(),
-          value: body["value"],
+          fieldname: "status",
+          value,
         },
       };
     }
@@ -595,8 +610,11 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
     case "api/method/frappe.client.cancel": {
       const doctype = body["doctype"];
       const name = body["name"];
-      if (typeof doctype !== "string" || !MAIN_DOCTYPES.has(doctype)) {
-        return { ok: false, reason: "cancel: unsupported doctype" };
+      if (doctype !== QUOTATION_DOCTYPE && doctype !== SALES_ORDER_DOCTYPE) {
+        return {
+          ok: false,
+          reason: "cancel is only allowed for Quotation and Sales Order",
+        };
       }
       if (!isPlausibleDocName(name)) {
         return { ok: false, reason: "cancel: invalid document name" };
@@ -608,11 +626,11 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
       const referenceDoctype = body["reference_doctype"];
       const referenceName = body["reference_name"];
       const content = body["content"];
-      if (
-        typeof referenceDoctype !== "string" ||
-        !ALLOWED_REFERENCE_DOCTYPES.has(referenceDoctype)
-      ) {
-        return { ok: false, reason: "add_comment: unsupported reference doctype" };
+      if (typeof referenceDoctype !== "string" || !RECORD_DOCTYPES.has(referenceDoctype)) {
+        return {
+          ok: false,
+          reason: "Comments are only allowed on CRM and sales records",
+        };
       }
       if (!isPlausibleDocName(referenceName)) {
         return { ok: false, reason: "add_comment: invalid reference name" };
@@ -639,8 +657,11 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
       const recipients = body["recipients"];
       const subject = body["subject"];
       const content = body["content"];
-      if (typeof doctype !== "string" || !ALLOWED_REFERENCE_DOCTYPES.has(doctype)) {
-        return { ok: false, reason: "email.make: unsupported doctype" };
+      if (typeof doctype !== "string" || !RECORD_DOCTYPES.has(doctype)) {
+        return {
+          ok: false,
+          reason: "Emails can only be sent from a CRM or sales record",
+        };
       }
       if (!isPlausibleDocName(name)) {
         return { ok: false, reason: "email.make: invalid document name" };

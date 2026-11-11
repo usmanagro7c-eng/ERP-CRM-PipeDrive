@@ -469,6 +469,19 @@ describe("validateMethodBody", () => {
     });
   });
 
+  it("only allows set_value for the status of a Quotation", () => {
+    const result = validateMethodBody("api/method/frappe.client.set_value", {
+      doctype: "CRM Deal",
+      name: "CRM-DEAL-001",
+      fieldname: "status",
+      value: "Won",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("set_value is only allowed for the status of a Quotation");
+    }
+  });
+
   it("rejects set_value for a doctype that is not allowed", () => {
     const result = validateMethodBody("api/method/frappe.client.set_value", {
       doctype: "User",
@@ -609,6 +622,88 @@ describe("validateMethodBody", () => {
     expect(validateMethodBody("api/method/frappe.client.set_value", "nope").ok).toBe(false);
     expect(validateMethodBody("api/method/frappe.client.get_list", {}).ok).toBe(false);
   });
+
+  it("allows exactly the calls the app makes", () => {
+    // The quotation status fallback (src/lib/api.ts -> updateQuotation).
+    expect(
+      validateMethodBody("api/method/frappe.client.set_value", {
+        doctype: "Quotation",
+        name: "QTN-1",
+        fieldname: "status",
+        value: "Lost",
+      }).ok,
+    ).toBe(true);
+    // The quotation cancellation (src/lib/api.ts -> cancelQuotation).
+    expect(
+      validateMethodBody("api/method/frappe.client.cancel", {
+        doctype: "Quotation",
+        name: "QTN-1",
+      }).ok,
+    ).toBe(true);
+    expect(
+      validateMethodBody("api/method/frappe.client.cancel", {
+        doctype: "Sales Order",
+        name: "SO-1",
+      }).ok,
+    ).toBe(true);
+    // A comment on a CRM record.
+    expect(
+      validateMethodBody("api/method/frappe.desk.form.utils.add_comment", {
+        reference_doctype: "CRM Deal",
+        reference_name: "D-1",
+        content: "hi",
+      }).ok,
+    ).toBe(true);
+    // An email from a CRM record.
+    expect(
+      validateMethodBody("api/method/frappe.core.doctype.communication.email.make", {
+        doctype: "CRM Lead",
+        name: "L-1",
+        recipients: "a@b.com",
+        subject: "Hi",
+        content: "There",
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("blocks abusing the generic methods on other doctypes or fields", () => {
+    // set_value may only touch the status of a Quotation.
+    expect(
+      validateMethodBody("api/method/frappe.client.set_value", {
+        doctype: "User",
+        name: "Administrator",
+        fieldname: "new_password",
+        value: "x",
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateMethodBody("api/method/frappe.client.set_value", {
+        doctype: "Quotation",
+        name: "Q",
+        fieldname: "grand_total",
+        value: "1",
+      }).ok,
+    ).toBe(false);
+    // cancel may only touch sales documents.
+    expect(
+      validateMethodBody("api/method/frappe.client.cancel", {
+        doctype: "Journal Entry",
+        name: "J",
+      }).ok,
+    ).toBe(false);
+    expect(validateMethodBody("api/method/frappe.client.cancel", null).ok).toBe(false);
+    // comments and emails are bound to CRM / sales records.
+    expect(
+      validateMethodBody("api/method/frappe.desk.form.utils.add_comment", {
+        reference_doctype: "User",
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateMethodBody("api/method/frappe.core.doctype.communication.email.make", {
+        recipients: "a@b.com",
+      }).ok,
+    ).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -642,7 +737,13 @@ describe("uploads", () => {
     expect(UPLOAD_DOCTYPES.has("Item")).toBe(true);
     expect(UPLOAD_DOCTYPES.has("Customer")).toBe(true);
     expect(UPLOAD_DOCTYPES.has("CRM Deal")).toBe(true);
+    expect(UPLOAD_DOCTYPES.has("CRM Lead")).toBe(true);
+    expect(UPLOAD_DOCTYPES.has("CRM Organization")).toBe(true);
     expect(UPLOAD_DOCTYPES.has("User")).toBe(false);
+    // Not a valid parent for an attachment.
+    expect(UPLOAD_DOCTYPES.has("File")).toBe(false);
+    expect(UPLOAD_DOCTYPES.has("Comment")).toBe(false);
+    expect(UPLOAD_DOCTYPES.has("Communication")).toBe(false);
   });
 
   it("routes the ERPNext doctypes to ERPNext", () => {

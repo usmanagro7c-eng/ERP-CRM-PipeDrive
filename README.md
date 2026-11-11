@@ -26,19 +26,21 @@ Browser ──(signed session cookie)──> /api/frappe/*  ──(token KEY:SEC
     scoped to one allowed parent document (reference filter required);
   - other DocTypes can only be listed (names only) when they are Link targets of
     `CRM Organization`; `User` is never readable;
-  - the body of `frappe.client.set_value`, `frappe.client.cancel`,
+  - the body of `frappe.client.set_value` (only the `status` of a `Quotation`),
+    `frappe.client.cancel` (only `Quotation` / `Sales Order`),
     `frappe.desk.form.utils.add_comment` and
-    `frappe.core.doctype.communication.email.make` is validated and rewritten;
+    `frappe.core.doctype.communication.email.make` (only CRM and sales records)
+    is validated and rewritten;
   - a write whose body carries a different `doctype` than the URL is rejected;
   - uploads are limited to a type allow-list and routed to the site that owns the
     document;
   - path traversal, other methods/doctypes and cross-site writes are blocked.
-  Rules live in `src/lib/frappe-proxy.ts` (unit-tested).
+    Rules live in `src/lib/frappe-proxy.ts` (unit-tested).
 
 ## Setup
 
 1. Frappe (dev03): create a dedicated integration user, give it only the permissions it
-   needs on **CRM Organization**, then *Settings → API Access → Generate Keys*.
+   needs on **CRM Organization**, then _Settings → API Access → Generate Keys_.
    Use keys from the **CRM site**, not the ERP site.
 2. Copy `.env.example` to `.env` and fill in the values (or set them as secrets on your host).
 3. Run:
@@ -79,20 +81,20 @@ npx wrangler deploy
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | dev server |
-| `npm run build` | production build |
-| `npm test` | unit tests (proxy rules, session cookies, rate limiter, secrets scan) |
-| `npm run check:secrets` | fails when a hard-coded credential is committed |
-| `npx tsc --noEmit` | type check |
+| Command                 | What it does                                                          |
+| ----------------------- | --------------------------------------------------------------------- |
+| `npm run dev`           | dev server                                                            |
+| `npm run build`         | production build                                                      |
+| `npm test`              | unit tests (proxy rules, session cookies, rate limiter, secrets scan) |
+| `npm run check:secrets` | fails when a hard-coded credential is committed                       |
+| `npx tsc --noEmit`      | type check                                                            |
 
 ## Security notes
 
 - Rotate any API key/secret that was ever pasted into a chat, ticket or commit.
 - Set a strong `SESSION_SECRET`; changing it signs everyone out.
-- Keep the API user's permissions minimal; the proxy limits *which* requests are forwarded,
-  Frappe permissions limit *what* that user can do.
+- Keep the API user's permissions minimal; the proxy limits _which_ requests are forwarded,
+  Frappe permissions limit _what_ that user can do.
 - Serve the app over HTTPS (the cookie is marked `Secure` automatically on HTTPS).
 - Every response carries `Content-Security-Policy`, `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: same-origin` and `X-Frame-Options: DENY` (added in
@@ -100,7 +102,7 @@ npx wrangler deploy
   popovers with inline `style` attributes; inline **scripts** are allowed because
   TanStack Start injects the SSR hydration payload as an inline `<script>` whose
   content differs per request (it cannot be allow-listed by hash). `script-src-attr
-  'none'` still blocks inline event handlers and no script may be loaded from another
+'none'` still blocks inline event handlers and no script may be loaded from another
   origin. Images may be loaded from the configured Frappe/ERPNext origins.
 
 ### Brute-force protection (known limitation)
@@ -115,7 +117,7 @@ answers further attempts with `429`. The counter is stored in:
 3. otherwise an **in-memory** counter.
 
 The in-memory fallback is per worker isolate: it is lost on a cold start and it is
-*not* shared between isolates, so a distributed attacker can still make more than
+_not_ shared between isolates, so a distributed attacker can still make more than
 5 attempts in total. To get a global limit, configure one of the bindings.
 
 **Cloudflare rate limiting binding** — add it to `wrangler.jsonc` (the `namespace_id`

@@ -9,6 +9,7 @@ import {
   MAX_REFERENCE_ROWS,
   MAX_UPLOAD_BYTES,
   ORG_DOCTYPE,
+  VALIDATED_METHODS,
   bodyContradictsDocType,
   buildLinkQuery,
   capPageLength,
@@ -46,14 +47,6 @@ import { isSameOrigin } from "@/lib/session";
 
 const PROXY_PREFIX = "/api/frappe/";
 const META_TTL_MS = 5 * 60 * 1000;
-
-/** Methods whose JSON body is validated (and rewritten) before forwarding. */
-const VALIDATED_METHODS = new Set([
-  "api/method/frappe.client.set_value",
-  "api/method/frappe.client.cancel",
-  "api/method/frappe.desk.form.utils.add_comment",
-  "api/method/frappe.core.doctype.communication.email.make",
-]);
 
 let linkTargetsCache: { targets: Set<string>; expires: number } | undefined;
 

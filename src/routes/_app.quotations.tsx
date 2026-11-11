@@ -214,7 +214,7 @@ function QuotationsPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Quotations / ☰ List */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
           <Link to="/quotations" className="hover:text-foreground transition-colors font-medium">
@@ -235,7 +235,7 @@ function QuotationsPage() {
           <Button
             size="sm"
             onClick={handleOpenCreate}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
@@ -244,11 +244,11 @@ function QuotationsPage() {
       </div>
 
       {/* Filter Bar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
+      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0 overflow-x-auto">
         {/* Left Inputs */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Customer / ID Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative w-40 sm:w-48 shrink-0">
+          <form onSubmit={handleSearchSubmit} className="relative w-32 sm:w-48 shrink-0">
             <Input
               value={term}
               onChange={(e) => setTerm(e.target.value)}
@@ -259,7 +259,7 @@ function QuotationsPage() {
 
           {/* Status Dropdown Filter */}
           <Select value={search.status ?? "all"} onValueChange={handleStatusChange}>
-            <SelectTrigger className="h-7 text-xs w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger className="h-7 text-xs w-24 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground shrink-0">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -277,9 +277,9 @@ function QuotationsPage() {
           {/* View Switcher Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs text-muted-foreground border-border/60">
+              <Button variant="outline" size="sm" className="h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs text-muted-foreground border-border/60 shrink-0">
                 <CurrentIcon className="size-3.5 text-muted-foreground" />
-                <span>{currentViewObj.label}</span>
+                <span className="hidden sm:inline">{currentViewObj.label}</span>
                 <ChevronDown className="size-3 opacity-60" />
               </Button>
             </DropdownMenuTrigger>

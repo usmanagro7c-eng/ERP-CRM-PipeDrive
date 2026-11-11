@@ -13,6 +13,7 @@ import {
   Loader2,
   Mail,
   MessageSquare,
+  MoreVertical,
   Paperclip,
   PhoneCall,
   Sparkles,
@@ -334,25 +335,71 @@ function LeadDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Leads / ☰ List / Zubair Khan */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
           <Link to="/leads" className="hover:text-foreground transition-colors font-medium shrink-0">
             Leads
           </Link>
+          <span className="hidden sm:inline-flex items-center gap-1 opacity-60">
+            /
+            <Link to="/leads" className="flex items-center gap-1 hover:text-foreground transition-colors">
+              <List className="size-3.5" />
+              <span>List</span>
+            </Link>
+          </span>
           <span className="opacity-60">/</span>
-          <Link to="/leads" className="flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
-            <List className="size-3.5" />
-            <span>List</span>
-          </Link>
-          <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-[320px]">
+          <span className="font-semibold text-foreground truncate max-w-[130px] sm:max-w-[320px]">
             {leadName}
           </span>
         </div>
 
-        {/* Top Right Actions Matching Frappe CRM: ⚡ Enrich, Assign To, ● New ▾, Convert to Deal */}
-        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto max-w-[65%] sm:max-w-none">
+        {/* Mobile Action Bar (< sm) */}
+        <div className="flex sm:hidden items-center gap-1 shrink-0">
+          {isConverted ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+              <CheckCircle2 className="size-3" />
+              <span>Converted</span>
+            </span>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => setConvertModalOpen(true)}
+              className="h-7 px-2 gap-1 text-xs font-semibold shadow-xs cursor-pointer bg-white text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-neutral-900 shrink-0"
+            >
+              <Sparkles className="size-3" />
+              <span>Convert</span>
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+                <MoreVertical className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-xs w-48">
+              <DropdownMenuItem onClick={() => toast.info("Enrich feature: Lead data validated")} className="cursor-pointer">
+                <Zap className="size-3.5 mr-2" /> Enrich Lead
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("tasks")} className="cursor-pointer">
+                <Activity className="size-3.5 mr-2" /> New Task
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("calls")} className="cursor-pointer">
+                <PhoneCall className="size-3.5 mr-2" /> New Call Log
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("notes")} className="cursor-pointer">
+                <StickyNote className="size-3.5 mr-2" /> New Note
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("emails")} className="cursor-pointer">
+                <Mail className="size-3.5 mr-2" /> New Email
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Desktop Action Bar (sm+) */}
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -360,7 +407,7 @@ function LeadDetailPage() {
             className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
           >
             <Zap className="size-3 text-muted-foreground" />
-            <span className="hidden sm:inline">Enrich</span>
+            <span>Enrich</span>
           </Button>
 
           {/* Assign To dropdown */}
@@ -372,7 +419,7 @@ function LeadDetailPage() {
                 className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
                 <UserPlus className="size-3" />
-                <span className="hidden sm:inline">Assign To</span>
+                <span>Assign To</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs w-48">

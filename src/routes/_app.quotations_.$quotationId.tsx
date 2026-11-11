@@ -166,18 +166,18 @@ function QuotationDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Breadcrumb & Action Bar matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Left: Breadcrumbs & Quotation ID */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground min-w-0 flex-1">
           <Link
             to="/quotations"
             className="hover:text-foreground transition-colors font-medium flex items-center gap-1 shrink-0"
           >
             <ArrowLeft className="size-3.5" />
-            <span>Quotations</span>
+            <span className="hidden sm:inline">Quotations</span>
           </Link>
           <span className="opacity-40">/</span>
-          <span className="font-mono text-foreground font-semibold truncate max-w-[140px] sm:max-w-none">
+          <span className="font-mono text-foreground font-semibold truncate max-w-[130px] sm:max-w-none">
             {quotationId}
           </span>
           <Button
@@ -191,8 +191,41 @@ function QuotationDetailPage() {
           </Button>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto">
+        {/* Mobile Action Bar (< sm) */}
+        <div className="flex sm:hidden items-center gap-1 shrink-0">
+          <Button
+            size="sm"
+            onClick={() => setSalesOrderModalOpen(true)}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+          >
+            <ShoppingCart className="size-3.5" />
+            <span>Convert</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+                <MoreVertical className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-xs w-44">
+              <DropdownMenuItem onClick={() => void refetch()} className="cursor-pointer">
+                <RefreshCw className="size-3.5 mr-2" /> Refresh
+              </DropdownMenuItem>
+              {isDraft && (
+                <DropdownMenuItem onClick={handleSubmit} disabled={submitMutation.isPending} className="cursor-pointer">
+                  <CheckCircle2 className="size-3.5 mr-2 text-emerald-600" /> Submit
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setEditModalOpen(true)} className="cursor-pointer">
+                <Edit2 className="size-3.5 mr-2" /> Edit
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Desktop Action Bar (sm+) */}
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -230,11 +263,10 @@ function QuotationDetailPage() {
             className="h-7 text-xs font-semibold px-2.5 sm:px-3 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 transition-colors shrink-0"
           >
             <ShoppingCart className="size-3.5" />
-            <span className="hidden sm:inline">Convert to Sales Order</span>
-            <span className="sm:hidden">Convert</span>
+            <span>Convert to Sales Order</span>
           </Button>
 
-          {/* Edit / More Dropdown */}
+          {/* Edit Button */}
           <Button
             size="sm"
             variant="outline"
@@ -242,7 +274,7 @@ function QuotationDetailPage() {
             className="h-7 text-xs font-medium px-2.5 border-border/70 cursor-pointer gap-1 shrink-0"
           >
             <Edit2 className="size-3" />
-            <span className="hidden sm:inline">Edit</span>
+            <span>Edit</span>
           </Button>
 
           <DropdownMenu>

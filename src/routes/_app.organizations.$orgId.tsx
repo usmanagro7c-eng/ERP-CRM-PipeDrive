@@ -223,42 +223,43 @@ function OrganizationDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Organizations / ☰ List / {orgName} */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
           <Link to="/organizations" className="hover:text-foreground transition-colors font-medium shrink-0">
             Organizations
           </Link>
-          <span className="opacity-60">/</span>
-          <Link to="/organizations" className="flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
+          <span className="opacity-60 hidden sm:inline">/</span>
+          <Link to="/organizations" className="hidden sm:flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
             <List className="size-3.5" />
             <span>List</span>
           </Link>
           <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[160px] sm:max-w-[240px]">
+          <span className="font-semibold text-foreground truncate max-w-[120px] sm:max-w-[240px]">
             {orgName}
           </span>
         </div>
 
         {/* Top Right Actions: Enrich + Solid Black "+ New Deal" Button matching Frappe CRM */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={() => toast.info("Organization domain enrichment triggered")}
-            className="h-7 text-xs font-medium px-3 rounded-md border-border/60 cursor-pointer gap-1.5 transition-colors shrink-0"
+            className="h-7 text-xs font-medium px-2 sm:px-3 rounded-md border-border/60 cursor-pointer gap-1 sm:gap-1.5 transition-colors shrink-0"
+            title="Enrich Organization"
           >
             <Sparkles className="size-3.5 text-muted-foreground" />
-            <span>Enrich</span>
+            <span className="hidden sm:inline">Enrich</span>
           </Button>
 
           <Button
             size="sm"
             onClick={() => setDealModalOpen(true)}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors shrink-0"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors shrink-0"
           >
             <Plus className="size-3.5" />
-            <span>New Deal</span>
+            <span><span className="hidden sm:inline">New </span>Deal</span>
           </Button>
         </div>
       </div>

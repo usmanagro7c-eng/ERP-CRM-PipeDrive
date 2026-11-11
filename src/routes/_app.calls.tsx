@@ -175,7 +175,7 @@ function CallLogsPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Call Logs / ☰ List */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
           <Link to="/calls" className="hover:text-foreground transition-colors font-medium">
@@ -196,7 +196,7 @@ function CallLogsPage() {
           <Button
             size="sm"
             onClick={handleOpenCreate}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
@@ -205,12 +205,12 @@ function CallLogsPage() {
       </div>
 
       {/* Filter Bar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
+      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
         {/* Left Inputs */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Type Dropdown */}
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="h-7 text-xs w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -227,7 +227,7 @@ function CallLogsPage() {
 
           {/* Status Dropdown */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-7 text-xs w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -243,7 +243,7 @@ function CallLogsPage() {
           </Select>
 
           {/* From Number Input */}
-          <div className="relative w-32 sm:w-44 shrink-0">
+          <div className="relative w-24 sm:w-44 shrink-0">
             <Input
               value={fromFilter}
               onChange={(e) => setFromFilter(e.target.value)}
@@ -253,7 +253,7 @@ function CallLogsPage() {
           </div>
 
           {/* To Number Input */}
-          <div className="relative w-32 sm:w-44 shrink-0">
+          <div className="relative w-24 sm:w-44 shrink-0">
             <Input
               value={toFilter}
               onChange={(e) => setToFilter(e.target.value)}
@@ -279,7 +279,7 @@ function CallLogsPage() {
             size="sm"
             title="Filter"
             aria-label="Filter"
-            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Filter className="size-3.5" />
             <span className="hidden sm:inline">Filter</span>
@@ -289,7 +289,7 @@ function CallLogsPage() {
             size="sm"
             title="Sort"
             aria-label="Sort"
-            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <ArrowUpDown className="size-3.5" />
             <span className="hidden sm:inline">Sort</span>
@@ -299,7 +299,7 @@ function CallLogsPage() {
             size="sm"
             title="Columns"
             aria-label="Columns"
-            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
+            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Columns3 className="size-3.5" />
             <span className="hidden sm:inline">Columns</span>

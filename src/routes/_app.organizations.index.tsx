@@ -273,16 +273,16 @@ function OrganizationsPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
-        <div className="flex min-w-0 items-center gap-2 text-sm">
-          <span className="font-medium text-foreground">Organizations</span>
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <span className="font-medium text-foreground truncate">Organizations</span>
           <span className="text-muted-foreground/60">/</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-sm">
-                <CurrentIcon className="size-3.5 text-muted-foreground" />
-                <span>{currentViewObj.label}</span>
-                <ChevronDown className="size-3 text-muted-foreground" />
+              <button className="flex items-center gap-1 sm:gap-1.5 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-xs sm:text-sm truncate">
+                <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">{currentViewObj.label}</span>
+                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 text-xs">
@@ -314,7 +314,7 @@ function OrganizationsPage() {
             size="sm"
             onClick={handleOpenCreateModal}
             disabled={!meta}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1 sm:gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
@@ -323,10 +323,10 @@ function OrganizationsPage() {
       </div>
 
       {/* Secondary Filter Toolbar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
-        <div className="flex items-center gap-2 text-xs shrink-0">
+      <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
           {/* Search Input */}
-          <form onSubmit={submitSearch} className="relative w-44 sm:w-52 shrink-0">
+          <form onSubmit={submitSearch} className="relative flex-1 min-w-[120px] max-w-[210px] sm:w-52">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
@@ -337,7 +337,7 @@ function OrganizationsPage() {
           </form>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -346,7 +346,7 @@ function OrganizationsPage() {
               void listQuery.refetch();
               void countQuery.refetch();
             }}
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            className="h-7 w-7 p-0 sm:w-auto sm:px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             title="Refresh"
           >
             <RefreshCw className="size-3.5" />

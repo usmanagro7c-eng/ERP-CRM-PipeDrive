@@ -194,19 +194,21 @@ function ContactDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Contacts / ☰ List / {contactName} */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
           <Link to="/contacts" className="hover:text-foreground transition-colors font-medium shrink-0">
             Contacts
           </Link>
+          <span className="hidden sm:inline-flex items-center gap-1 opacity-60">
+            /
+            <Link to="/contacts" className="flex items-center gap-1 hover:text-foreground transition-colors">
+              <List className="size-3.5" />
+              <span>List</span>
+            </Link>
+          </span>
           <span className="opacity-60">/</span>
-          <Link to="/contacts" className="flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
-            <List className="size-3.5" />
-            <span>List</span>
-          </Link>
-          <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[160px] sm:max-w-[240px]">
+          <span className="font-semibold text-foreground truncate max-w-[130px] sm:max-w-[320px]">
             {contactName}
           </span>
         </div>
@@ -216,10 +218,11 @@ function ContactDetailPage() {
           <Button
             size="sm"
             onClick={() => setDealModalOpen(true)}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors shrink-0"
           >
             <Plus className="size-3.5" />
-            <span>New Deal</span>
+            <span className="hidden sm:inline">New Deal</span>
+            <span className="sm:hidden">Deal</span>
           </Button>
         </div>
       </div>

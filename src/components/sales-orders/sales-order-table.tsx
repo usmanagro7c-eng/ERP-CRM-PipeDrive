@@ -149,11 +149,11 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
               />
             </TableHead>
             <TableHead className="w-[200px] min-w-[190px] text-xs font-semibold">Order ID</TableHead>
-            <TableHead className="text-xs font-semibold">Customer</TableHead>
-            <TableHead className="text-center text-xs font-semibold whitespace-nowrap">Status</TableHead>
-            <TableHead className="text-right text-xs font-semibold whitespace-nowrap">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell text-xs font-semibold whitespace-nowrap">Delivery Date</TableHead>
-            <TableHead className="hidden sm:table-cell text-xs font-semibold whitespace-nowrap">Order Date</TableHead>
+            <TableHead className="text-xs font-semibold min-w-[160px]">Customer</TableHead>
+            <TableHead className="w-[110px] min-w-[100px] text-xs font-semibold whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-[140px] min-w-[130px] text-xs font-semibold whitespace-nowrap">Grand Total</TableHead>
+            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] text-xs font-semibold whitespace-nowrap">Delivery Date</TableHead>
+            <TableHead className="hidden sm:table-cell w-[120px] min-w-[110px] text-xs font-semibold whitespace-nowrap">Order Date</TableHead>
             <TableHead className="w-[70px] text-right text-xs font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -186,10 +186,10 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                     <span className="truncate max-w-[200px]">{row.customer}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <SalesOrderStatusBadge status={row.status} />
                 </TableCell>
-                <TableCell className="text-right font-semibold text-xs whitespace-nowrap">
+                <TableCell className="font-semibold text-xs whitespace-nowrap">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">

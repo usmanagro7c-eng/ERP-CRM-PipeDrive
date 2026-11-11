@@ -166,13 +166,13 @@ export function QuotationTable({
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead className="w-[200px] min-w-[190px]">Quotation ID</TableHead>
-            <TableHead className="w-[25%] min-w-[180px]">Customer / Party</TableHead>
-            <TableHead className="w-[12%] whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-[15%] text-right whitespace-nowrap">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell w-[12%] whitespace-nowrap">Valid Till</TableHead>
-            <TableHead className="w-[10%] whitespace-nowrap">Date</TableHead>
-            <TableHead className="hidden lg:table-cell w-[11%]">CRM Deal</TableHead>
+            <TableHead className="w-[190px] min-w-[180px]">Quotation ID</TableHead>
+            <TableHead className="min-w-[180px]">Customer / Party</TableHead>
+            <TableHead className="w-[110px] min-w-[100px] whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-[140px] min-w-[130px] whitespace-nowrap">Grand Total</TableHead>
+            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] whitespace-nowrap">Valid Till</TableHead>
+            <TableHead className="w-[120px] min-w-[110px] whitespace-nowrap">Date</TableHead>
+            <TableHead className="hidden lg:table-cell w-[130px] min-w-[120px]">CRM Deal</TableHead>
             <TableHead className="w-[40px] text-right pr-2" />
           </TableRow>
         </TableHeader>
@@ -198,7 +198,7 @@ export function QuotationTable({
                 </TableCell>
 
                 {/* Quotation ID */}
-                <TableCell className="text-xs font-mono font-medium text-foreground py-2 whitespace-nowrap min-w-[190px]">
+                <TableCell className="text-xs font-mono font-medium text-foreground py-2 whitespace-nowrap min-w-[180px]">
                   <Link
                     to="/quotations/$quotationId"
                     params={{ quotationId: row.name }}
@@ -217,22 +217,22 @@ export function QuotationTable({
                 </TableCell>
 
                 {/* Status */}
-                <TableCell className="py-2">
+                <TableCell className="py-2 whitespace-nowrap">
                   <QuotationStatusBadge status={row.status} />
                 </TableCell>
 
                 {/* Grand Total */}
-                <TableCell className="text-xs font-semibold text-foreground text-right py-2">
+                <TableCell className="text-xs font-semibold text-foreground py-2 whitespace-nowrap">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </TableCell>
 
                 {/* Valid Till */}
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground py-2">
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground py-2 whitespace-nowrap">
                   {row.valid_till || "-"}
                 </TableCell>
 
                 {/* Date */}
-                <TableCell className="text-xs text-muted-foreground py-2">
+                <TableCell className="text-xs text-muted-foreground py-2 whitespace-nowrap">
                   {row.transaction_date || "-"}
                 </TableCell>
 

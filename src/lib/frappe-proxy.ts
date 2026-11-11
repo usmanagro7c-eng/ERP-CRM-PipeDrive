@@ -7,6 +7,9 @@
  *  - Quotation, Sales Order, Item, Customer, and related ERPNext DocTypes route to ERPNext site (dev06).
  *  - Other DocTypes can only be read as a list of `name`s, and only when they are
  *    the target of a Link field on CRM Organization (resolved from its metadata).
+ *  - File / Comment / Communication lists may only be read when the request is
+ *    scoped to one allowed parent document (reference filter required).
+ *  - "User" and friends are never readable as a link target.
  *  - Path traversal ("..") and encoded slashes are rejected.
  */
 
@@ -24,6 +27,7 @@ export const FILE_DOCTYPE = "File";
 export const COMMENT_DOCTYPE = "Comment";
 export const COMMUNICATION_DOCTYPE = "Communication";
 export const CRM_PRODUCTS_DOCTYPE = "CRM Products";
+export const CUSTOMER_DOCTYPE = "Customer";
 
 export const MAIN_DOCTYPES = new Set([
   ORG_DOCTYPE,
@@ -47,7 +51,7 @@ export const ERPNEXT_DOCTYPES = new Set([
   QUOTATION_DOCTYPE,
   SALES_ORDER_DOCTYPE,
   ITEM_DOCTYPE,
-  "Customer",
+  CUSTOMER_DOCTYPE,
   "Item Group",
   "UOM",
   "Price List",
@@ -65,7 +69,6 @@ export const DEFAULT_LINK_TARGETS = new Set([
   "CRM Industry",
   "Address",
   "Country",
-  "User",
   "Contact",
   "CRM Organization",
   "CRM Deal",
@@ -95,17 +98,104 @@ export const DEFAULT_LINK_TARGETS = new Set([
   "Note",
   "CRM Note",
   "CRM Call Log",
-  "File",
-  "Comment",
-  "Communication",
   "CRM Products",
 ]);
 
+/**
+ * DocTypes that must never be readable through the proxy, not even when a
+ * DocType's metadata lists them as a Link target.
+ *
+ * The UI does not need them: user pickers use `crm.api.session.get_users`
+ * (an allow-listed method), never `api/resource/User`.
+ */
+export const BLOCKED_LINK_TARGETS = new Set([
+  "User",
+  "User Type",
+  "Role",
+  "Role Profile",
+  "DocType",
+  "Report",
+  "Print Format",
+  "Server Script",
+  "Client Script",
+  "Custom DocPerm",
+  "Access Log",
+  "Personalization",
+  "Webhook",
+  "Scheduled Job Type",
+]);
+
+/** Parent DocTypes a user may read attachments / comments / emails for. */
+export const ALLOWED_REFERENCE_DOCTYPES = new Set([
+  LEAD_DOCTYPE,
+  DEAL_DOCTYPE,
+  TASK_DOCTYPE,
+  ORG_DOCTYPE,
+  CONTACT_DOCTYPE,
+  QUOTATION_DOCTYPE,
+  SALES_ORDER_DOCTYPE,
+]);
+
+/**
+ * DocTypes whose list reads are only allowed when the request is scoped to a
+ * single parent document, plus the filter fields used for that scoping.
+ */
+export const REFERENCE_FILTERED_DOCTYPES = new Map<
+  string,
+  { doctypeField: string; nameField: string }
+>([
+  [FILE_DOCTYPE, { doctypeField: "attached_to_doctype", nameField: "attached_to_name" }],
+  [COMMENT_DOCTYPE, { doctypeField: "reference_doctype", nameField: "reference_name" }],
+  [COMMUNICATION_DOCTYPE, { doctypeField: "reference_doctype", nameField: "reference_name" }],
+]);
+
+/** DocTypes a file may be attached to (uploads). */
+export const UPLOAD_DOCTYPES = new Set([...MAIN_DOCTYPES, CUSTOMER_DOCTYPE]);
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
+/** Hard cap for any single list read of a main resource. */
+export const MAX_MAIN_ROWS = 200;
+/** Hard cap for File / Comment / Communication list reads. */
+export const MAX_REFERENCE_ROWS = 100;
+/** Maximum length of a Frappe document name. */
+export const MAX_DOC_NAME_LENGTH = 140;
+
+/**
+ * Upload allow-list: file extension -> acceptable content types.
+ * Anything not listed here is rejected before the request is forwarded.
+ */
+export const UPLOAD_TYPE_ALLOWLIST: Record<string, string[]> = {
+  png: ["image/png"],
+  jpg: ["image/jpeg"],
+  jpeg: ["image/jpeg"],
+  gif: ["image/gif"],
+  webp: ["image/webp"],
+  bmp: ["image/bmp"],
+  pdf: ["application/pdf", "application/octet-stream"],
+  docx: [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/zip",
+    "application/octet-stream",
+  ],
+  xlsx: [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/zip",
+    "application/octet-stream",
+  ],
+  csv: [
+    "text/csv",
+    "application/csv",
+    "text/plain",
+    "application/vnd.ms-excel",
+    "application/octet-stream",
+  ],
+  txt: ["text/plain", "text/csv", "application/octet-stream"],
+};
 
 export type ProxyKind =
   | "org-read" // GET api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item[/<name>]
+  | "scoped-read" // GET api/resource/File|Comment|Communication (needs a reference filter)
   | "org-write" // POST/PUT/DELETE api/resource/CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item[/<name>]
   | "link-read" // GET api/resource/<LinkedDocType>
   | "meta" // GET api/method/frappe.desk.form.load.getdoctype
@@ -114,7 +204,7 @@ export type ProxyKind =
 
 export interface Classification {
   kind: ProxyKind;
-  /** Target DocType for "link-read". */
+  /** Target DocType for "link-read" and "scoped-read". */
   doctype?: string;
 }
 
@@ -124,8 +214,16 @@ export function hasUnsafeSegments(path: string): boolean {
   return path.split("/").some((segment) => segment === ".." || segment === ".");
 }
 
-const MAIN_RESOURCE = /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)(?:\/([^/]+))?$/;
+const MAIN_RESOURCE =
+  /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
+const RESOURCE_DOCTYPE = /^api\/resource\/([^/]+)(?:\/[^/]*)?$/;
+
+/** Extract the DocType from an `api/resource/<DocType>[/<name>]` path. */
+export function doctypeFromResourcePath(path: string): string | undefined {
+  const match = RESOURCE_DOCTYPE.exec(path);
+  return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+}
 
 /**
  * Decide what kind of request this is, or null if it must be blocked.
@@ -139,7 +237,15 @@ export function classifyRequest(
   if (!path || hasUnsafeSegments(path)) return null;
 
   if (method === "GET") {
-    if (MAIN_RESOURCE.test(path)) return { kind: "org-read" };
+    if (MAIN_RESOURCE.test(path)) {
+      const doctype = doctypeFromResourcePath(path);
+      if (doctype && REFERENCE_FILTERED_DOCTYPES.has(doctype)) {
+        // File / Comment / Communication: list reads need a reference filter,
+        // single document reads are never allowed.
+        return path === `api/resource/${doctype}` ? { kind: "scoped-read", doctype } : null;
+      }
+      return { kind: "org-read" };
+    }
     if (path === "api/method/frappe.desk.form.load.getdoctype") {
       const dt = searchParams.get("doctype") ?? "";
       return MAIN_DOCTYPES.has(dt) ? { kind: "meta" } : null;
@@ -154,7 +260,8 @@ export function classifyRequest(
   }
 
   if (method === "POST") {
-    if (path === "api/method/upload_file" || path === "api/method/uploadfile") return { kind: "upload" };
+    if (path === "api/method/upload_file" || path === "api/method/uploadfile")
+      return { kind: "upload" };
     if (
       path === "api/method/frappe.client.set_value" ||
       path === "api/method/frappe.client.cancel" ||
@@ -167,7 +274,12 @@ export function classifyRequest(
     ) {
       return { kind: "org-write" };
     }
-    if (/^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)$/.test(path)) return { kind: "org-write" };
+    if (
+      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)$/.test(
+        path,
+      )
+    )
+      return { kind: "org-write" };
     return null;
   }
 
@@ -237,4 +349,350 @@ export function buildLinkQuery(incoming: URLSearchParams): string {
   query.set("limit_page_length", String(limit));
   query.set("order_by", "name asc");
   return query.toString();
+}
+
+// ---------------------------------------------------------------------------
+// Reference scoped reads (File / Comment / Communication)
+// ---------------------------------------------------------------------------
+
+export type FilterEntry = [string, string, string];
+
+/**
+ * Parse the `filters` query parameter of a Frappe list request.
+ * Supports the JSON array-of-arrays form and the JSON object form.
+ */
+export function parseFilters(searchParams: URLSearchParams): FilterEntry[] {
+  const raw = searchParams.get("filters");
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  const entries: FilterEntry[] = [];
+  if (Array.isArray(parsed)) {
+    for (const item of parsed) {
+      if (!Array.isArray(item) || item.length < 3) continue;
+      const [field, op, value] = item as unknown[];
+      if (typeof field === "string" && typeof op === "string" && typeof value === "string") {
+        entries.push([field, op, value]);
+      }
+    }
+    return entries;
+  }
+  if (parsed && typeof parsed === "object") {
+    for (const [field, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === "string") entries.push([field, "=", value]);
+    }
+  }
+  return entries;
+}
+
+export interface ReferenceScope {
+  doctype: string;
+  name: string;
+}
+
+/**
+ * Extract the parent document a File/Comment/Communication list read is
+ * scoped to. Returns null when the request is not scoped to an allowed parent.
+ */
+export function referenceScopeFor(
+  doctype: string,
+  searchParams: URLSearchParams,
+): ReferenceScope | null {
+  const spec = REFERENCE_FILTERED_DOCTYPES.get(doctype);
+  if (!spec) return null;
+  let refDoctype: string | undefined;
+  let refName: string | undefined;
+  for (const [field, op, value] of parseFilters(searchParams)) {
+    if (op !== "=") continue;
+    if (field === spec.doctypeField) refDoctype = value;
+    if (field === spec.nameField) refName = value;
+  }
+  if (!refDoctype || !refName) return null;
+  if (!ALLOWED_REFERENCE_DOCTYPES.has(refDoctype)) return null;
+  if (!isPlausibleDocName(refName)) return null;
+  return { doctype: refDoctype, name: refName };
+}
+
+/**
+ * Rebuild a list query with a hard cap on the page size.
+ * `limit_page_length=0` means "unlimited" in Frappe, so it is replaced too.
+ * The legacy `limit` parameter is folded into `limit_page_length`.
+ */
+export function capPageLength(searchParams: URLSearchParams, max: number): string {
+  const query = new URLSearchParams(searchParams);
+  const legacy = Number(query.get("limit"));
+  query.delete("limit");
+  const requested = Number(query.get("limit_page_length"));
+  const candidates = [requested, legacy].filter((n) => Number.isFinite(n) && n > 0);
+  const limit = candidates.length > 0 ? Math.min(max, ...candidates) : max;
+  query.set("limit_page_length", String(limit));
+  return query.toString();
+}
+
+// ---------------------------------------------------------------------------
+// Document names and upload payloads
+// ---------------------------------------------------------------------------
+
+/**
+ * A document name must be a short, single-segment string: no slashes, no
+ * control characters, no traversal, and at most 140 characters.
+ */
+export function isPlausibleDocName(name: unknown): boolean {
+  if (typeof name !== "string") return false;
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.length > MAX_DOC_NAME_LENGTH) return false;
+  if (trimmed.includes("/") || trimmed.includes("\\")) return false;
+  if (trimmed.includes("..")) return false;
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
+  return /[A-Za-z0-9]/.test(trimmed);
+}
+
+/** Lower-case extension of a file name ("" when there is none). */
+export function fileExtension(fileName: string): string {
+  const base = fileName.split(/[\\/]/).pop() ?? "";
+  const dot = base.lastIndexOf(".");
+  if (dot <= 0 || dot === base.length - 1) return "";
+  return base.slice(dot + 1).toLowerCase();
+}
+
+/**
+ * True when the file extension is on the upload allow-list and the reported
+ * content type is compatible with it.
+ */
+export function isAllowedUploadType(fileName: string, contentType?: string | null): boolean {
+  const extension = fileExtension(fileName);
+  const allowed = UPLOAD_TYPE_ALLOWLIST[extension];
+  if (!allowed) return false;
+  const type = (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+  if (!type) return true;
+  return allowed.includes(type);
+}
+
+// ---------------------------------------------------------------------------
+// Uploads
+// ---------------------------------------------------------------------------
+
+export interface UploadInfo {
+  doctype: string;
+  docname: string;
+  /** True when the file must be uploaded to ERPNext (dev06). */
+  isErpNext: boolean;
+}
+
+export type UploadResult =
+  { ok: true; info: UploadInfo } | { ok: false; status: number; reason: string };
+
+/**
+ * Validate a multipart upload form.
+ *
+ * The DocType decides the target site (ERPNext for Quotation, Sales Order,
+ * Item and Customer), the docname must look like a document name and the file
+ * must be on the type allow-list.
+ */
+export function validateUploadForm(form: FormData): UploadResult {
+  const doctype = String(form.get("doctype") ?? "").trim();
+  if (!UPLOAD_DOCTYPES.has(doctype)) {
+    return {
+      ok: false,
+      status: 403,
+      reason: "Uploads are only allowed for CRM and Sales DocTypes",
+    };
+  }
+
+  const docname = String(form.get("docname") ?? "").trim();
+  if (!isPlausibleDocName(docname)) {
+    return { ok: false, status: 400, reason: "Upload needs a valid docname" };
+  }
+
+  const file = form.get("file");
+  if (!(file instanceof File)) {
+    return { ok: false, status: 400, reason: "Upload needs a file" };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { ok: false, status: 413, reason: "File too large (max 10 MB)" };
+  }
+  if (!isAllowedUploadType(file.name, file.type)) {
+    return {
+      ok: false,
+      status: 403,
+      reason: "File type not allowed (images, pdf, docx, xlsx, csv, txt)",
+    };
+  }
+
+  return { ok: true, info: { doctype, docname, isErpNext: ERPNEXT_DOCTYPES.has(doctype) } };
+}
+
+// ---------------------------------------------------------------------------
+// Method body validation
+// ---------------------------------------------------------------------------
+
+export type MethodBodyResult =
+  { ok: true; body: Record<string, unknown> } | { ok: false; reason: string };
+
+const MAX_COMMENT_LENGTH = 10_000;
+const MAX_EMAIL_SUBJECT_LENGTH = 250;
+const MAX_EMAIL_BODY_LENGTH = 50_000;
+const MAX_RECIPIENTS_LENGTH = 1_000;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isScalar(value: unknown): boolean {
+  return (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    value === null
+  );
+}
+
+/**
+ * Validate (and sanitize) the JSON body of the allow-listed RPC methods.
+ *
+ * Only the fields the UI actually needs are forwarded; anything else the
+ * caller sends is dropped, so a request can never reach a Frappe method with
+ * extra, unvetted arguments.
+ */
+export function validateMethodBody(path: string, body: unknown): MethodBodyResult {
+  if (!isPlainObject(body)) {
+    return { ok: false, reason: "Request body must be a JSON object" };
+  }
+
+  switch (path) {
+    case "api/method/frappe.client.set_value": {
+      const doctype = body["doctype"];
+      const name = body["name"];
+      const fieldname = body["fieldname"];
+      if (typeof doctype !== "string" || !MAIN_DOCTYPES.has(doctype)) {
+        return { ok: false, reason: "set_value: unsupported doctype" };
+      }
+      if (!isPlausibleDocName(name)) {
+        return { ok: false, reason: "set_value: invalid document name" };
+      }
+      if (typeof fieldname !== "string" || !fieldname.trim() || fieldname.length > 140) {
+        return { ok: false, reason: "set_value: invalid fieldname" };
+      }
+      if (!("value" in body) || !isScalar(body["value"])) {
+        return { ok: false, reason: "set_value: invalid value" };
+      }
+      return {
+        ok: true,
+        body: {
+          doctype,
+          name: (name as string).trim(),
+          fieldname: fieldname.trim(),
+          value: body["value"],
+        },
+      };
+    }
+
+    case "api/method/frappe.client.cancel": {
+      const doctype = body["doctype"];
+      const name = body["name"];
+      if (typeof doctype !== "string" || !MAIN_DOCTYPES.has(doctype)) {
+        return { ok: false, reason: "cancel: unsupported doctype" };
+      }
+      if (!isPlausibleDocName(name)) {
+        return { ok: false, reason: "cancel: invalid document name" };
+      }
+      return { ok: true, body: { doctype, name: (name as string).trim() } };
+    }
+
+    case "api/method/frappe.desk.form.utils.add_comment": {
+      const referenceDoctype = body["reference_doctype"];
+      const referenceName = body["reference_name"];
+      const content = body["content"];
+      if (
+        typeof referenceDoctype !== "string" ||
+        !ALLOWED_REFERENCE_DOCTYPES.has(referenceDoctype)
+      ) {
+        return { ok: false, reason: "add_comment: unsupported reference doctype" };
+      }
+      if (!isPlausibleDocName(referenceName)) {
+        return { ok: false, reason: "add_comment: invalid reference name" };
+      }
+      if (typeof content !== "string" || !content.trim() || content.length > MAX_COMMENT_LENGTH) {
+        return { ok: false, reason: "add_comment: invalid content" };
+      }
+      // comment_by / comment_email are dropped on purpose: the author of a
+      // comment is taken from the signed-in Frappe session, never from the
+      // request body.
+      return {
+        ok: true,
+        body: {
+          reference_doctype: referenceDoctype,
+          reference_name: (referenceName as string).trim(),
+          content,
+        },
+      };
+    }
+
+    case "api/method/frappe.core.doctype.communication.email.make": {
+      const doctype = body["doctype"];
+      const name = body["name"];
+      const recipients = body["recipients"];
+      const subject = body["subject"];
+      const content = body["content"];
+      if (typeof doctype !== "string" || !ALLOWED_REFERENCE_DOCTYPES.has(doctype)) {
+        return { ok: false, reason: "email.make: unsupported doctype" };
+      }
+      if (!isPlausibleDocName(name)) {
+        return { ok: false, reason: "email.make: invalid document name" };
+      }
+      if (
+        typeof recipients !== "string" ||
+        !recipients.trim() ||
+        recipients.length > MAX_RECIPIENTS_LENGTH
+      ) {
+        return { ok: false, reason: "email.make: invalid recipients" };
+      }
+      if (
+        typeof subject !== "string" ||
+        !subject.trim() ||
+        subject.length > MAX_EMAIL_SUBJECT_LENGTH
+      ) {
+        return { ok: false, reason: "email.make: invalid subject" };
+      }
+      if (
+        typeof content !== "string" ||
+        !content.trim() ||
+        content.length > MAX_EMAIL_BODY_LENGTH
+      ) {
+        return { ok: false, reason: "email.make: invalid content" };
+      }
+      return {
+        ok: true,
+        body: {
+          doctype,
+          name: (name as string).trim(),
+          recipients: recipients.trim(),
+          subject,
+          content,
+          send_email: 1,
+          now: 1,
+        },
+      };
+    }
+
+    default:
+      return { ok: false, reason: `No body policy for ${path}` };
+  }
+}
+
+/**
+ * True when a write body carries a `doctype` that contradicts the DocType in
+ * the URL (a classic confused-deputy attempt).
+ */
+export function bodyContradictsDocType(urlDocType: string, body: unknown): boolean {
+  if (!isPlainObject(body)) return false;
+  const doctype = body["doctype"];
+  if (doctype === undefined || doctype === null) return false;
+  if (typeof doctype !== "string") return true;
+  return doctype !== urlDocType;
 }

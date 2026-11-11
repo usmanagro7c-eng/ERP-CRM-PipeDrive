@@ -141,8 +141,21 @@ export function isSameOrigin(request: Request): boolean {
   }
 }
 
+/**
+ * Whether the request reached us over HTTPS. Plain HTTP is only accepted for
+ * local development, so the session cookie is always marked `Secure` in
+ * production (even when a proxy forgets to send `x-forwarded-proto`).
+ */
 export function isSecureRequest(request: Request): boolean {
   const proto = request.headers.get("x-forwarded-proto");
   if (proto) return proto.split(",")[0]?.trim() === "https";
-  return new URL(request.url).protocol === "https:";
+  const url = new URL(request.url);
+  if (url.protocol === "https:") return true;
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host;
+  return !isLocalHost(host);
+}
+
+function isLocalHost(host: string): boolean {
+  const name = host.split(":")[0]?.toLowerCase() ?? "";
+  return name === "localhost" || name === "127.0.0.1" || name === "[::1]" || name === "0.0.0.0";
 }

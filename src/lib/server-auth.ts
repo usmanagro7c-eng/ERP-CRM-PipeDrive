@@ -17,12 +17,25 @@ export function erpnextBaseUrl(): string {
   return (readEnv("ERPNEXT_BASE_URL") ?? DEFAULT_ERPNEXT_BASE_URL).replace(/\/$/, "");
 }
 
+export function frappeApiKey(): string | undefined {
+  return readEnv("FRAPPE_API_KEY");
+}
+
+export function frappeApiSecret(): string | undefined {
+  return readEnv("FRAPPE_API_SECRET");
+}
+
+/**
+ * ERPNext (dev06) credentials. There are deliberately no fallback values:
+ * a missing secret must break the request instead of silently using a
+ * hard-coded key that is committed to the repository.
+ */
 export function erpnextApiKey(): string | undefined {
-  return readEnv("ERPNEXT_API_KEY") ?? "fb08190ef15316d";
+  return readEnv("ERPNEXT_API_KEY");
 }
 
 export function erpnextApiSecret(): string | undefined {
-  return readEnv("ERPNEXT_API_SECRET") ?? "97b9180839ad767";
+  return readEnv("ERPNEXT_API_SECRET");
 }
 
 export function sessionSecret(): string | undefined {

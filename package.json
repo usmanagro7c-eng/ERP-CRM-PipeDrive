@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:secrets": "node scripts/check-secrets.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

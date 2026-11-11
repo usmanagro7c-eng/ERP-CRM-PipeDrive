@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { ensureCloudflareEnv } from "@/lib/cloudflare-bindings";
+import { clientIp, loginAttemptKey, resolveLoginRateLimiter } from "@/lib/login-rate-limit";
 import { frappeBaseUrl, isUserAllowed, jsonResponse, sessionSecret } from "@/lib/server-auth";
 import {
   SESSION_TTL_SECONDS,
@@ -13,6 +15,8 @@ import {
  * Sign in with a Frappe username + password. The credentials are verified against the
  * Frappe site itself; we only keep a signed, HttpOnly session cookie (no password, no Frappe sid).
  * Access is further limited by the ALLOWED_USERS env var.
+ *
+ * Failed attempts are rate limited per IP + username (see lib/login-rate-limit.ts).
  */
 async function login(request: Request): Promise<Response> {
   const secret = sessionSecret();
@@ -37,6 +41,20 @@ async function login(request: Request): Promise<Response> {
     return jsonResponse({ error: "Enter your username and password" }, 400);
   }
 
+  // Pick up the Cloudflare bindings (KV namespace / rate limiter) when the app
+  // runs on Workers; falls back to the in-memory counter everywhere else.
+  await ensureCloudflareEnv();
+  const limiter = resolveLoginRateLimiter();
+  const attemptKey = loginAttemptKey(clientIp(request), usr);
+  const before = await limiter.check(attemptKey);
+  if (before.blocked) {
+    return jsonResponse(
+      { error: `Too many failed sign-in attempts. Try again in ${before.retryAfterSeconds}s.` },
+      429,
+      { "Retry-After": String(before.retryAfterSeconds) },
+    );
+  }
+
   const base = frappeBaseUrl();
   let loginResponse: Response;
   try {
@@ -51,6 +69,16 @@ async function login(request: Request): Promise<Response> {
   }
 
   if (loginResponse.status === 401 || loginResponse.status === 403) {
+    const after = await limiter.recordFailure(attemptKey);
+    if (after.blocked) {
+      return jsonResponse(
+        {
+          error: `Too many failed sign-in attempts. Try again in ${after.retryAfterSeconds}s.`,
+        },
+        429,
+        { "Retry-After": String(after.retryAfterSeconds) },
+      );
+    }
     return jsonResponse({ error: "Invalid username or password" }, 401);
   }
   if (!loginResponse.ok) {
@@ -87,6 +115,8 @@ async function login(request: Request): Promise<Response> {
   if (!isUserAllowed(userId, usr)) {
     return jsonResponse({ error: "This account is not allowed to use this app" }, 403);
   }
+
+  await limiter.reset(attemptKey);
 
   const token = await signSession(
     { u: userId, n: fullName, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS },

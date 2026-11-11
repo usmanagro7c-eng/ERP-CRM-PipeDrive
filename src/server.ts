@@ -1,5 +1,6 @@
 import "./lib/error-capture";
 
+import { registerCloudflareEnv } from "./lib/cloudflare-bindings";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
@@ -46,6 +47,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // Make the Cloudflare bindings (KV namespaces, rate limiters, ...) reachable
+    // from the request handlers.
+    registerCloudflareEnv(env);
     if (request.signal?.aborted) {
       return new Response(null, { status: 499 });
     }

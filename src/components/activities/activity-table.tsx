@@ -199,7 +199,7 @@ export function ActivityTable({
 
   return (
     <div className="relative overflow-x-auto">
-      <Table className="min-w-[800px]">
+      <Table className="min-w-[640px] md:min-w-[800px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
             {/* Checkbox */}
@@ -251,7 +251,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Priority */}
-            <TableHead className="w-[12%]">
+            <TableHead className="hidden md:table-cell w-[12%]">
               <button
                 type="button"
                 onClick={() =>
@@ -289,7 +289,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Assigned To */}
-            <TableHead className="w-[13%]">
+            <TableHead className="hidden lg:table-cell w-[13%]">
               <button
                 type="button"
                 onClick={() =>
@@ -308,7 +308,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Last Modified */}
-            <TableHead className="w-[12%] text-right pr-4">
+            <TableHead className="hidden md:table-cell w-[12%] text-right pr-4">
               <button
                 type="button"
                 onClick={() =>
@@ -367,7 +367,7 @@ export function ActivityTable({
                 </TableCell>
 
                 {/* Priority */}
-                <TableCell className="py-2">
+                <TableCell className="hidden md:table-cell py-2">
                   <PriorityBadge priority={priority} />
                 </TableCell>
 
@@ -377,7 +377,7 @@ export function ActivityTable({
                 </TableCell>
 
                 {/* Assigned To */}
-                <TableCell className="py-2">
+                <TableCell className="hidden lg:table-cell py-2">
                   {assignedTo ? (
                     <div className="flex items-center gap-1.5 text-xs text-foreground">
                       <div className="size-5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[10px] font-semibold shrink-0">
@@ -391,7 +391,7 @@ export function ActivityTable({
                 </TableCell>
 
                 {/* Last Modified */}
-                <TableCell className="text-xs text-muted-foreground text-right pr-4 py-2">
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground text-right pr-4 py-2">
                   {formatRelativeTime(modified)}
                 </TableCell>
 

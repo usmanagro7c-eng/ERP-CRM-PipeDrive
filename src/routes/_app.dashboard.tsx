@@ -113,22 +113,21 @@ function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col overflow-y-auto bg-background text-foreground">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="border-b border-border bg-card/40 px-6 py-2.5 shrink-0">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2.5 text-sm">
-            <span className="font-semibold text-foreground">Dashboard</span>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-muted-foreground font-medium">Overview</span>
-            <span className="inline-flex items-center gap-1.5 ml-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-              </span>
-              Live Sync
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px] overflow-x-auto">
+        <div className="flex items-center gap-2.5 text-sm min-w-0 shrink-0">
+          <span className="font-semibold text-foreground">Dashboard</span>
+          <span className="text-muted-foreground/60">/</span>
+          <span className="text-muted-foreground font-medium">Overview</span>
+          <span className="inline-flex items-center gap-1.5 ml-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
-          </div>
+            Live Sync
+          </span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
             {/* Refresh Button */}
             <Button
               variant="outline"
@@ -201,13 +200,12 @@ function DashboardPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-4 p-4 sm:space-y-6 sm:p-6">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7 animate-pulse">
+          <div className="grid grid-cols-2 gap-2 animate-pulse sm:gap-4 sm:grid-cols-4 lg:grid-cols-7">
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="h-24 rounded-lg bg-card/40 border border-border" />
             ))}
@@ -216,7 +214,7 @@ function DashboardPage() {
           <>
             {/* Top 7 KPI Cards */}
             {numberWidgets.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">
                 {numberWidgets.map((w) => (
                   <DashboardKpiCard
                     key={w.name}
@@ -227,7 +225,7 @@ function DashboardPage() {
             )}
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
               {/* Row 1: Sales Trend & Forecasted Revenue */}
               {salesTrendWidget?.data && (
                 <div className="h-full">
@@ -309,13 +307,13 @@ function DashboardPage() {
         )}
 
         {/* Quick Hub Navigation Strip */}
-        <div className="pt-6 border-t border-border">
-          <div className="flex items-center justify-between mb-3">
+        <div className="border-t border-border pt-4 sm:pt-6">
+          <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Quick CRM Modules
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
             <Link
               to="/leads"
               className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"

@@ -28,7 +28,7 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
   const isBad = data.negativeIsBetter ? isPositive : isNegative;
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/80 bg-card p-4 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md">
       {/* Subtle ambient gradient sheen */}
       <div className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-radial from-primary/5 via-transparent to-transparent rounded-xl" />
 
@@ -47,14 +47,17 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
         )}
       </div>
 
-      <div className="relative z-10 mt-3 flex items-baseline justify-between gap-2">
-        <span className="text-2xl font-bold tracking-tight text-foreground transition-transform duration-200 group-hover:scale-[1.02]">
+      <div className="relative z-10 mt-3 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+        <span
+          className="min-w-0 text-lg font-bold tracking-tight text-foreground transition-transform duration-200 group-hover:scale-[1.02] sm:text-2xl"
+          title={formattedValue}
+        >
           {formattedValue}
         </span>
 
         {delta !== undefined && (
           <div
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-all duration-150 ${
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-all duration-150 ${
               isGood
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                 : isBad

@@ -223,30 +223,30 @@ function OrganizationDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
         {/* Breadcrumb: Organizations / ☰ List / {orgName} */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-          <Link to="/organizations" className="hover:text-foreground transition-colors font-medium">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0">
+          <Link to="/organizations" className="hover:text-foreground transition-colors font-medium shrink-0">
             Organizations
           </Link>
           <span className="opacity-60">/</span>
-          <Link to="/organizations" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <Link to="/organizations" className="flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
             <List className="size-3.5" />
             <span>List</span>
           </Link>
           <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[240px]">
+          <span className="font-semibold text-foreground truncate max-w-[160px] sm:max-w-[240px]">
             {orgName}
           </span>
         </div>
 
         {/* Top Right Actions: Enrich + Solid Black "+ New Deal" Button matching Frappe CRM */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={() => toast.info("Organization domain enrichment triggered")}
-            className="h-7 text-xs font-medium px-3 rounded-md border-border/60 cursor-pointer gap-1.5 transition-colors"
+            className="h-7 text-xs font-medium px-3 rounded-md border-border/60 cursor-pointer gap-1.5 transition-colors shrink-0"
           >
             <Sparkles className="size-3.5 text-muted-foreground" />
             <span>Enrich</span>
@@ -255,7 +255,7 @@ function OrganizationDetailPage() {
           <Button
             size="sm"
             onClick={() => setDealModalOpen(true)}
-            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors shrink-0"
           >
             <Plus className="size-3.5" />
             <span>New Deal</span>
@@ -264,9 +264,9 @@ function OrganizationDetailPage() {
       </div>
 
       {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* LEFT COLUMN: Sidebar (Details & Organization Attributes) */}
-        <div className="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card/30 p-4 sm:p-5 flex flex-col gap-5 overflow-y-auto">
+        <div className="flex w-full shrink-0 flex-col gap-5 overflow-y-auto border-b border-border bg-card/30 p-4 sm:p-5 lg:w-80 lg:border-b-0 lg:border-r">
           {/* Avatar & Organization Name & Delete */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -446,9 +446,9 @@ function OrganizationDetailPage() {
         </div>
 
         {/* RIGHT COLUMN: Canvas with Deals & Contacts Tabs */}
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+        <div className="flex-none lg:flex-1 flex flex-col overflow-y-auto p-4 sm:p-6">
           {/* Top Tabs: Deals {count} & Contacts {count} */}
-          <div className="flex items-center gap-6 border-b border-border pb-3">
+          <div className="flex items-center gap-4 sm:gap-6 border-b border-border pb-3">
             <button
               type="button"
               onClick={() => setActiveTab("deals")}

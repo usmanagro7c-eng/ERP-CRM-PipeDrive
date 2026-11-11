@@ -164,11 +164,11 @@ function QuotationDetailPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-60px)] bg-background">
+    <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Breadcrumb & Action Bar matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
         {/* Left: Breadcrumbs & Quotation ID */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 shrink-0">
           <Link
             to="/quotations"
             className="hover:text-foreground transition-colors font-medium flex items-center gap-1 shrink-0"
@@ -177,14 +177,14 @@ function QuotationDetailPage() {
             <span>Quotations</span>
           </Link>
           <span className="opacity-40">/</span>
-          <span className="font-mono text-foreground font-semibold truncate">
+          <span className="font-mono text-foreground font-semibold truncate max-w-[140px] sm:max-w-none">
             {quotationId}
           </span>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleCopyId}
-            className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="size-6 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
             title="Copy ID"
           >
             <Copy className="size-3" />
@@ -192,12 +192,12 @@ function QuotationDetailPage() {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => void refetch()}
-            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
             title="Refresh"
           >
             <RefreshCw className={cn("size-3.5", isFetching && "animate-spin")} />
@@ -210,7 +210,7 @@ function QuotationDetailPage() {
               variant="outline"
               onClick={handleSubmit}
               disabled={submitMutation.isPending}
-              className="h-7 text-xs font-medium px-2.5 border-border/70 cursor-pointer gap-1"
+              className="h-7 text-xs font-medium px-2.5 border-border/70 cursor-pointer gap-1 shrink-0"
             >
               {submitMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
@@ -225,10 +225,13 @@ function QuotationDetailPage() {
           <Button
             size="sm"
             onClick={() => setSalesOrderModalOpen(true)}
-            className="h-7 text-xs font-semibold px-3 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 transition-colors"
+            title="Convert to Sales Order"
+            aria-label="Convert to Sales Order"
+            className="h-7 text-xs font-semibold px-2.5 sm:px-3 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 transition-colors shrink-0"
           >
             <ShoppingCart className="size-3.5" />
-            <span>Convert to Sales Order</span>
+            <span className="hidden sm:inline">Convert to Sales Order</span>
+            <span className="sm:hidden">Convert</span>
           </Button>
 
           {/* Edit / More Dropdown */}
@@ -236,7 +239,7 @@ function QuotationDetailPage() {
             size="sm"
             variant="outline"
             onClick={() => setEditModalOpen(true)}
-            className="h-7 text-xs font-medium px-2.5 border-border/70 cursor-pointer gap-1"
+            className="h-7 text-xs font-medium px-2.5 border-border/70 cursor-pointer gap-1 shrink-0"
           >
             <Edit2 className="size-3" />
             <span className="hidden sm:inline">Edit</span>
@@ -247,7 +250,7 @@ function QuotationDetailPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground cursor-pointer"
+                className="size-7 text-muted-foreground cursor-pointer shrink-0"
               >
                 <MoreVertical className="size-3.5" />
               </Button>

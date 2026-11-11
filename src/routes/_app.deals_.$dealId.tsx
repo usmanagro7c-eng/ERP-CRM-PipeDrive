@@ -357,33 +357,33 @@ function DealDetailPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 py-2.5 bg-card/60 backdrop-blur-xs">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
         {/* Breadcrumb: Deals / ☰ List / {dealName} */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-          <Link to="/deals" className="hover:text-foreground transition-colors font-medium">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0">
+          <Link to="/deals" className="hover:text-foreground transition-colors font-medium shrink-0">
             Deals
           </Link>
           <span className="opacity-60">/</span>
-          <Link to="/deals" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <Link to="/deals" className="flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
             <List className="size-3.5" />
             <span>List</span>
           </Link>
           <span className="opacity-60">/</span>
-          <span className="font-semibold text-foreground truncate max-w-[240px]">
+          <span className="font-semibold text-foreground truncate max-w-[140px] sm:max-w-[240px]">
             {dealName}
           </span>
         </div>
 
         {/* Top Right Actions Matching Frappe CRM: ⚡ Enrich, Assign To, ● New ▾, Won, Lost */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto max-w-[65%] sm:max-w-none">
           <Button
             variant="outline"
             size="sm"
             onClick={() => toast.info("Enrich feature: Deal intelligence updated")}
-            className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
           >
             <Zap className="size-3 text-muted-foreground" />
-            <span>Enrich</span>
+            <span className="hidden sm:inline">Enrich</span>
           </Button>
 
           {/* Assign To dropdown */}
@@ -392,10 +392,10 @@ function DealDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
                 <UserPlus className="size-3" />
-                <span>Assign To</span>
+                <span className="hidden sm:inline">Assign To</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs w-48">
@@ -420,7 +420,7 @@ function DealDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-7 text-xs gap-1.5 bg-secondary/50 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
                 <span className="size-1.5 rounded-full bg-foreground inline-block" />
                 <span>New</span>
@@ -447,17 +447,18 @@ function DealDetailPage() {
           <Button
             size="sm"
             onClick={() => setQuotationModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1"
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
           >
             <FileText className="size-3.5" />
-            <span>Convert to Quotation</span>
+            <span className="hidden md:inline">Convert to Quotation</span>
+            <span className="md:hidden">Quotation</span>
           </Button>
 
           {/* Won Button */}
           <Button
             size="sm"
             onClick={handleMarkWon}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0"
           >
             <span>Won</span>
           </Button>
@@ -467,7 +468,7 @@ function DealDetailPage() {
             size="sm"
             variant="outline"
             onClick={() => setLostModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20"
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20 shrink-0"
           >
             <span>Lost</span>
           </Button>
@@ -475,9 +476,9 @@ function DealDetailPage() {
       </div>
 
       {/* Main 2-Column Content Layout (Feed Tabs + Right Side-Panel) */}
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left / Center Tab Canvas */}
-        <div className="flex-1 flex flex-col min-w-0 border-b lg:border-b-0 lg:border-r border-border justify-between">
+        <div className="flex-none lg:flex-1 flex flex-col min-w-0 lg:border-r border-border justify-between">
           <div className="flex-1 flex flex-col">
             {/* Horizontal Tabs List (All 9 Tabs) */}
             <div className="flex items-center gap-1 border-b px-4 overflow-x-auto scrollbar-none bg-card/30 shrink-0">
@@ -621,7 +622,7 @@ function DealDetailPage() {
         </div>
 
         {/* Right Sidebar (Record Attributes & Details Panel) Matching Frappe CRM */}
-        <div className="w-full lg:w-80 shrink-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+        <div className="order-first w-full lg:order-none lg:w-80 shrink-0 border-b lg:border-b-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
           {/* Top Identifier & Avatar */}
           <div>
             <div className="text-xs text-muted-foreground font-sans">{dealId}</div>

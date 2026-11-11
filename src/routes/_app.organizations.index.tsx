@@ -271,10 +271,10 @@ function OrganizationsPage() {
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="border-b border-border bg-card/40 px-6 py-2.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+        <div className="flex min-w-0 items-center gap-2 text-sm">
           <span className="font-medium text-foreground">Organizations</span>
           <span className="text-muted-foreground/60">/</span>
           <DropdownMenu>
@@ -309,12 +309,12 @@ function OrganizationsPage() {
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             onClick={handleOpenCreateModal}
             disabled={!meta}
-            className="h-8 text-xs font-medium px-3.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+            className="h-7 text-xs font-medium px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
@@ -323,10 +323,10 @@ function OrganizationsPage() {
       </div>
 
       {/* Secondary Filter Toolbar Matching Frappe CRM */}
-      <div className="border-b border-border bg-background px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex items-center justify-between border-b border-border bg-background px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-2 text-xs shrink-0">
           {/* Search Input */}
-          <form onSubmit={submitSearch} className="relative w-52">
+          <form onSubmit={submitSearch} className="relative w-44 sm:w-52 shrink-0">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
@@ -337,7 +337,7 @@ function OrganizationsPage() {
           </form>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -475,7 +475,7 @@ function OrganizationsPage() {
 
       {/* Footer Pagination matching Frappe CRM */}
       {meta && activeView === "table" && total > 0 && (
-        <div className="border-t border-border px-6 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-card/20 shrink-0">
+        <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
           <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
             {[20, 50, 100].map((size) => (
               <button

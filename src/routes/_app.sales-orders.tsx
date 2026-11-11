@@ -219,8 +219,8 @@ function SalesOrdersPage() {
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="border-b border-border bg-card/40 px-6 py-2.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
+        <div className="flex min-w-0 items-center gap-2 text-sm">
           <span className="font-medium text-foreground">Sales Orders</span>
           <span className="text-muted-foreground/60">/</span>
           <DropdownMenu>
@@ -255,11 +255,11 @@ function SalesOrdersPage() {
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             onClick={handleOpenCreate}
-            className="h-8 text-xs font-medium px-3.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+            className="h-7 text-xs font-medium px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create</span>
@@ -268,10 +268,10 @@ function SalesOrdersPage() {
       </div>
 
       {/* Secondary Filter Toolbar Matching Frappe CRM */}
-      <div className="border-b border-border bg-background px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex items-center justify-between border-b border-border bg-background px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-2 text-xs shrink-0">
           {/* Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative w-56">
+          <form onSubmit={handleSearchSubmit} className="relative w-44 sm:w-56 shrink-0">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={term}
@@ -301,7 +301,7 @@ function SalesOrdersPage() {
           </Select>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -318,7 +318,9 @@ function SalesOrdersPage() {
       <div
         className={cn(
           "flex-1 min-h-0 flex flex-col",
-          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-y-auto p-6",
+          activeView === "kanban"
+            ? "overflow-hidden p-4 sm:p-6 pb-2"
+            : "overflow-y-auto p-4 sm:p-6",
         )}
       >
         {activeView === "kanban" ? (
@@ -346,7 +348,7 @@ function SalesOrdersPage() {
       </div>
 
       {/* Footer Pagination Matching Frappe CRM */}
-      <div className="border-t border-border px-6 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-card/20 shrink-0">
+      <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
         <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
           {[20, 50, 100].map((size) => (
             <button

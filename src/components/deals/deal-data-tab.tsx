@@ -537,7 +537,7 @@ export function DealDataTab({
           <CollapsibleContent className="space-y-3 pt-1">
             {/* Products Table */}
             <div className="rounded-lg border border-border/70 overflow-hidden bg-card/40">
-              <div className="grid grid-cols-[36px_40px_1fr_140px_100px_40px] items-center gap-2 px-3 py-2 bg-muted/40 border-b border-border/60 text-xs font-medium text-muted-foreground">
+              <div className="hidden sm:grid grid-cols-[36px_40px_1fr_140px_100px_40px] items-center gap-2 px-3 py-2 bg-muted/40 border-b border-border/60 text-xs font-medium text-muted-foreground">
                 <div className="flex items-center justify-center">
                   <input type="checkbox" className="rounded border-border size-3.5" />
                 </div>
@@ -557,13 +557,34 @@ export function DealDataTab({
                   {products.map((row, index) => (
                     <div
                       key={row.id}
-                      className="grid grid-cols-[36px_40px_1fr_140px_100px_40px] items-center gap-2 px-3 py-2 text-xs hover:bg-muted/20"
+                      className="flex flex-col gap-2 px-3 py-2.5 text-xs hover:bg-muted/20 sm:grid sm:grid-cols-[36px_40px_1fr_140px_100px_40px] sm:items-center sm:gap-2 sm:py-2"
                     >
-                      <div className="flex items-center justify-center">
-                        <input type="checkbox" className="rounded border-border size-3.5" />
+                      {/* Checkbox + No. + delete: top bar on mobile, grid cells on sm+ */}
+                      <div className="flex items-center justify-between gap-2 sm:contents">
+                        <div className="flex items-center gap-2 sm:contents">
+                          <div className="flex items-center justify-center">
+                            <input type="checkbox" className="rounded border-border size-3.5" />
+                          </div>
+                          <div className="text-muted-foreground font-mono">{index + 1}</div>
+                        </div>
+                        <div className="flex justify-end sm:order-6">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveProductRow(row.id)}
+                            className="size-6 text-muted-foreground hover:text-destructive cursor-pointer"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="text-muted-foreground font-mono">{index + 1}</div>
+
+                      {/* Product: full-width labelled field on mobile */}
                       <div>
+                        <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">
+                          Product
+                        </span>
                         {availableItems.length > 0 ? (
                           <Select
                             value={row.item || ""}
@@ -589,35 +610,34 @@ export function DealDataTab({
                           />
                         )}
                       </div>
-                      <div>
-                        <Input
-                          type="number"
-                          value={row.rate}
-                          onChange={(e) => handleProductRowChange(row.id, "rate", e.target.value)}
-                          placeholder="Rate"
-                          className="h-7 text-xs bg-background"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          type="number"
-                          value={row.qty}
-                          onChange={(e) => handleProductRowChange(row.id, "qty", e.target.value)}
-                          placeholder="Qty"
-                          min={1}
-                          className="h-7 text-xs bg-background"
-                        />
-                      </div>
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveProductRow(row.id)}
-                          className="size-6 text-muted-foreground hover:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+
+                      {/* Rate + Qty: side-by-side on mobile, grid cells on sm+ */}
+                      <div className="grid grid-cols-2 gap-2 sm:contents">
+                        <div>
+                          <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">
+                            Rate *
+                          </span>
+                          <Input
+                            type="number"
+                            value={row.rate}
+                            onChange={(e) => handleProductRowChange(row.id, "rate", e.target.value)}
+                            placeholder="Rate"
+                            className="h-7 text-xs bg-background"
+                          />
+                        </div>
+                        <div>
+                          <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">
+                            Qty
+                          </span>
+                          <Input
+                            type="number"
+                            value={row.qty}
+                            onChange={(e) => handleProductRowChange(row.id, "qty", e.target.value)}
+                            placeholder="Qty"
+                            min={1}
+                            className="h-7 text-xs bg-background"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}

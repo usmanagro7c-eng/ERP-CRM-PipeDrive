@@ -88,9 +88,9 @@ function NotesPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
         {/* Breadcrumb: Notes / ☰ Notes View */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
           <Link to="/notes" className="hover:text-foreground transition-colors font-medium">
             Notes
           </Link>
@@ -105,21 +105,23 @@ function NotesPage() {
         </div>
 
         {/* Right Action: Solid Black "+ Create" Button matching Frappe CRM */}
-        <Button
-          size="sm"
-          onClick={handleOpenCreate}
-          className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
-        >
-          <Plus className="size-3.5" />
-          <span>Create</span>
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={handleOpenCreate}
+            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+          >
+            <Plus className="size-3.5" />
+            <span>Create</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filter Bar Matching Frappe CRM */}
-      <div className="border-b border-border/80 px-6 py-2 bg-card/20 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
         {/* Left Inputs */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-40 sm:w-48">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative w-36 sm:w-48 shrink-0">
             <Input
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
@@ -128,7 +130,7 @@ function NotesPage() {
             />
           </div>
 
-          <div className="relative w-40 sm:w-48">
+          <div className="relative w-36 sm:w-48 shrink-0">
             <Input
               value={searchContent}
               onChange={(e) => setSearchContent(e.target.value)}
@@ -139,7 +141,7 @@ function NotesPage() {
         </div>
 
         {/* Right Toolbar Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -152,24 +154,28 @@ function NotesPage() {
           <Button
             variant="outline"
             size="sm"
+            title="Filter"
+            aria-label="Filter"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Filter className="size-3.5" />
-            <span>Filter</span>
+            <span className="hidden sm:inline">Filter</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
+            title="Sort"
+            aria-label="Sort"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <ArrowUpDown className="size-3.5" />
-            <span>Sort</span>
+            <span className="hidden sm:inline">Sort</span>
           </Button>
         </div>
       </div>
 
       {/* Main Canvas Body */}
-      <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="size-8 animate-spin text-primary" />

@@ -168,9 +168,9 @@ function ActivitiesPage() {
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-2.5 bg-card/60 backdrop-blur-xs">
+      <div className="flex items-center justify-between border-b border-border bg-card/60 px-4 sm:px-6 py-2.5 backdrop-blur-xs shrink-0 gap-3 min-h-[48px]">
         {/* Breadcrumb: Tasks / ☰ List */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
           <Link to="/activities" className="hover:text-foreground transition-colors font-medium">
             Tasks
           </Link>
@@ -185,22 +185,24 @@ function ActivitiesPage() {
         </div>
 
         {/* Right Create Button: Solid Black "+ Create" */}
-        <Button
-          size="sm"
-          onClick={handleOpenCreateModal}
-          className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
-        >
-          <Plus className="size-3.5" />
-          <span>Create</span>
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={handleOpenCreateModal}
+            className="h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
+          >
+            <Plus className="size-3.5" />
+            <span>Create</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filter & Action Toolbar Matching Frappe CRM */}
-      <div className="border-b border-border/80 px-6 py-2 bg-card/20 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-4 sm:px-6 py-2 gap-3 shrink-0 overflow-x-auto">
         {/* Left Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Title Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative w-40 sm:w-48">
+          <form onSubmit={handleSearchSubmit} className="relative w-40 sm:w-48 shrink-0">
             <Input
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
@@ -274,7 +276,7 @@ function ActivitiesPage() {
         </div>
 
         {/* Right Toolbar Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -287,34 +289,42 @@ function ActivitiesPage() {
           <Button
             variant="outline"
             size="sm"
+            title="Group"
+            aria-label="Group"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Folder className="size-3.5" />
-            <span>Group</span>
+            <span className="hidden sm:inline">Group</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
+            title="Filter"
+            aria-label="Filter"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Filter className="size-3.5" />
-            <span>Filter</span>
+            <span className="hidden sm:inline">Filter</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
+            title="Sort"
+            aria-label="Sort"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <ArrowUpDown className="size-3.5" />
-            <span>Sort</span>
+            <span className="hidden sm:inline">Sort</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
+            title="Columns"
+            aria-label="Columns"
             className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
           >
             <Columns3 className="size-3.5" />
-            <span>Columns</span>
+            <span className="hidden sm:inline">Columns</span>
           </Button>
         </div>
       </div>
@@ -364,7 +374,7 @@ function ActivitiesPage() {
         </div>
 
         {/* Footer Pagination matching Frappe CRM */}
-        <div className="border-t border-border px-6 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-card/20 shrink-0">
+        <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
           {/* Page size toggle pills: 20 | 50 | 100 */}
           <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
             {[20, 50, 100].map((size) => (

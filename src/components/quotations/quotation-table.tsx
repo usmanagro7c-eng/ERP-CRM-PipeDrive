@@ -155,7 +155,7 @@ export function QuotationTable({
 
   return (
     <div className="relative overflow-x-auto">
-      <Table className="min-w-[850px]">
+      <Table className="min-w-[640px] md:min-w-[850px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
             {/* Checkbox */}
@@ -170,9 +170,9 @@ export function QuotationTable({
             <TableHead className="w-[25%]">Customer / Party</TableHead>
             <TableHead className="w-[12%]">Status</TableHead>
             <TableHead className="w-[15%] text-right">Grand Total</TableHead>
-            <TableHead className="w-[12%]">Valid Till</TableHead>
+            <TableHead className="hidden md:table-cell w-[12%]">Valid Till</TableHead>
             <TableHead className="w-[10%]">Date</TableHead>
-            <TableHead className="w-[11%]">CRM Deal</TableHead>
+            <TableHead className="hidden lg:table-cell w-[11%]">CRM Deal</TableHead>
             <TableHead className="w-[40px] text-right pr-2" />
           </TableRow>
         </TableHeader>
@@ -227,7 +227,7 @@ export function QuotationTable({
                 </TableCell>
 
                 {/* Valid Till */}
-                <TableCell className="text-xs text-muted-foreground py-2">
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground py-2">
                   {row.valid_till || "-"}
                 </TableCell>
 
@@ -237,7 +237,7 @@ export function QuotationTable({
                 </TableCell>
 
                 {/* CRM Deal */}
-                <TableCell className="text-xs text-muted-foreground py-2 truncate max-w-[120px]">
+                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground py-2 truncate max-w-[120px]">
                   {row.crm_deal ? (
                     <span className="font-mono text-[10px] bg-muted/60 px-1.5 py-0.5 rounded border border-border/40">
                       {row.crm_deal}

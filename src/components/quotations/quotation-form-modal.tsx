@@ -151,11 +151,11 @@ export function QuotationFormModal({
           "p-0 overflow-hidden flex flex-col transition-all duration-200 border border-border bg-card shadow-2xl",
           isFullscreen
             ? "w-screen h-screen max-w-none max-h-none rounded-none"
-            : "w-[95vw] sm:max-w-3xl max-h-[92vh] rounded-xl",
+            : "w-[96vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] rounded-xl",
         )}
       >
         {/* Header Matching Frappe CRM */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-2">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-2.5 border-b border-border/50">
           <DialogTitle className="text-base font-semibold text-foreground">
             {quotation ? `Edit Quotation ${quotation.name}` : "Create Quotation"}
           </DialogTitle>
@@ -184,7 +184,7 @@ export function QuotationFormModal({
         </div>
 
         {/* Modal Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-5">
           {/* Header Details (2 Columns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Customer */}

@@ -167,14 +167,14 @@ export function SalesOrderFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className={`p-0 overflow-hidden flex flex-col transition-all duration-200 ${
+        className={`p-0 overflow-hidden flex flex-col transition-all duration-200 border border-border bg-card shadow-2xl ${
           isFullscreen
             ? "w-screen h-screen max-w-none max-h-none rounded-none"
-            : "w-[95vw] sm:max-w-3xl max-h-[92vh] rounded-lg border border-border bg-card"
+            : "w-[96vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] rounded-xl"
         }`}
       >
         {/* Header Matching Frappe CRM */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-border/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-border/60">
           <div className="flex items-center gap-2.5">
             <div className="flex size-7 items-center justify-center rounded-md bg-muted/60 text-foreground">
               <ShoppingCart className="size-4 text-muted-foreground" />
@@ -211,7 +211,7 @@ export function SalesOrderFormModal({
         </div>
 
         {/* Modal Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-5">
           {/* 2-Column Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">

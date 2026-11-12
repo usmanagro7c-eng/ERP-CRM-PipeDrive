@@ -144,13 +144,38 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
   }, [open, lead, initialValues, users]);
 
   const handleChange = (field: keyof FormDataState, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "email") {
+        const email = value.trim().toLowerCase();
+        if (email && email === (prev.lead_owner || "").trim().toLowerCase()) {
+          next.lead_owner = "";
+        }
+      }
+      if (field === "lead_owner") {
+        const owner = value.trim().toLowerCase();
+        if (owner && owner === (prev.email || "").trim().toLowerCase()) {
+          // keep selection but warn handled at submit
+        }
+      }
+      return next;
+    });
   };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!formData.first_name.trim()) {
       toast.error("Please provide First Name");
+      return;
+    }
+    if (
+      formData.lead_owner.trim() &&
+      formData.email.trim() &&
+      formData.lead_owner.trim().toLowerCase() === formData.email.trim().toLowerCase()
+    ) {
+      toast.error(
+        "Lead Owner cannot be the same as the Lead Email Address. Please choose a different owner.",
+      );
       return;
     }
 

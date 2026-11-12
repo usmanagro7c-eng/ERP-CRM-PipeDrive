@@ -21,6 +21,7 @@ import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
 import { Route as AppQuotationsRouteImport } from './routes/_app.quotations'
 import { Route as AppSalesOrdersRouteImport } from './routes/_app.sales-orders'
+import { Route as FilesSplatRouteImport } from './routes/files.$'
 import { Route as AppContactsContactIdRouteImport } from './routes/_app.contacts_.$contactId'
 import { Route as AppDealsDealIdRouteImport } from './routes/_app.deals_.$dealId'
 import { Route as AppLeadsLeadIdRouteImport } from './routes/_app.leads_.$leadId'
@@ -91,6 +92,11 @@ const AppSalesOrdersRoute = AppSalesOrdersRouteImport.update({
   path: '/sales-orders',
   getParentRoute: () => AppRoute,
 } as any)
+const FilesSplatRoute = FilesSplatRouteImport.update({
+  id: '/files/$',
+  path: '/files/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppContactsContactIdRoute = AppContactsContactIdRouteImport.update({
   id: '/contacts_/$contactId',
   path: '/contacts/$contactId',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/files/$': typeof FilesSplatRoute
   '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/files/$': typeof FilesSplatRoute
   '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
   '/leads/$leadId': typeof AppLeadsLeadIdRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/quotations': typeof AppQuotationsRoute
   '/_app/sales-orders': typeof AppSalesOrdersRoute
+  '/files/$': typeof FilesSplatRoute
   '/_app/contacts_/$contactId': typeof AppContactsContactIdRoute
   '/_app/deals_/$dealId': typeof AppDealsDealIdRoute
   '/_app/leads_/$leadId': typeof AppLeadsLeadIdRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/files/$'
     | '/contacts/$contactId'
     | '/deals/$dealId'
     | '/leads/$leadId'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/files/$'
     | '/contacts/$contactId'
     | '/deals/$dealId'
     | '/leads/$leadId'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/quotations'
     | '/_app/sales-orders'
+    | '/files/$'
     | '/_app/contacts_/$contactId'
     | '/_app/deals_/$dealId'
     | '/_app/leads_/$leadId'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  FilesSplatRoute: typeof FilesSplatRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sales-orders'
       preLoaderRoute: typeof AppSalesOrdersRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/files/$': {
+      id: '/files/$'
+      path: '/files/$'
+      fullPath: '/files/$'
+      preLoaderRoute: typeof FilesSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/contacts_/$contactId': {
       id: '/_app/contacts_/$contactId'
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  FilesSplatRoute: FilesSplatRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,

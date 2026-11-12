@@ -77,9 +77,22 @@ function matchDoctype(pathname) {
   if (idx === -1) return { doctype: rest, name: null };
   return { doctype: rest.slice(0, idx), name: rest.slice(idx + 1) };
 }
+const linkTargets = {
+  "CRM Territory": ["North", "South", "East", "West"],
+  "CRM Industry": ["Tech", "Manufacturing", "Finance", "Retail", "Healthcare"],
+  "CRM Lead Source": ["Website", "Referral", "Cold Call", "Event"],
+  Currency: ["PKR", "USD", "EUR"],
+  Country: ["Pakistan", "United Arab Emirates", "United Kingdom"],
+  Salutation: ["Mr", "Ms", "Dr"],
+  Gender: ["Male", "Female", "Other"],
+};
+const linkStores = Object.fromEntries(
+  Object.entries(linkTargets).map(([doctype, names]) => [doctype, names.map((name) => ({ name }))]),
+);
+
 function storeFor(doctype) {
   const map = { "CRM Organization": orgs, "CRM Lead": leads, "CRM Deal": deals, "CRM Deal Status": dealStatuses, "CRM Lead Status": leadStatuses, "Contact": contacts, "CRM Task": tasks, "Note": notes, "CRM Call Log": calls, "Quotation": quotations, "Sales Order": salesOrders, "Item": items, "Comment": comments, "File": files, "Communication": communications, "Company": [{ name: "AGROVISIONS", default_currency: "PKR" }] };
-  return map[doctype] || null;
+  return map[doctype] || linkStores[doctype] || null;
 }
 function filterRows(rows, filters) {
   if (!filters || !filters.length) return rows;

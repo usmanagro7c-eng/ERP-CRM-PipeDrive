@@ -22,7 +22,9 @@ export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "same-origin",
   "X-Frame-Options": "DENY",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  // `interest-cohort` was removed from Chrome (FLoC is gone) and logs a
+  // "Unrecognized feature" warning. `browsing-topics` is its modern replacement.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), browsing-topics=()",
 };
 
 export function buildContentSecurityPolicy(options: SecurityHeaderOptions = {}): string {

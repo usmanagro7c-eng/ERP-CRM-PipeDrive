@@ -86,13 +86,7 @@ export function formatCurrency(value: unknown, currency = "PKR"): string {
   }
 }
 
-export function StageBadge({
-  stage,
-  className,
-}: {
-  stage?: string | null;
-  className?: string;
-}) {
+export function StageBadge({ stage, className }: { stage?: string | null; className?: string }) {
   if (!stage) return <span className="text-muted-foreground">—</span>;
 
   const style = getStageStyle(stage);

@@ -42,11 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
 import {
   SalesOrderFormModal,
@@ -112,14 +108,7 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface SidebarState {
   organization: string;
@@ -170,8 +159,10 @@ function DealDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [lostModalOpen, setLostModalOpen] = useState(false);
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
-  const [salesOrderInitialValues, setSalesOrderInitialValues] = useState<SalesOrderInitialValues | null>(null);
+  const [salesOrderInitialValues, setSalesOrderInitialValues] =
+    useState<SalesOrderInitialValues | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleConvertToSalesOrder(quotation?: any) {
     if (quotation) {
       setSalesOrderInitialValues({
@@ -361,12 +352,18 @@ function DealDetailPage() {
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Deals / ☰ List / {dealName} */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
-          <Link to="/deals" className="hover:text-foreground transition-colors font-medium shrink-0">
+          <Link
+            to="/deals"
+            className="hover:text-foreground transition-colors font-medium shrink-0"
+          >
             Deals
           </Link>
           <span className="hidden sm:inline-flex items-center gap-1 opacity-60">
             /
-            <Link to="/deals" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <Link
+              to="/deals"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
               <List className="size-3.5" />
               <span>List</span>
             </Link>
@@ -403,19 +400,43 @@ function DealDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs w-48">
-              <DropdownMenuItem onClick={() => setQuotationModalOpen(true)} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => setQuotationModalOpen(true)}
+                className="cursor-pointer"
+              >
                 <FileText className="size-3.5 mr-2" /> Convert to Quotation
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Enrich feature: Deal intelligence updated")} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => toast.info("Enrich feature: Deal intelligence updated")}
+                className="cursor-pointer"
+              >
                 <Zap className="size-3.5 mr-2" /> Enrich Deal
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("tasks"); window.location.hash = "tasks"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("tasks");
+                  window.location.hash = "tasks";
+                }}
+                className="cursor-pointer"
+              >
                 <Activity className="size-3.5 mr-2" /> New Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("calls"); window.location.hash = "calls"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("calls");
+                  window.location.hash = "calls";
+                }}
+                className="cursor-pointer"
+              >
                 <PhoneCall className="size-3.5 mr-2" /> New Call Log
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("notes"); window.location.hash = "notes"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("notes");
+                  window.location.hash = "notes";
+                }}
+                className="cursor-pointer"
+              >
                 <StickyNote className="size-3.5 mr-2" /> New Note
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -476,16 +497,37 @@ function DealDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs">
-              <DropdownMenuItem onClick={() => { setActiveTab("tasks"); window.location.hash = "tasks"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("tasks");
+                  window.location.hash = "tasks";
+                }}
+                className="cursor-pointer"
+              >
                 Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("calls"); window.location.hash = "calls"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("calls");
+                  window.location.hash = "calls";
+                }}
+                className="cursor-pointer"
+              >
                 Call Log
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setActiveTab("notes"); window.location.hash = "notes"; }} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => {
+                  setActiveTab("notes");
+                  window.location.hash = "notes";
+                }}
+                className="cursor-pointer"
+              >
                 Note
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setQuotationModalOpen(true)} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => setQuotationModalOpen(true)}
+                className="cursor-pointer"
+              >
                 Quotation
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -563,9 +605,18 @@ function DealDetailPage() {
                   owner={String(deal["owner"] || "system")}
                   status={currentStage}
                   creation={String(deal["creation"] || "")}
-                  onNewTask={() => { setActiveTab("tasks"); window.location.hash = "tasks"; }}
-                  onNewCall={() => { setActiveTab("calls"); window.location.hash = "calls"; }}
-                  onNewNote={() => { setActiveTab("notes"); window.location.hash = "notes"; }}
+                  onNewTask={() => {
+                    setActiveTab("tasks");
+                    window.location.hash = "tasks";
+                  }}
+                  onNewCall={() => {
+                    setActiveTab("calls");
+                    window.location.hash = "calls";
+                  }}
+                  onNewNote={() => {
+                    setActiveTab("notes");
+                    window.location.hash = "notes";
+                  }}
                   onNewComment={() => {
                     setActiveTab("comments");
                     window.location.hash = "comments";
@@ -612,24 +663,15 @@ function DealDetailPage() {
               )}
 
               {activeTab === "tasks" && (
-                <RecordTasksTab
-                  referenceDoctype={api.DEAL_DOCTYPE}
-                  referenceName={dealId}
-                />
+                <RecordTasksTab referenceDoctype={api.DEAL_DOCTYPE} referenceName={dealId} />
               )}
 
               {activeTab === "notes" && (
-                <RecordNotesTab
-                  referenceDoctype={api.DEAL_DOCTYPE}
-                  referenceName={dealId}
-                />
+                <RecordNotesTab referenceDoctype={api.DEAL_DOCTYPE} referenceName={dealId} />
               )}
 
               {activeTab === "attachments" && (
-                <RecordAttachmentsTab
-                  referenceDoctype={api.DEAL_DOCTYPE}
-                  referenceName={dealId}
-                />
+                <RecordAttachmentsTab referenceDoctype={api.DEAL_DOCTYPE} referenceName={dealId} />
               )}
 
               {activeTab === "quotations" && (
@@ -772,10 +814,16 @@ function DealDetailPage() {
           </div>
 
           {/* Section 1: Contacts (Collapsible) matching Frappe CRM */}
-          <Collapsible open={contactsOpen} onOpenChange={setContactsOpen} className="space-y-2 border-t pt-3">
+          <Collapsible
+            open={contactsOpen}
+            onOpenChange={setContactsOpen}
+            className="space-y-2 border-t pt-3"
+          >
             <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
               <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
-                <ChevronDown className={cn("size-3.5 transition-transform", !contactsOpen && "-rotate-90")} />
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", !contactsOpen && "-rotate-90")}
+                />
                 <span>Contacts</span>
               </CollapsibleTrigger>
               <Button
@@ -797,9 +845,15 @@ function DealDetailPage() {
           </Collapsible>
 
           {/* Section 2: Lost Reason (Collapsible) matching Frappe CRM */}
-          <Collapsible open={lostReasonOpen} onOpenChange={setLostReasonOpen} className="space-y-2 border-t pt-3">
+          <Collapsible
+            open={lostReasonOpen}
+            onOpenChange={setLostReasonOpen}
+            className="space-y-2 border-t pt-3"
+          >
             <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-xs font-semibold text-foreground cursor-pointer hover:text-foreground/80">
-              <ChevronDown className={cn("size-3.5 transition-transform", !lostReasonOpen && "-rotate-90")} />
+              <ChevronDown
+                className={cn("size-3.5 transition-transform", !lostReasonOpen && "-rotate-90")}
+              />
               <span>Lost Reason</span>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-2 pt-1 text-xs">
@@ -828,10 +882,16 @@ function DealDetailPage() {
           </Collapsible>
 
           {/* Section 3: Organization Details (Collapsible) matching Frappe CRM */}
-          <Collapsible open={orgDetailsOpen} onOpenChange={setOrgDetailsOpen} className="space-y-2 border-t pt-3">
+          <Collapsible
+            open={orgDetailsOpen}
+            onOpenChange={setOrgDetailsOpen}
+            className="space-y-2 border-t pt-3"
+          >
             <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
               <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
-                <ChevronDown className={cn("size-3.5 transition-transform", !orgDetailsOpen && "-rotate-90")} />
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", !orgDetailsOpen && "-rotate-90")}
+                />
                 <span>Organization Details</span>
               </CollapsibleTrigger>
               <button
@@ -850,7 +910,9 @@ function DealDetailPage() {
                 <span className="text-muted-foreground truncate">Organization</span>
                 <Input
                   value={sidebarValues.organization || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, organization: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, organization: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("organization", e.target.value)}
                   placeholder="Add Organization..."
                   className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
@@ -862,7 +924,9 @@ function DealDetailPage() {
                 <span className="text-muted-foreground truncate pt-0.5">Company Desc...</span>
                 <Textarea
                   value={sidebarValues.company_description || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, company_description: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, company_description: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("company_description", e.target.value)}
                   placeholder="Add Company Description..."
                   rows={1}
@@ -956,7 +1020,9 @@ function DealDetailPage() {
                 <span className="text-muted-foreground truncate">Annual Revenue</span>
                 <Input
                   value={sidebarValues.annual_revenue || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, annual_revenue: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, annual_revenue: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("annual_revenue", e.target.value)}
                   placeholder="Add Annual Revenue..."
                   className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
@@ -1027,11 +1093,7 @@ function DealDetailPage() {
       </div>
 
       {/* Edit Deal Modal */}
-      <DealFormModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        deal={deal}
-      />
+      <DealFormModal open={editModalOpen} onOpenChange={setEditModalOpen} deal={deal} />
 
       {/* Deal Lost Modal */}
       <DealLostModal

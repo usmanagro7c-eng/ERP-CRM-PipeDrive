@@ -3,12 +3,7 @@ import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,14 +30,7 @@ interface OrgFormModalProps {
 }
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 const INDUSTRIES = [
   "Accounting",
   "Advertising",
@@ -117,7 +105,9 @@ export function OrgFormModal({
     if (open) {
       if (organization) {
         setForm({
-          organization_name: String(organization["organization_name"] || organization["name"] || ""),
+          organization_name: String(
+            organization["organization_name"] || organization["name"] || "",
+          ),
           website: String(organization["website"] || ""),
           company_description: String(organization["company_description"] || ""),
           annual_revenue: String(organization["annual_revenue"] || ""),
@@ -129,7 +119,9 @@ export function OrgFormModal({
       } else if (initialValues) {
         setForm({
           ...defaultFormState,
-          organization_name: String(initialValues["organization_name"] || initialValues["name"] || ""),
+          organization_name: String(
+            initialValues["organization_name"] || initialValues["name"] || "",
+          ),
           website: String(initialValues["website"] || ""),
           company_description: String(initialValues["company_description"] || ""),
           annual_revenue: String(initialValues["annual_revenue"] || ""),
@@ -209,7 +201,11 @@ export function OrgFormModal({
               className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
               title={isFullscreen ? "Restore window" : "Maximize window"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"
@@ -263,7 +259,9 @@ export function OrgFormModal({
 
                 {/* Company Description */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Company Description</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Company Description
+                  </Label>
                   <Textarea
                     value={form.company_description}
                     onChange={(e) => handleChange("company_description", e.target.value)}
@@ -280,7 +278,9 @@ export function OrgFormModal({
               <div className="space-y-3">
                 {/* Annual Revenue */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Annual Revenue</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Annual Revenue
+                  </Label>
                   <Input
                     value={form.annual_revenue}
                     onChange={(e) => handleChange("annual_revenue", e.target.value)}
@@ -314,7 +314,9 @@ export function OrgFormModal({
             {/* 2-Column Section: No. of Employees & Industry */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-normal text-muted-foreground">No. of Employees</Label>
+                <Label className="text-xs font-normal text-muted-foreground">
+                  No. of Employees
+                </Label>
                 <Select
                   value={form.no_of_employees || undefined}
                   onValueChange={(val) => handleChange("no_of_employees", val)}

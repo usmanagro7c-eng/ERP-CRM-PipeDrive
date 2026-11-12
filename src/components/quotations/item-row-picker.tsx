@@ -205,7 +205,9 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
 
                   {/* Item Selector */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-muted-foreground">Select Product</label>
+                    <label className="text-[11px] font-medium text-muted-foreground">
+                      Select Product
+                    </label>
                     <Select
                       value={row.item_code}
                       onValueChange={(val) => handleUpdateItem(index, { item_code: val })}
@@ -231,7 +233,9 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
                   {/* Qty & Rate Grid */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">Quantity</label>
+                      <label className="text-[11px] font-medium text-muted-foreground">
+                        Quantity
+                      </label>
                       <Input
                         type="number"
                         min={1}
@@ -244,7 +248,9 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">Rate (PKR)</label>
+                      <label className="text-[11px] font-medium text-muted-foreground">
+                        Rate (PKR)
+                      </label>
                       <Input
                         type="number"
                         min={0}

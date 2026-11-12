@@ -30,11 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useSubmitQuotation,
-  useDeleteQuotation,
-  type Quotation,
-} from "@/hooks/use-quotations";
+import { useSubmitQuotation, useDeleteQuotation, type Quotation } from "@/hooks/use-quotations";
 import { useCreateSalesOrderFromQuotation } from "@/hooks/use-sales-orders";
 import { cn } from "@/lib/utils";
 
@@ -51,15 +47,23 @@ function QuotationStatusBadge({ status }: { status?: string }) {
   const s = (status || "Draft").trim().toLowerCase();
   let color = "bg-muted text-muted-foreground border-border/40";
   if (s === "ordered") {
-    color = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+    color =
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
   } else if (s === "open") {
-    color = "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-800";
+    color =
+      "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-800";
   } else if (s === "lost" || s === "cancelled") {
-    color = "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
+    color =
+      "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
   }
 
   return (
-    <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border", color)}>
+    <span
+      className={cn(
+        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border",
+        color,
+      )}
+    >
       {status || "Draft"}
     </span>
   );
@@ -93,9 +97,7 @@ export function QuotationTable({
 
   const toggleSelectRow = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   async function handleSubmit(q: Quotation) {
@@ -170,7 +172,9 @@ export function QuotationTable({
             <TableHead className="min-w-[180px]">Customer / Party</TableHead>
             <TableHead className="w-[110px] min-w-[100px] whitespace-nowrap">Status</TableHead>
             <TableHead className="w-[140px] min-w-[130px] whitespace-nowrap">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] whitespace-nowrap">Valid Till</TableHead>
+            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] whitespace-nowrap">
+              Valid Till
+            </TableHead>
             <TableHead className="w-[120px] min-w-[110px] whitespace-nowrap">Date</TableHead>
             <TableHead className="hidden lg:table-cell w-[130px] min-w-[120px]">CRM Deal</TableHead>
             <TableHead className="w-[40px] text-right pr-2" />
@@ -186,14 +190,22 @@ export function QuotationTable({
             return (
               <TableRow
                 key={row.name}
-                onClick={() => void navigate({ to: "/quotations/$quotationId", params: { quotationId: row.name } })}
+                onClick={() =>
+                  void navigate({
+                    to: "/quotations/$quotationId",
+                    params: { quotationId: row.name },
+                  })
+                }
                 className={cn(
                   "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
                   isSelected && "bg-muted/30",
                 )}
               >
                 {/* Checkbox */}
-                <TableCell className="w-[40px] pl-4 py-2" onClick={(e) => toggleSelectRow(row.name, e)}>
+                <TableCell
+                  className="w-[40px] pl-4 py-2"
+                  onClick={(e) => toggleSelectRow(row.name, e)}
+                >
                   <Checkbox checked={isSelected} aria-label={`Select ${row.name}`} />
                 </TableCell>
 
@@ -280,7 +292,12 @@ export function QuotationTable({
                       <DropdownMenuContent align="end" className="w-48 text-xs">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
-                          onClick={() => void navigate({ to: "/quotations/$quotationId", params: { quotationId: row.name } })}
+                          onClick={() =>
+                            void navigate({
+                              to: "/quotations/$quotationId",
+                              params: { quotationId: row.name },
+                            })
+                          }
                           className="font-medium cursor-pointer"
                         >
                           <Eye className="size-3.5 mr-1.5 text-muted-foreground" />

@@ -40,17 +40,12 @@ export function DashboardDualAxisChart({ data }: DashboardDualAxisChartProps) {
     <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
       <div>
         <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
-        {data.subtitle && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>
-        )}
+        {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
       <div className="my-3 h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={chartData}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-          >
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
             <XAxis
               dataKey={xKey}

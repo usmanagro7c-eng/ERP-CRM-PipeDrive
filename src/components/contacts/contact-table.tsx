@@ -43,11 +43,7 @@ import {
   useBulkMoveContactStatus,
   type FrappeDocTypeMeta,
 } from "@/hooks/use-contacts";
-import {
-  fieldLabel,
-  formatFieldValue,
-  type FrappeDocField,
-} from "@/lib/frappe-meta";
+import { fieldLabel, formatFieldValue, type FrappeDocField } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
 export interface SortState {
@@ -134,19 +130,12 @@ export function ContactTable({
 
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
 
-  const fieldMap = useMemo(
-    () => new Map((meta.fields ?? []).map((f) => [f.fieldname, f])),
-    [meta],
-  );
+  const fieldMap = useMemo(() => new Map((meta.fields ?? []).map((f) => [f.fieldname, f])), [meta]);
 
-  const allNames = useMemo(
-    () => rows.map((r) => String(r["name"] ?? "")).filter(Boolean),
-    [rows],
-  );
+  const allNames = useMemo(() => rows.map((r) => String(r["name"] ?? "")).filter(Boolean), [rows]);
 
   const isAllSelected = allNames.length > 0 && selectedNames.length === allNames.length;
-  const isPartiallySelected =
-    selectedNames.length > 0 && selectedNames.length < allNames.length;
+  const isPartiallySelected = selectedNames.length > 0 && selectedNames.length < allNames.length;
 
   function toggleSelectAll() {
     if (isAllSelected) {
@@ -178,7 +167,8 @@ export function ContactTable({
       {selectedNames.length > 0 && (
         <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-2 text-sm">
           <span className="font-medium">
-            {selectedNames.length} of {rows.length} contact{selectedNames.length === 1 ? "" : "s"} selected
+            {selectedNames.length} of {rows.length} contact{selectedNames.length === 1 ? "" : "s"}{" "}
+            selected
           </span>
           <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -245,12 +235,7 @@ export function ContactTable({
               </TableHead>
 
               <TableHead className="min-w-[120px]">
-                <SortButton
-                  field="status"
-                  label="Status"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                />
+                <SortButton field="status" label="Status" sort={sort} onSortChange={onSortChange} />
               </TableHead>
 
               <TableHead className="min-w-[180px]">

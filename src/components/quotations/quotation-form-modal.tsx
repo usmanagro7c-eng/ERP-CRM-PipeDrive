@@ -4,11 +4,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -75,10 +71,7 @@ export function QuotationFormModal({
       setValidTill(quotation.valid_till || in30Days);
       setItems(quotation.items || []);
     } else {
-      const defaultParty =
-        initialValues?.party_name ||
-        customerOptions[0]?.name ||
-        "";
+      const defaultParty = initialValues?.party_name || customerOptions[0]?.name || "";
       setPartyName(defaultParty);
       setCrmDeal(initialValues?.crm_deal || "");
       setTransactionDate(today);
@@ -93,7 +86,10 @@ export function QuotationFormModal({
   }, [open, quotation, initialValues, customerOptions, catalogItems]);
 
   const grandTotal = useMemo(() => {
-    return items.reduce((sum, item) => sum + (Number(item.amount) || Number(item.qty * item.rate) || 0), 0);
+    return items.reduce(
+      (sum, item) => sum + (Number(item.amount) || Number(item.qty * item.rate) || 0),
+      0,
+    );
   }, [items]);
 
   const totalQty = useMemo(() => {
@@ -194,12 +190,19 @@ export function QuotationFormModal({
               </Label>
               {customerOptions.length > 0 ? (
                 <Select value={partyName} onValueChange={setPartyName}>
-                  <SelectTrigger id="party-name" className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
+                  <SelectTrigger
+                    id="party-name"
+                    className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer"
+                  >
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
                     {customerOptions.map((opt: { name: string }) => (
-                      <SelectItem key={opt.name} value={opt.name} className="text-xs cursor-pointer">
+                      <SelectItem
+                        key={opt.name}
+                        value={opt.name}
+                        className="text-xs cursor-pointer"
+                      >
                         {opt.name}
                       </SelectItem>
                     ))}

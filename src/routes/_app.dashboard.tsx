@@ -128,78 +128,78 @@ function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-            {/* Refresh Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              className="h-7 px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer"
-            >
-              <RotateCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </Button>
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="h-7 px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer"
+          >
+            <RotateCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
 
-            {/* Date Range Preset Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer"
+          {/* Date Range Preset Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer"
+              >
+                <Calendar className="h-3 w-3 text-muted-foreground" />
+                <span className="truncate max-w-[70px] sm:max-w-none">{preset}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {PRESETS.map((p) => (
+                <DropdownMenuItem
+                  key={p}
+                  onClick={() => setPreset(p)}
+                  className="text-xs cursor-pointer"
                 >
-                  <Calendar className="h-3 w-3 text-muted-foreground" />
-                  <span className="truncate max-w-[70px] sm:max-w-none">{preset}</span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {PRESETS.map((p) => (
+                  {p}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sales User Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer max-w-[85px] sm:max-w-none"
+              >
+                <UserIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+                <span className="truncate">{selectedUserLabel}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 max-h-64 overflow-y-auto">
+              <DropdownMenuItem
+                onClick={() => setSelectedUser(null)}
+                className="text-xs font-medium cursor-pointer"
+              >
+                All Sales Users
+              </DropdownMenuItem>
+              {users
+                .filter((u) => u.name && u.full_name)
+                .map((u) => (
                   <DropdownMenuItem
-                    key={p}
-                    onClick={() => setPreset(p)}
+                    key={u.name}
+                    onClick={() => setSelectedUser(u.name)}
                     className="text-xs cursor-pointer"
                   >
-                    {p}
+                    {u.full_name || u.first_name || u.name}
                   </DropdownMenuItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Sales User Filter Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer max-w-[85px] sm:max-w-none"
-                >
-                  <UserIcon className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <span className="truncate">{selectedUserLabel}</span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 max-h-64 overflow-y-auto">
-                <DropdownMenuItem
-                  onClick={() => setSelectedUser(null)}
-                  className="text-xs font-medium cursor-pointer"
-                >
-                  All Sales Users
-                </DropdownMenuItem>
-                {users
-                  .filter((u) => u.name && u.full_name)
-                  .map((u) => (
-                    <DropdownMenuItem
-                      key={u.name}
-                      onClick={() => setSelectedUser(u.name)}
-                      className="text-xs cursor-pointer"
-                    >
-                      {u.full_name || u.first_name || u.name}
-                    </DropdownMenuItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Main Content Area */}

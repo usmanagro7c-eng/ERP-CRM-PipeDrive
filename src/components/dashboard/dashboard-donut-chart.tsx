@@ -61,9 +61,7 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
     <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
       <div>
         <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
-        {data.subtitle && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>
-        )}
+        {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
       <div className="relative my-3 h-64 w-full">

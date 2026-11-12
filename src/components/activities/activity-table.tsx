@@ -107,13 +107,17 @@ function StatusBadge({ status }: { status: string }) {
   const s = status.trim().toLowerCase();
   let color = "bg-muted text-muted-foreground border-border/40";
   if (s === "done" || s === "completed") {
-    color = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+    color =
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
   } else if (s === "in progress") {
-    color = "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800";
+    color =
+      "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800";
   } else if (s === "todo") {
-    color = "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-800";
+    color =
+      "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-800";
   } else if (s === "canceled" || s === "cancelled") {
-    color = "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
+    color =
+      "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
   }
 
   return (
@@ -219,15 +223,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "title",
-                    direction: sort?.field === "title" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "title" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Title</span>
-                {sort?.field === "title" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "title" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -238,15 +246,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "status",
-                    direction: sort?.field === "status" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "status" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Status</span>
-                {sort?.field === "status" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "status" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -257,15 +269,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "priority",
-                    direction: sort?.field === "priority" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "priority" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Priority</span>
-                {sort?.field === "priority" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "priority" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -276,15 +292,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "due_date",
-                    direction: sort?.field === "due_date" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "due_date" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Due Date</span>
-                {sort?.field === "due_date" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "due_date" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -295,15 +315,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "assigned_to",
-                    direction: sort?.field === "assigned_to" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "assigned_to" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Assigned To</span>
-                {sort?.field === "assigned_to" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "assigned_to" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -314,15 +338,19 @@ export function ActivityTable({
                 onClick={() =>
                   onSortChange({
                     field: "modified",
-                    direction: sort?.field === "modified" && sort?.direction === "asc" ? "desc" : "asc",
+                    direction:
+                      sort?.field === "modified" && sort?.direction === "asc" ? "desc" : "asc",
                   })
                 }
                 className="ml-auto flex items-center gap-1 font-normal text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <span>Last Modified</span>
-                {sort?.field === "modified" && (
-                  sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-                )}
+                {sort?.field === "modified" &&
+                  (sort.direction === "asc" ? (
+                    <ArrowUp className="size-3" />
+                  ) : (
+                    <ArrowDown className="size-3" />
+                  ))}
               </button>
             </TableHead>
 
@@ -410,9 +438,7 @@ export function ActivityTable({
                     <DropdownMenuContent align="end" className="w-44 text-xs">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Task
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Task</DropdownMenuItem>
                       )}
                       <MoveToSubmenu
                         label="Change Status"

@@ -23,14 +23,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useSaveOrganization,
-  useLinkOptions,
-} from "@/hooks/use-organizations";
-import {
-  selectOptions,
-  type FrappeDocTypeMeta,
-} from "@/lib/frappe-meta";
+import { useSaveOrganization, useLinkOptions } from "@/hooks/use-organizations";
+import { selectOptions, type FrappeDocTypeMeta } from "@/lib/frappe-meta";
 
 interface OrgGridProps {
   meta: FrappeDocTypeMeta;
@@ -48,14 +42,7 @@ function initialsOf(value: unknown): string {
   return parts.map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
-export function OrgGrid({
-  meta,
-  rows,
-  onRowClick,
-  onEdit,
-  loading,
-  emptyAction,
-}: OrgGridProps) {
+export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }: OrgGridProps) {
   const saveMutation = useSaveOrganization();
   const titleField = meta.title_field || "organization_name";
   const imageField = meta.image_field;
@@ -105,7 +92,10 @@ export function OrgGrid({
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={`skel-card-${i}`} className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-xs">
+          <div
+            key={`skel-card-${i}`}
+            className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-xs"
+          >
             <div className="flex items-center gap-3">
               <Skeleton className="size-11 rounded-lg" />
               <div className="flex-1 space-y-2">
@@ -144,13 +134,16 @@ export function OrgGrid({
       {rows.map((org) => {
         const orgName = String(org["name"] ?? "");
         const displayName = String(org[titleField] ?? orgName);
-        const logoUrl = imageField && typeof org[imageField] === "string" ? String(org[imageField]) : null;
+        const logoUrl =
+          imageField && typeof org[imageField] === "string" ? String(org[imageField]) : null;
         const industryVal = typeof org["industry"] === "string" ? org["industry"] : null;
-        const employeesVal = typeof org["no_of_employees"] === "string" ? org["no_of_employees"] : null;
+        const employeesVal =
+          typeof org["no_of_employees"] === "string" ? org["no_of_employees"] : null;
         const revenueVal = typeof org["annual_revenue"] === "number" ? org["annual_revenue"] : null;
         const territoryVal = typeof org["territory"] === "string" ? org["territory"] : null;
         const website = typeof org["website"] === "string" ? org["website"] : null;
-        const description = typeof org["company_description"] === "string" ? org["company_description"] : null;
+        const description =
+          typeof org["company_description"] === "string" ? org["company_description"] : null;
 
         return (
           <div
@@ -191,7 +184,9 @@ export function OrgGrid({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Globe className="size-3" />
-                        <span className="truncate max-w-[140px]">{website.replace(/^https?:\/\//, "")}</span>
+                        <span className="truncate max-w-[140px]">
+                          {website.replace(/^https?:\/\//, "")}
+                        </span>
                         <ExternalLink className="size-2.5 opacity-60" />
                       </a>
                     )}
@@ -200,7 +195,11 @@ export function OrgGrid({
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="size-8 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    >
                       <MoreVertical className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -232,7 +231,11 @@ export function OrgGrid({
                       <MoveToSubmenu
                         label="Move to Employees"
                         currentValue={employeesVal}
-                        options={employeeOptions.map((opt) => ({ key: opt, label: opt, value: opt }))}
+                        options={employeeOptions.map((opt) => ({
+                          key: opt,
+                          label: opt,
+                          value: opt,
+                        }))}
                         onSelect={(val) => void handleMoveOrg(orgName, "no_of_employees", val)}
                       />
                     )}
@@ -243,7 +246,11 @@ export function OrgGrid({
                         label="Move to Territory"
                         currentValue={territoryVal}
                         allowNone={true}
-                        options={territories.map((terr) => ({ key: terr, label: terr, value: terr }))}
+                        options={territories.map((terr) => ({
+                          key: terr,
+                          label: terr,
+                          value: terr,
+                        }))}
                         onSelect={(val) => void handleMoveOrg(orgName, "territory", val)}
                       />
                     )}
@@ -267,19 +274,28 @@ export function OrgGrid({
             <div className="space-y-3 pt-3 border-t">
               <div className="flex flex-wrap items-center gap-1.5">
                 {industryVal && (
-                  <Badge variant="outline" className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40"
+                  >
                     <Briefcase className="size-3 text-muted-foreground" />
                     <span>{industryVal}</span>
                   </Badge>
                 )}
                 {employeesVal && (
-                  <Badge variant="outline" className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40"
+                  >
                     <Users className="size-3 text-muted-foreground" />
                     <span>{employeesVal}</span>
                   </Badge>
                 )}
                 {territoryVal && (
-                  <Badge variant="outline" className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 px-2 py-0.5 text-xs font-normal bg-secondary/40"
+                  >
                     <MapPin className="size-3 text-muted-foreground" />
                     <span>{territoryVal}</span>
                   </Badge>
@@ -290,7 +306,10 @@ export function OrgGrid({
                 <div className="flex items-center justify-between text-xs pt-1">
                   <span className="text-muted-foreground">Annual Revenue</span>
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                    PKR {revenueVal >= 1_000_000 ? `${(revenueVal / 1_000_000).toFixed(1)}M` : revenueVal.toLocaleString()}
+                    PKR{" "}
+                    {revenueVal >= 1_000_000
+                      ? `${(revenueVal / 1_000_000).toFixed(1)}M`
+                      : revenueVal.toLocaleString()}
                   </span>
                 </div>
               )}

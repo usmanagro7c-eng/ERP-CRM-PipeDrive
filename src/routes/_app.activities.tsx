@@ -128,7 +128,7 @@ function ActivitiesPage() {
     enabled: Boolean(meta),
   });
 
-  const total = countQuery.data ?? (listQuery.data?.length ?? 0);
+  const total = countQuery.data ?? listQuery.data?.length ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
   const error = metaQuery.error ?? listQuery.error;
@@ -202,7 +202,10 @@ function ActivitiesPage() {
         {/* Left Filters */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Title Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative min-w-[90px] w-28 sm:w-48 shrink-0">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative min-w-[90px] w-28 sm:w-48 shrink-0"
+          >
             <Input
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}

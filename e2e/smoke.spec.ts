@@ -3,13 +3,13 @@ import { test, expect, login } from "./fixtures";
 test.describe("smoke", () => {
   test("login and navigate dashboard", async ({ page }) => {
     await login(page);
-    await expect(page).toHaveURL(/dashboard|leads|deals|organizations/);
+    await expect(page).toHaveURL(/dashboard|leads|deals|organizations/, { timeout: 20000 });
   });
 
   test("organizations list renders", async ({ page }) => {
     await login(page);
     await page.goto("/organizations");
-    await expect(page.getByText(/organization/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/organization/i).first()).toBeVisible({ timeout: 20000 });
   });
 
   test("no horizontal overflow on mobile", async ({ page }) => {

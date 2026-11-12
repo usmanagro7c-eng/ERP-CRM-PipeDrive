@@ -3,11 +3,7 @@ import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -160,9 +156,7 @@ export function NoteFormModal({
               autoFocus
               required
             />
-            {errors.title && (
-              <p className="text-[11px] text-destructive">{errors.title}</p>
-            )}
+            {errors.title && <p className="text-[11px] text-destructive">{errors.title}</p>}
           </div>
 
           {/* Optional Reference Link */}
@@ -191,7 +185,9 @@ export function NoteFormModal({
 
             {referenceDoctype && (
               <div className="space-y-1.5">
-                <Label className="text-xs font-normal text-muted-foreground">Record ID / Name</Label>
+                <Label className="text-xs font-normal text-muted-foreground">
+                  Record ID / Name
+                </Label>
                 <Input
                   value={referenceDocname}
                   onChange={(e) => setReferenceDocname(e.target.value)}
@@ -221,9 +217,7 @@ export function NoteFormModal({
               disabled={saveMutation.isPending}
               className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
             >
-              {saveMutation.isPending && (
-                <Loader2 className="size-3.5 animate-spin mr-1.5" />
-              )}
+              {saveMutation.isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{isEdit ? "Save Changes" : "Create"}</span>
             </Button>
           </div>

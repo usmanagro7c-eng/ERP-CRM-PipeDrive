@@ -330,7 +330,10 @@ function ContactsPage() {
       <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0">
         <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
           {/* Search Input */}
-          <form onSubmit={submitSearch} className="relative flex-1 min-w-[120px] max-w-[210px] sm:w-52">
+          <form
+            onSubmit={submitSearch}
+            className="relative flex-1 min-w-[120px] max-w-[210px] sm:w-52"
+          >
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
@@ -427,7 +430,11 @@ function ContactsPage() {
               }}
               onEdit={handleEditContact}
               emptyAction={
-                <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5 cursor-pointer">
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreateModal}
+                  className="gap-1.5 cursor-pointer"
+                >
                   <Plus className="size-4" />
                   Create Contact
                 </Button>
@@ -456,7 +463,11 @@ function ContactsPage() {
                 onEdit={handleEditContact}
                 loading={loading}
                 emptyAction={
-                  <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5 cursor-pointer">
+                  <Button
+                    size="sm"
+                    onClick={handleOpenCreateModal}
+                    className="gap-1.5 cursor-pointer"
+                  >
                     <Plus className="size-4" />
                     Create Contact
                   </Button>
@@ -475,7 +486,7 @@ function ContactsPage() {
                           "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
                           pageSize === size
                             ? "bg-background text-foreground shadow-xs font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
                         )}
                         onClick={() => setPageSize(size)}
                       >
@@ -485,9 +496,7 @@ function ContactsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span>
-                      {total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}
-                    </span>
+                    <span>{total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}</span>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"

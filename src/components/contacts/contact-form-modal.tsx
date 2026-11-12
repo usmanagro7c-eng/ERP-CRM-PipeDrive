@@ -4,12 +4,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -125,7 +120,9 @@ export function ContactFormModal({
           email_id: String(initialValues["email_id"] || initialValues["email"] || ""),
           mobile_no: String(initialValues["mobile_no"] || initialValues["phone"] || ""),
           gender: String(initialValues["gender"] || ""),
-          company_name: String(initialValues["company_name"] || initialValues["organization"] || ""),
+          company_name: String(
+            initialValues["company_name"] || initialValues["organization"] || "",
+          ),
           designation: String(initialValues["designation"] || ""),
           address: String(initialValues["address"] || ""),
         });
@@ -201,7 +198,11 @@ export function ContactFormModal({
               className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
               title={isFullscreen ? "Restore window" : "Maximize window"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"

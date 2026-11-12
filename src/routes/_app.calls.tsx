@@ -45,11 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  callLogsListOptions,
-  useDeleteCallLog,
-  type CrmCallLog,
-} from "@/hooks/use-call-logs";
+import { callLogsListOptions, useDeleteCallLog, type CrmCallLog } from "@/hooks/use-call-logs";
 import { CallFormModal } from "@/components/calls/call-form-modal";
 import { cn } from "@/lib/utils";
 
@@ -101,15 +97,23 @@ function StatusBadge({ status }: { status?: string | undefined }) {
   const s = (status || "Connected").trim().toLowerCase();
   let color = "bg-muted text-muted-foreground border-border/40";
   if (s === "connected") {
-    color = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+    color =
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
   } else if (s === "no answer") {
-    color = "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800";
+    color =
+      "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800";
   } else if (s === "busy" || s === "failed") {
-    color = "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
+    color =
+      "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800";
   }
 
   return (
-    <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border", color)}>
+    <span
+      className={cn(
+        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border",
+        color,
+      )}
+    >
       {status || "Connected"}
     </span>
   );
@@ -134,7 +138,10 @@ function CallLogsPage() {
     return calls.filter((c) => {
       if (filterType !== "all" && c.type !== filterType) return false;
       if (filterStatus !== "all" && c.status !== filterStatus) return false;
-      if (fromFilter.trim() && !(c.from || "").toLowerCase().includes(fromFilter.trim().toLowerCase())) {
+      if (
+        fromFilter.trim() &&
+        !(c.from || "").toLowerCase().includes(fromFilter.trim().toLowerCase())
+      ) {
         return false;
       }
       if (toFilter.trim() && !(c.to || "").toLowerCase().includes(toFilter.trim().toLowerCase())) {
@@ -157,9 +164,7 @@ function CallLogsPage() {
 
   const toggleSelectRow = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   function handleOpenCreate() {
@@ -321,7 +326,8 @@ function CallLogsPage() {
             </div>
             <h3 className="text-base font-semibold text-foreground">No call logs yet</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-              Calls made through Twilio or Exotel are logged here, along with calls you log by hand on a lead or deal.
+              Calls made through Twilio or Exotel are logged here, along with calls you log by hand
+              on a lead or deal.
             </p>
             <Button
               size="sm"
@@ -373,7 +379,10 @@ function CallLogsPage() {
                       )}
                     >
                       {/* Checkbox */}
-                      <TableCell className="w-[40px] pl-4 py-2" onClick={(e) => toggleSelectRow(c.name, e)}>
+                      <TableCell
+                        className="w-[40px] pl-4 py-2"
+                        onClick={(e) => toggleSelectRow(c.name, e)}
+                      >
                         <Checkbox checked={isSelected} aria-label={`Select ${c.name}`} />
                       </TableCell>
 
@@ -390,7 +399,9 @@ function CallLogsPage() {
                           ) : (
                             <ArrowDownLeft className="size-3.5 text-emerald-500" />
                           )}
-                          <span className="font-medium text-foreground">{c.type || "Outbound"}</span>
+                          <span className="font-medium text-foreground">
+                            {c.type || "Outbound"}
+                          </span>
                         </div>
                       </TableCell>
 
@@ -423,7 +434,10 @@ function CallLogsPage() {
                       </TableCell>
 
                       {/* Dropdown Menu Actions */}
-                      <TableCell className="text-right pr-2 py-2" onClick={(e) => e.stopPropagation()}>
+                      <TableCell
+                        className="text-right pr-2 py-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -443,7 +457,11 @@ function CallLogsPage() {
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete call log "${c.name}"?`)) {
+                                if (
+                                  window.confirm(
+                                    `Are you sure you want to delete call log "${c.name}"?`,
+                                  )
+                                ) {
                                   void deleteMutation.mutate(c.name);
                                 }
                               }}

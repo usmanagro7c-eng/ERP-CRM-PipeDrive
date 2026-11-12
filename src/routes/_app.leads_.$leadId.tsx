@@ -40,11 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import { LeadFormModal } from "@/components/leads/lead-form-modal";
 import {
@@ -71,14 +67,7 @@ export const Route = createFileRoute("/_app/leads_/$leadId")({
 });
 
 type TabKey =
-  | "activity"
-  | "emails"
-  | "comments"
-  | "data"
-  | "calls"
-  | "tasks"
-  | "notes"
-  | "attachments";
+  "activity" | "emails" | "comments" | "data" | "calls" | "tasks" | "notes" | "attachments";
 
 const SALUTATIONS = ["Mr", "Ms", "Mx", "Dr", "Mrs", "Madam", "Miss", "Master", "Prof"];
 const SOURCES = [
@@ -167,7 +156,8 @@ function LeadDetailPage() {
     enabled: Boolean(isConverted),
   });
   const rawLinkedDeal = linkedDeals?.[0];
-  const linkedDealName = typeof rawLinkedDeal?.["name"] === "string" ? String(rawLinkedDeal["name"]) : undefined;
+  const linkedDealName =
+    typeof rawLinkedDeal?.["name"] === "string" ? String(rawLinkedDeal["name"]) : undefined;
 
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
@@ -338,12 +328,18 @@ function LeadDetailPage() {
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Leads / ☰ List / Zubair Khan */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
-          <Link to="/leads" className="hover:text-foreground transition-colors font-medium shrink-0">
+          <Link
+            to="/leads"
+            className="hover:text-foreground transition-colors font-medium shrink-0"
+          >
             Leads
           </Link>
           <span className="hidden sm:inline-flex items-center gap-1 opacity-60">
             /
-            <Link to="/leads" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <Link
+              to="/leads"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
               <List className="size-3.5" />
               <span>List</span>
             </Link>
@@ -379,7 +375,10 @@ function LeadDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs w-48">
-              <DropdownMenuItem onClick={() => toast.info("Enrich feature: Lead data validated")} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => toast.info("Enrich feature: Lead data validated")}
+                className="cursor-pointer"
+              >
                 <Zap className="size-3.5 mr-2" /> Enrich Lead
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("tasks")} className="cursor-pointer">
@@ -586,24 +585,15 @@ function LeadDetailPage() {
               )}
 
               {activeTab === "tasks" && (
-                <RecordTasksTab
-                  referenceDoctype={api.LEAD_DOCTYPE}
-                  referenceName={leadId}
-                />
+                <RecordTasksTab referenceDoctype={api.LEAD_DOCTYPE} referenceName={leadId} />
               )}
 
               {activeTab === "notes" && (
-                <RecordNotesTab
-                  referenceDoctype={api.LEAD_DOCTYPE}
-                  referenceName={leadId}
-                />
+                <RecordNotesTab referenceDoctype={api.LEAD_DOCTYPE} referenceName={leadId} />
               )}
 
               {activeTab === "attachments" && (
-                <RecordAttachmentsTab
-                  referenceDoctype={api.LEAD_DOCTYPE}
-                  referenceName={leadId}
-                />
+                <RecordAttachmentsTab referenceDoctype={api.LEAD_DOCTYPE} referenceName={leadId} />
               )}
             </div>
           </div>
@@ -756,10 +746,16 @@ function LeadDetailPage() {
           </div>
 
           {/* Collapsible Details Section with 2-Column Key-Value Rows & Edit Modal Trigger */}
-          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2 border-t pt-3">
+          <Collapsible
+            open={detailsOpen}
+            onOpenChange={setDetailsOpen}
+            className="space-y-2 border-t pt-3"
+          >
             <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
               <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
-                <ChevronDown className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")} />
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")}
+                />
                 <span>Details</span>
               </CollapsibleTrigger>
               <button
@@ -778,7 +774,9 @@ function LeadDetailPage() {
                 <span className="text-muted-foreground truncate">Organization</span>
                 <Input
                   value={sidebarValues.organization || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, organization: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, organization: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("organization", e.target.value)}
                   placeholder="Add Organization..."
                   className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
@@ -790,7 +788,9 @@ function LeadDetailPage() {
                 <span className="text-muted-foreground truncate pt-0.5">Company Desc...</span>
                 <Textarea
                   value={sidebarValues.company_description || ""}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, company_description: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, company_description: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("company_description", e.target.value)}
                   placeholder="Add Company Description..."
                   rows={1}
@@ -941,10 +941,16 @@ function LeadDetailPage() {
           </Collapsible>
 
           {/* Collapsible Person Section with 2-Column Key-Value Rows */}
-          <Collapsible open={personOpen} onOpenChange={setPersonOpen} className="space-y-2 border-t pt-3">
+          <Collapsible
+            open={personOpen}
+            onOpenChange={setPersonOpen}
+            className="space-y-2 border-t pt-3"
+          >
             <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold text-foreground cursor-pointer">
               <span className="flex items-center gap-1.5">
-                <ChevronDown className={cn("size-3.5 transition-transform", !personOpen && "-rotate-90")} />
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", !personOpen && "-rotate-90")}
+                />
                 <span>Person</span>
               </span>
             </CollapsibleTrigger>
@@ -1028,18 +1034,10 @@ function LeadDetailPage() {
       </div>
 
       {/* Convert to Deal Modal */}
-      <ConvertLeadModal
-        open={convertModalOpen}
-        onOpenChange={setConvertModalOpen}
-        lead={lead}
-      />
+      <ConvertLeadModal open={convertModalOpen} onOpenChange={setConvertModalOpen} lead={lead} />
 
       {/* Edit Lead Modal Matching Create/Edit Layout */}
-      <LeadFormModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        lead={lead}
-      />
+      <LeadFormModal open={editModalOpen} onOpenChange={setEditModalOpen} lead={lead} />
     </div>
   );
 }

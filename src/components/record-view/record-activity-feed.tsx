@@ -120,11 +120,11 @@ export function RecordActivityFeed({
           </div>
           <div className="text-xs">
             <span className="font-semibold text-foreground">{authorName(owner)}</span>{" "}
-            <span className="text-muted-foreground">created this {referenceDoctype.toLowerCase().replace("crm ", "")}</span>
+            <span className="text-muted-foreground">
+              created this {referenceDoctype.toLowerCase().replace("crm ", "")}
+            </span>
             {creation && (
-              <span className="text-[11px] text-muted-foreground/70 ml-2">
-                {timeAgo(creation)}
-              </span>
+              <span className="text-[11px] text-muted-foreground/70 ml-2">{timeAgo(creation)}</span>
             )}
           </div>
         </div>
@@ -133,7 +133,12 @@ export function RecordActivityFeed({
         {rawActivities.map((event: CrmActivityEvent, idx: number) => {
           const isExpanded = !!expandedEvents[idx];
           const eventData = (event.data && typeof event.data === "object" ? event.data : {}) as {
-            changed?: Array<{ fieldName?: string; field_label?: string; oldValue?: unknown; newValue?: unknown }>;
+            changed?: Array<{
+              fieldName?: string;
+              field_label?: string;
+              oldValue?: unknown;
+              newValue?: unknown;
+            }>;
             added?: unknown[];
             removed?: unknown[];
             field_label?: string;
@@ -145,7 +150,8 @@ export function RecordActivityFeed({
             (eventData.changed && eventData.changed.length > 0) ||
             (eventData.added && eventData.added.length > 0) ||
             (eventData.removed && eventData.removed.length > 0) ||
-            (eventData.field_label && (eventData.value !== undefined || eventData.old_value !== undefined)),
+            (eventData.field_label &&
+              (eventData.value !== undefined || eventData.old_value !== undefined)),
           );
 
           const author = authorName(event.owner);
@@ -153,11 +159,14 @@ export function RecordActivityFeed({
             event.activity_type === "creation"
               ? "created this record"
               : event.activity_type === "changed" && eventData.field_label
-              ? `updated ${eventData.field_label}`
-              : event.activity_type || "updated";
+                ? `updated ${eventData.field_label}`
+                : event.activity_type || "updated";
 
           return (
-            <div key={idx} className="relative group p-1 -ml-1 rounded-xl transition-colors hover:bg-muted/20">
+            <div
+              key={idx}
+              className="relative group p-1 -ml-1 rounded-xl transition-colors hover:bg-muted/20"
+            >
               <div className="absolute -left-[35px] top-0 ring-4 ring-background rounded-full">
                 <AvatarGradient name={author} size="xs" />
               </div>

@@ -1,4 +1,15 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown, CircleSlash, MoreVertical, Building2, User, Calendar, Loader2, FileText } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  CircleSlash,
+  MoreVertical,
+  Building2,
+  User,
+  Calendar,
+  Loader2,
+  FileText,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
@@ -114,15 +125,12 @@ function DealCellValue({
 
   if (field.fieldname === "deal_value") {
     const currency = (row["currency"] as string) || "PKR";
-    return (
-      <span className="font-semibold text-foreground">
-        {formatCurrency(value, currency)}
-      </span>
-    );
+    return <span className="font-semibold text-foreground">{formatCurrency(value, currency)}</span>;
   }
 
   if (field.fieldname === "probability") {
-    if (value === null || value === undefined || value === "") return <span className="text-muted-foreground">—</span>;
+    if (value === null || value === undefined || value === "")
+      return <span className="text-muted-foreground">—</span>;
     return (
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
@@ -206,7 +214,11 @@ export function DealTable({
 
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
-    return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+    return (
+      stageKey.toLowerCase().includes("lost") ||
+      stage?.label?.toLowerCase().includes("lost") ||
+      false
+    );
   }
 
   async function handleMove(dealName: string, targetStage: string) {
@@ -258,12 +270,7 @@ export function DealTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[200px] min-w-[190px]">
-              <SortButton
-                field="name"
-                label="Deal ID"
-                sort={sort}
-                onSortChange={onSortChange}
-              />
+              <SortButton field="name" label="Deal ID" sort={sort} onSortChange={onSortChange} />
             </TableHead>
             {activeFields.map((field) => (
               <TableHead key={field.fieldname}>
@@ -303,10 +310,7 @@ export function DealTable({
                     <DealCellValue field={field} row={row} movingTo={movingTo} />
                   </TableCell>
                 ))}
-                <TableCell
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -330,9 +334,7 @@ export function DealTable({
                         </DropdownMenuItem>
                       )}
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Deal
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Deal</DropdownMenuItem>
                       )}
                       <MoveToSubmenu
                         label="Move to Stage"
@@ -358,11 +360,7 @@ export function DealTable({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete deal ${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete deal ${name}?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}

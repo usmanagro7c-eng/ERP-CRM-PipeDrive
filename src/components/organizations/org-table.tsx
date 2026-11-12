@@ -22,10 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useSaveOrganization,
-  useLinkOptions,
-} from "@/hooks/use-organizations";
+import { useSaveOrganization, useLinkOptions } from "@/hooks/use-organizations";
 import {
   fieldsByNames,
   fieldLabel,
@@ -299,8 +296,14 @@ export function OrgTable({
                       {employeeOptions.length > 0 && (
                         <MoveToSubmenu
                           label="Move to Employees"
-                          currentValue={typeof row["no_of_employees"] === "string" ? row["no_of_employees"] : ""}
-                          options={employeeOptions.map((opt) => ({ key: opt, label: opt, value: opt }))}
+                          currentValue={
+                            typeof row["no_of_employees"] === "string" ? row["no_of_employees"] : ""
+                          }
+                          options={employeeOptions.map((opt) => ({
+                            key: opt,
+                            label: opt,
+                            value: opt,
+                          }))}
                           onSelect={(val) => void handleMoveOrg(orgName, "no_of_employees", val)}
                         />
                       )}
@@ -309,9 +312,15 @@ export function OrgTable({
                       {territories.length > 0 && (
                         <MoveToSubmenu
                           label="Move to Territory"
-                          currentValue={typeof row["territory"] === "string" ? row["territory"] : ""}
+                          currentValue={
+                            typeof row["territory"] === "string" ? row["territory"] : ""
+                          }
                           allowNone={true}
-                          options={territories.map((terr) => ({ key: terr, label: terr, value: terr }))}
+                          options={territories.map((terr) => ({
+                            key: terr,
+                            label: terr,
+                            value: terr,
+                          }))}
                           onSelect={(val) => void handleMoveOrg(orgName, "territory", val)}
                         />
                       )}

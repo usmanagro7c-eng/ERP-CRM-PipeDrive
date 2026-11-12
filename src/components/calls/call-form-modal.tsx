@@ -3,11 +3,7 @@ import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -201,7 +197,9 @@ export function CallFormModal({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-normal text-muted-foreground">Duration (seconds)</Label>
+                <Label className="text-xs font-normal text-muted-foreground">
+                  Duration (seconds)
+                </Label>
                 <Input
                   type="number"
                   value={duration}
@@ -232,9 +230,7 @@ export function CallFormModal({
                   autoFocus
                   required
                 />
-                {errors.to && (
-                  <p className="text-[11px] text-destructive">{errors.to}</p>
-                )}
+                {errors.to && <p className="text-[11px] text-destructive">{errors.to}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -269,7 +265,11 @@ export function CallFormModal({
                       None (Standalone)
                     </SelectItem>
                     {LINK_DOCTYPES.map((dt) => (
-                      <SelectItem key={dt.value} value={dt.value} className="text-xs cursor-pointer">
+                      <SelectItem
+                        key={dt.value}
+                        value={dt.value}
+                        className="text-xs cursor-pointer"
+                      >
                         {dt.label}
                       </SelectItem>
                     ))}
@@ -310,9 +310,7 @@ export function CallFormModal({
               disabled={saveMutation.isPending}
               className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
             >
-              {saveMutation.isPending && (
-                <Loader2 className="size-3.5 animate-spin mr-1.5" />
-              )}
+              {saveMutation.isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{isEdit ? "Save Changes" : "Create"}</span>
             </Button>
           </div>

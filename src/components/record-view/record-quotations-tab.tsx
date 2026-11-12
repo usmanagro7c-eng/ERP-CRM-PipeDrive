@@ -43,14 +43,42 @@ export function RecordQuotationsTab({
   function getStatusBadge(status?: string) {
     switch (status?.toLowerCase()) {
       case "submitted":
-        return <Badge variant="outline" className="text-[10px] h-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Submitted</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-[10px] h-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+          >
+            Submitted
+          </Badge>
+        );
       case "ordered":
-        return <Badge variant="outline" className="text-[10px] h-4 bg-blue-500/10 text-blue-500 border-blue-500/20">Ordered</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-[10px] h-4 bg-blue-500/10 text-blue-500 border-blue-500/20"
+          >
+            Ordered
+          </Badge>
+        );
       case "lost":
       case "cancelled":
-        return <Badge variant="outline" className="text-[10px] h-4 bg-red-500/10 text-red-500 border-red-500/20">Lost</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-[10px] h-4 bg-red-500/10 text-red-500 border-red-500/20"
+          >
+            Lost
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="text-[10px] h-4 bg-secondary text-muted-foreground border-border/60">Draft</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-[10px] h-4 bg-secondary text-muted-foreground border-border/60"
+          >
+            Draft
+          </Badge>
+        );
     }
   }
 
@@ -107,7 +135,9 @@ export function RecordQuotationsTab({
                       {getStatusBadge(q.status)}
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">
-                      <span>PKR {amount.toLocaleString("en-PK", { minimumFractionDigits: 2 })}</span>
+                      <span>
+                        PKR {amount.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </span>
                       {dateStr && <span className="ml-2">· {dateStr}</span>}
                     </div>
                   </div>

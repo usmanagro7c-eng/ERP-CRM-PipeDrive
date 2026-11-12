@@ -17,12 +17,7 @@ const COLUMNS = [
   { key: "Completed", label: "Completed", color: "border-emerald-500/40" },
 ];
 
-export function TaskKanban({
-  tasks,
-  onToggleComplete,
-  onEdit,
-  onAddInStatus,
-}: TaskKanbanProps) {
+export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: TaskKanbanProps) {
   function getPriorityColor(priority: string) {
     switch (priority?.toLowerCase()) {
       case "urgent":
@@ -49,7 +44,9 @@ export function TaskKanban({
             className="flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/20"
           >
             {/* Header */}
-            <div className={`flex items-center justify-between p-3 border-b bg-card/60 rounded-t-lg border-t-2 ${col.color}`}>
+            <div
+              className={`flex items-center justify-between p-3 border-b bg-card/60 rounded-t-lg border-t-2 ${col.color}`}
+            >
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-xs text-foreground">{col.label}</h3>
                 <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">

@@ -3,12 +3,7 @@ import { Loader2, Maximize2, Minimize2, X, User as UserIcon } from "lucide-react
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,12 +99,7 @@ const defaultFormData: FormDataState = {
   lead_owner: "",
 };
 
-export function LeadFormModal({
-  open,
-  onOpenChange,
-  lead,
-  initialValues,
-}: LeadFormModalProps) {
+export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadFormModalProps) {
   const isEdit = Boolean(lead);
   const docName = lead ? String(lead["name"]) : undefined;
   const saveMutation = useSaveLead();
@@ -218,7 +208,11 @@ export function LeadFormModal({
               className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
               title={isFullscreen ? "Minimize" : "Maximize"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"

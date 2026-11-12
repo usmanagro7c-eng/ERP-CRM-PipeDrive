@@ -24,10 +24,7 @@ interface RecordTasksTabProps {
   referenceName: string;
 }
 
-export function RecordTasksTab({
-  referenceDoctype,
-  referenceName,
-}: RecordTasksTabProps) {
+export function RecordTasksTab({ referenceDoctype, referenceName }: RecordTasksTabProps) {
   const { data: tasks = [], isLoading } = useQuery(
     tasksListOptions({
       reference_doctype: referenceDoctype,
@@ -166,9 +163,7 @@ export function RecordTasksTab({
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <button
-                    onClick={() =>
-                      toggleMutation.mutate({ name: t.name, currentStatus: t.status })
-                    }
+                    onClick={() => toggleMutation.mutate({ name: t.name, currentStatus: t.status })}
                     className="text-muted-foreground hover:text-primary cursor-pointer shrink-0"
                     title={isCompleted ? "Mark incomplete" : "Mark complete"}
                   >
@@ -203,7 +198,10 @@ export function RecordTasksTab({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${getPriorityColor(t.priority)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] h-4 px-1.5 ${getPriorityColor(t.priority)}`}
+                  >
                     {t.priority || "Medium"}
                   </Badge>
                   <button

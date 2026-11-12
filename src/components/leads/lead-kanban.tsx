@@ -89,9 +89,7 @@ export function LeadKanban({
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
     return (meta.fields ?? []).filter(
-      (f) =>
-        (f.fieldtype === "Select" || f.fieldtype === "Link") &&
-        !f.hidden,
+      (f) => (f.fieldtype === "Select" || f.fieldtype === "Link") && !f.hidden,
     );
   }, [meta]);
 
@@ -148,9 +146,7 @@ export function LeadKanban({
     for (const row of rows) {
       const val = row[groupBy];
       const key =
-        typeof val === "string" && val.trim() && map.has(val.trim())
-          ? val.trim()
-          : UNASSIGNED_KEY;
+        typeof val === "string" && val.trim() && map.has(val.trim()) ? val.trim() : UNASSIGNED_KEY;
       const list = map.get(key);
       if (list) list.push(row);
       else map.set(key, [row]);
@@ -252,9 +248,7 @@ export function LeadKanban({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
-                    <h3 className="font-semibold text-xs text-foreground truncate">
-                      {col.label}
-                    </h3>
+                    <h3 className="font-semibold text-xs text-foreground truncate">{col.label}</h3>
                     <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-mono">
                       {leads.length}
                     </Badge>
@@ -335,10 +329,7 @@ export function LeadKanban({
                             </div>
                           </div>
 
-                          <div
-                            className="shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -359,7 +350,9 @@ export function LeadKanban({
                                 {onConvert && (
                                   <DropdownMenuItem
                                     onClick={() => onConvert(lead)}
-                                    disabled={Boolean(lead["converted"]) || currentStatus === "Converted"}
+                                    disabled={
+                                      Boolean(lead["converted"]) || currentStatus === "Converted"
+                                    }
                                   >
                                     <Briefcase className="mr-2 size-3.5 text-primary" />
                                     {Boolean(lead["converted"]) || currentStatus === "Converted"
@@ -400,7 +393,7 @@ export function LeadKanban({
 
                         {/* Middle row: Organization & Temperature */}
                         <div className="mt-2.5 flex items-center justify-between gap-2">
-                          {Boolean(org) ? (
+                          {org ? (
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
                               <Building2 className="size-3 shrink-0" />
                               <span className="truncate max-w-[170px]">{String(org)}</span>
@@ -409,9 +402,7 @@ export function LeadKanban({
                             <span />
                           )}
 
-                          {Boolean(temp) && (
-                            <LeadTemperatureBadge temp={temp} />
-                          )}
+                          {Boolean(temp) && <LeadTemperatureBadge temp={temp} />}
                         </div>
 
                         {/* Contact details */}
@@ -433,7 +424,10 @@ export function LeadKanban({
                         {/* Bottom row: Lead Owner */}
                         {Boolean(owner) && (
                           <div className="mt-2 flex items-center justify-end text-[10px] text-muted-foreground font-medium">
-                            <div className="flex items-center gap-1" title={`Owner: ${String(owner)}`}>
+                            <div
+                              className="flex items-center gap-1"
+                              title={`Owner: ${String(owner)}`}
+                            >
                               <User className="size-3 opacity-70" />
                               <span className="truncate max-w-[120px]">{String(owner)}</span>
                             </div>

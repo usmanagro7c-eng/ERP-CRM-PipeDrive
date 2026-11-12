@@ -1,5 +1,13 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear, startOfQuarter } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  startOfYear,
+  startOfQuarter,
+} from "date-fns";
 
 import {
   getCrmDashboard,
@@ -19,7 +27,10 @@ export type DateRangePreset =
   | "This Quarter"
   | "This Year";
 
-export function getDateRangeFromPreset(preset: DateRangePreset): { from_date: string; to_date: string } {
+export function getDateRangeFromPreset(preset: DateRangePreset): {
+  from_date: string;
+  to_date: string;
+} {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
 

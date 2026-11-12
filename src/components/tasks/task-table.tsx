@@ -25,12 +25,7 @@ interface TaskTableProps {
   onDelete: (name: string) => void;
 }
 
-export function TaskTable({
-  tasks,
-  onToggleComplete,
-  onEdit,
-  onDelete,
-}: TaskTableProps) {
+export function TaskTable({ tasks, onToggleComplete, onEdit, onDelete }: TaskTableProps) {
   function getPriorityColor(priority: string) {
     switch (priority?.toLowerCase()) {
       case "urgent":
@@ -86,9 +81,7 @@ export function TaskTable({
             return (
               <TableRow
                 key={task.name}
-                className={`transition-colors ${
-                  isCompleted ? "opacity-60 bg-muted/10" : ""
-                }`}
+                className={`transition-colors ${isCompleted ? "opacity-60 bg-muted/10" : ""}`}
               >
                 <TableCell className="py-2.5">
                   <button
@@ -108,12 +101,18 @@ export function TaskTable({
                   </span>
                 </TableCell>
                 <TableCell className="py-2.5">
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${getStatusBadge(task.status)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 h-4 ${getStatusBadge(task.status)}`}
+                  >
                     {task.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-2.5">
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${getPriorityColor(task.priority)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 h-4 ${getPriorityColor(task.priority)}`}
+                  >
                     {task.priority}
                   </Badge>
                 </TableCell>

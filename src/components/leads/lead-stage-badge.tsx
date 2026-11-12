@@ -1,4 +1,11 @@
-import { CheckCircle2, XCircle, CircleDot, Flame, ThermometerSnowflake, Sparkles } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  CircleDot,
+  Flame,
+  ThermometerSnowflake,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 

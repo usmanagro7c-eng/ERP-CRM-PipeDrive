@@ -34,13 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
@@ -59,22 +53,14 @@ const NAV_ITEMS = [
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
 ] as const;
 
-function NavLinks({
-  collapsed,
-  onItemClick,
-}: {
-  collapsed?: boolean;
-  onItemClick?: () => void;
-}) {
+function NavLinks({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="flex flex-col gap-0.5 px-2">
       {NAV_ITEMS.map((item) => {
         const active =
-          item.to === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.to);
+          item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
 
         return (
           <Link
@@ -144,10 +130,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         >
           {/* Brand Icon */}
           <div className="flex size-7 items-center justify-center rounded-lg bg-pink-600 text-white shrink-0 shadow-xs">
-            <svg
-              className="size-4 fill-current"
-              viewBox="0 0 24 24"
-            >
+            <svg className="size-4 fill-current" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
@@ -174,7 +157,10 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => void signOut()} className="cursor-pointer gap-2 text-destructive">
+        <DropdownMenuItem
+          onClick={() => void signOut()}
+          className="cursor-pointer gap-2 text-destructive"
+        >
           <LogOut className="size-3.5" />
           <span>Sign Out</span>
         </DropdownMenuItem>

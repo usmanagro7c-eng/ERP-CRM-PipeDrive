@@ -1,13 +1,5 @@
 import { useMemo } from "react";
-import {
-  Briefcase,
-  Building2,
-  Mail,
-  MoreVertical,
-  Phone,
-  User,
-  CircleSlash,
-} from "lucide-react";
+import { Briefcase, Building2, Mail, MoreVertical, Phone, User, CircleSlash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,10 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  LeadStatusBadge,
-  LeadTemperatureBadge,
-} from "@/components/leads/lead-stage-badge";
+import { LeadStatusBadge, LeadTemperatureBadge } from "@/components/leads/lead-stage-badge";
 import { useSaveLead, useDeleteLead, type FrappeDocTypeMeta } from "@/hooks/use-leads";
 
 interface LeadGridProps {
@@ -125,16 +114,11 @@ export function LeadGrid({
                     <h4 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                       {fullName}
                     </h4>
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {name}
-                    </span>
+                    <span className="font-mono text-[11px] text-muted-foreground">{name}</span>
                   </div>
                 </div>
 
-                <div
-                  className="shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -148,9 +132,7 @@ export function LeadGrid({
                     <DropdownMenuContent align="end" className="w-48 text-xs">
                       <DropdownMenuLabel>Lead Actions</DropdownMenuLabel>
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Lead
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Lead</DropdownMenuItem>
                       )}
                       {onConvert && (
                         <DropdownMenuItem
@@ -178,11 +160,7 @@ export function LeadGrid({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete lead ${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete lead ${name}?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}

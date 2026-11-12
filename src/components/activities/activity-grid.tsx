@@ -20,10 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ActivityStatusBadge,
-  ActivityPriorityBadge,
-} from "@/components/activities/activity-badge";
+import { ActivityStatusBadge, ActivityPriorityBadge } from "@/components/activities/activity-badge";
 import { useSaveActivity, useDeleteActivity, type FrappeDocTypeMeta } from "@/hooks/use-activities";
 import { cn } from "@/lib/utils";
 
@@ -144,16 +141,11 @@ export function ActivityGrid({
                     >
                       {title}
                     </h4>
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      #{name}
-                    </span>
+                    <span className="font-mono text-[11px] text-muted-foreground">#{name}</span>
                   </div>
                 </div>
 
-                <div
-                  className="shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -197,9 +189,7 @@ export function ActivityGrid({
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
                           if (
-                            window.confirm(
-                              `Are you sure you want to delete activity #${name}?`,
-                            )
+                            window.confirm(`Are you sure you want to delete activity #${name}?`)
                           ) {
                             void deleteMutation.mutate(name);
                           }

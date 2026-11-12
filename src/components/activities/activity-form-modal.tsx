@@ -3,11 +3,7 @@ import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +72,9 @@ export function ActivityFormModal({
         setFormData({
           title: String(activity["title"] || ""),
           priority: String(activity["priority"] || "Low"),
-          due_date: String(activity["due_date"] || "").replace(" ", "T").slice(0, 16),
+          due_date: String(activity["due_date"] || "")
+            .replace(" ", "T")
+            .slice(0, 16),
           assigned_to: String(activity["assigned_to"] || ""),
           status: String(activity["status"] || "Backlog"),
           description: String(activity["description"] || ""),
@@ -88,12 +86,14 @@ export function ActivityFormModal({
           ...defaultFormData,
           status: presetStatus,
           assigned_to: defaultOwner,
-          ...(initialValues ? {
-            title: String(initialValues["title"] || ""),
-            priority: String(initialValues["priority"] || "Low"),
-            due_date: String(initialValues["due_date"] || ""),
-            description: String(initialValues["description"] || ""),
-          } : {}),
+          ...(initialValues
+            ? {
+                title: String(initialValues["title"] || ""),
+                priority: String(initialValues["priority"] || "Low"),
+                due_date: String(initialValues["due_date"] || ""),
+                description: String(initialValues["description"] || ""),
+              }
+            : {}),
         });
       }
       setErrors({});
@@ -195,9 +195,7 @@ export function ActivityFormModal({
               autoFocus
               required
             />
-            {errors.title && (
-              <p className="text-[11px] text-destructive">{errors.title}</p>
-            )}
+            {errors.title && <p className="text-[11px] text-destructive">{errors.title}</p>}
           </div>
 
           {/* Row 1: Priority & Due Date */}
@@ -263,10 +261,7 @@ export function ActivityFormModal({
 
             <div className="space-y-1.5">
               <Label className="text-xs font-normal text-muted-foreground">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) => handleChange("status", val)}
-              >
+              <Select value={formData.status} onValueChange={(val) => handleChange("status", val)}>
                 <SelectTrigger className="h-8 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -300,9 +295,7 @@ export function ActivityFormModal({
               disabled={saveMutation.isPending}
               className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
             >
-              {saveMutation.isPending && (
-                <Loader2 className="size-3.5 animate-spin mr-1.5" />
-              )}
+              {saveMutation.isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{isEdit ? "Save Changes" : "Create"}</span>
             </Button>
           </div>

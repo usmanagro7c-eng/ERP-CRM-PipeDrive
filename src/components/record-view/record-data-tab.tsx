@@ -12,12 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface RecordDataTabProps {
@@ -64,14 +67,7 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormState {
   salutation: string;
@@ -126,8 +122,7 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
   // Track if modified
   const isDirty = useMemo(() => {
     return Object.keys(initialValues).some(
-      (key) =>
-        formState[key as keyof FormState] !== initialValues[key as keyof FormState],
+      (key) => formState[key as keyof FormState] !== initialValues[key as keyof FormState],
     );
   }, [formState, initialValues]);
 
@@ -373,7 +368,11 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
         </Collapsible>
 
         {/* Section: Person (3-Column Layout with Divider) */}
-        <Collapsible open={personOpen} onOpenChange={setPersonOpen} className="border-t border-border/60 pt-5 space-y-3">
+        <Collapsible
+          open={personOpen}
+          onOpenChange={setPersonOpen}
+          className="border-t border-border/60 pt-5 space-y-3"
+        >
           <div className="flex items-center justify-between">
             <CollapsibleTrigger className="flex items-center gap-2 text-base font-medium text-foreground cursor-pointer hover:text-foreground/80">
               <span>Person</span>

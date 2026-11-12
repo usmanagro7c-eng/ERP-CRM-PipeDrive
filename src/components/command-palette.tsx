@@ -68,15 +68,24 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Columns3 className="size-4 text-primary" />
             <span>Deals & Pipelines</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/quotations")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/quotations")}
+            className="gap-2 cursor-pointer"
+          >
             <FileText className="size-4 text-primary" />
             <span>Quotations</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/sales-orders")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/sales-orders")}
+            className="gap-2 cursor-pointer"
+          >
             <ShoppingCart className="size-4 text-primary" />
             <span>Sales Orders</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/organizations")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/organizations")}
+            className="gap-2 cursor-pointer"
+          >
             <Building2 className="size-4 text-primary" />
             <span>Organizations</span>
           </CommandItem>
@@ -84,7 +93,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Users className="size-4 text-primary" />
             <span>Contacts</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/activities")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/activities")}
+            className="gap-2 cursor-pointer"
+          >
             <CalendarClock className="size-4 text-primary" />
             <span>Activities & Tasks</span>
           </CommandItem>
@@ -109,11 +121,17 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Plus className="size-4 text-muted-foreground" />
             <span>Create New Deal</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/quotations")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/quotations")}
+            className="gap-2 cursor-pointer"
+          >
             <Plus className="size-4 text-muted-foreground" />
             <span>Create New Quotation</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/organizations")} className="gap-2 cursor-pointer">
+          <CommandItem
+            onSelect={() => handleSelect("/organizations")}
+            className="gap-2 cursor-pointer"
+          >
             <Plus className="size-4 text-muted-foreground" />
             <span>Create New Organization</span>
           </CommandItem>

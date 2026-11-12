@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Mail,
-  Plus,
-  RefreshCw,
-  Send,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle2, Clock, Loader2, Mail, Plus, RefreshCw, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -209,7 +200,8 @@ export function RecordEmailsTab({
           </div>
           <p className="text-sm font-semibold text-foreground">No Emails Found</p>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-            No emails have been sent or received for this record yet. Click &quot;New Email&quot; above to compose your first message.
+            No emails have been sent or received for this record yet. Click &quot;New Email&quot;
+            above to compose your first message.
           </p>
           <Button
             size="sm"
@@ -228,11 +220,9 @@ export function RecordEmailsTab({
       ) : (
         <div className="space-y-3 pb-8">
           {emails.map((email: RecordEmail) => {
-            const senderInitial = (
-              email.sender_full_name ||
-              email.sender ||
-              "U"
-            ).charAt(0).toUpperCase();
+            const senderInitial = (email.sender_full_name || email.sender || "U")
+              .charAt(0)
+              .toUpperCase();
 
             const isSent = email.delivery_status === "Sent";
 
@@ -296,9 +286,7 @@ export function RecordEmailsTab({
                   </div>
                 </div>
 
-                <div className="font-medium text-foreground text-xs pt-0.5">
-                  {email.subject}
-                </div>
+                <div className="font-medium text-foreground text-xs pt-0.5">{email.subject}</div>
 
                 <div
                   className="text-xs text-muted-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words [&>p]:mb-1 [&>p:last-child]:mb-0"

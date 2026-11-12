@@ -20,10 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus } from "lucide-react";
-import {
-  useSubmitSalesOrder,
-  type SalesOrder,
-} from "@/hooks/use-sales-orders";
+import { useSubmitSalesOrder, type SalesOrder } from "@/hooks/use-sales-orders";
 
 interface SalesOrderGridProps {
   rows: SalesOrder[];
@@ -36,7 +33,10 @@ function SalesOrderStatusBadge({ status }: { status: string }) {
   const s = (status || "Draft").toLowerCase();
   if (s.includes("completed")) {
     return (
-      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium gap-1">
+      <Badge
+        variant="outline"
+        className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium gap-1"
+      >
         <Check className="size-3" />
         <span>Completed</span>
       </Badge>
@@ -44,7 +44,10 @@ function SalesOrderStatusBadge({ status }: { status: string }) {
   }
   if (s.includes("deliver") || s.includes("bill")) {
     return (
-      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium gap-1">
+      <Badge
+        variant="outline"
+        className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium gap-1"
+      >
         <Clock className="size-3" />
         <span>{status}</span>
       </Badge>
@@ -52,7 +55,10 @@ function SalesOrderStatusBadge({ status }: { status: string }) {
   }
   if (s === "cancelled" || s === "closed") {
     return (
-      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium">
+      <Badge
+        variant="outline"
+        className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium"
+      >
         {status}
       </Badge>
     );
@@ -129,9 +135,7 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
                     <Building2 className="size-4 text-primary shrink-0" />
                     <span className="truncate max-w-[200px]">{row.customer}</span>
                   </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {row.name}
-                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground">{row.name}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -179,15 +183,11 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
                   <Calendar className="size-3" />
                   <span>{row.transaction_date}</span>
                 </span>
-                {row.delivery_date && (
-                  <span>Delivery: {row.delivery_date}</span>
-                )}
+                {row.delivery_date && <span>Delivery: {row.delivery_date}</span>}
               </div>
 
               <div className="flex items-baseline justify-between pt-1">
-                <span className="text-[11px] font-medium text-muted-foreground">
-                  Grand Total:
-                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">Grand Total:</span>
                 <span className="text-base font-bold text-primary">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </span>

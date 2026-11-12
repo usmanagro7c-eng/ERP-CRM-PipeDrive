@@ -23,12 +23,7 @@ export function FormSectionNav({
   if (pages.length <= 1) return null;
 
   return (
-    <div
-      className={cn(
-        "border-b bg-muted/30 p-2 sm:px-6 sm:py-2.5",
-        className,
-      )}
-    >
+    <div className={cn("border-b bg-muted/30 p-2 sm:px-6 sm:py-2.5", className)}>
       <div
         className={cn(
           "grid w-full gap-1.5 sm:gap-2",

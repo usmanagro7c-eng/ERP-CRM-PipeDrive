@@ -47,10 +47,26 @@ interface QuotationKanbanProps {
 }
 
 export const QUOTATION_STAGES = [
-  { key: "Draft", label: "Draft", headerBg: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-300" },
-  { key: "Open", label: "Open (Sent)", headerBg: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300" },
-  { key: "Ordered", label: "Ordered (Won)", headerBg: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300" },
-  { key: "Lost", label: "Lost / Cancelled", headerBg: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-300" },
+  {
+    key: "Draft",
+    label: "Draft",
+    headerBg: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-300",
+  },
+  {
+    key: "Open",
+    label: "Open (Sent)",
+    headerBg: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300",
+  },
+  {
+    key: "Ordered",
+    label: "Ordered (Won)",
+    headerBg: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300",
+  },
+  {
+    key: "Lost",
+    label: "Lost / Cancelled",
+    headerBg: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-300",
+  },
 ] as const;
 
 function getQuotationStageKey(status?: string): string {
@@ -214,10 +230,7 @@ export function QuotationKanban({
       {QUOTATION_STAGES.map((col) => {
         const list = grouped.get(col.key) ?? [];
         const isOver = dragOverCol === col.key;
-        const totalAmount = list.reduce(
-          (sum, q) => sum + (Number(q.grand_total) || 0),
-          0,
-        );
+        const totalAmount = list.reduce((sum, q) => sum + (Number(q.grand_total) || 0), 0);
 
         return (
           <div
@@ -247,9 +260,7 @@ export function QuotationKanban({
             {/* Stage Column Header */}
             <div className="flex items-center justify-between border-b bg-card/60 backdrop-blur-xs p-3 rounded-t-xl border-border/70 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-xs text-foreground">
-                  {col.label}
-                </span>
+                <span className="font-semibold text-xs text-foreground">{col.label}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
                   {list.length}
                 </span>
@@ -300,7 +311,9 @@ export function QuotationKanban({
                       onClick={() => handleCardClick(q.name)}
                       className={cn(
                         "group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 active:scale-[0.99] shrink-0",
-                        draggedQuotationName === q.name ? "opacity-40 border-dashed" : "border-border/80",
+                        draggedQuotationName === q.name
+                          ? "opacity-40 border-dashed"
+                          : "border-border/80",
                         isMoving && "pointer-events-none ring-2 ring-primary/40",
                       )}
                     >
@@ -393,7 +406,9 @@ export function QuotationKanban({
                               <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">
                                 Move Stage
                               </DropdownMenuLabel>
-                              {QUOTATION_STAGES.filter((s) => s.key !== getQuotationStageKey(q.status)).map((stage) => (
+                              {QUOTATION_STAGES.filter(
+                                (s) => s.key !== getQuotationStageKey(q.status),
+                              ).map((stage) => (
                                 <DropdownMenuItem
                                   key={stage.key}
                                   onClick={(e) => {
@@ -446,7 +461,10 @@ export function QuotationKanban({
                       </div>
 
                       {/* Quick "Convert to Order" CTA button on card */}
-                      <div className="mt-2.5 pt-2 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="mt-2.5 pt-2 border-t border-border/40"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           size="sm"
                           onClick={(e) => handleCreateSalesOrder(q, e)}

@@ -1,9 +1,4 @@
-import {
-  keepPreviousData,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { SalesOrder, Quotation } from "@/lib/api";
@@ -110,9 +105,7 @@ export function useCreateSalesOrderFromQuotation() {
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not create sales order from quotation",
+        error instanceof Error ? error.message : "Could not create sales order from quotation",
       );
     },
   });

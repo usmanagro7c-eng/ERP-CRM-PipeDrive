@@ -213,7 +213,11 @@ function QuotationDetailPage() {
                 <RefreshCw className="size-3.5 mr-2" /> Refresh
               </DropdownMenuItem>
               {isDraft && (
-                <DropdownMenuItem onClick={handleSubmit} disabled={submitMutation.isPending} className="cursor-pointer">
+                <DropdownMenuItem
+                  onClick={handleSubmit}
+                  disabled={submitMutation.isPending}
+                  className="cursor-pointer"
+                >
                   <CheckCircle2 className="size-3.5 mr-2 text-emerald-600" /> Submit
                 </DropdownMenuItem>
               )}
@@ -333,7 +337,10 @@ function QuotationDetailPage() {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <Building2 className="size-3.5 text-muted-foreground/70" />
-                    <span>Customer: <strong className="text-foreground">{quotation.party_name || "-"}</strong></span>
+                    <span>
+                      Customer:{" "}
+                      <strong className="text-foreground">{quotation.party_name || "-"}</strong>
+                    </span>
                   </div>
 
                   {quotation.crm_deal && (
@@ -353,13 +360,18 @@ function QuotationDetailPage() {
 
                   <div className="flex items-center gap-1.5">
                     <Calendar className="size-3.5 text-muted-foreground/70" />
-                    <span>Date: <span className="text-foreground">{quotation.transaction_date || "-"}</span></span>
+                    <span>
+                      Date:{" "}
+                      <span className="text-foreground">{quotation.transaction_date || "-"}</span>
+                    </span>
                   </div>
 
                   {quotation.valid_till && (
                     <div className="flex items-center gap-1.5">
                       <Clock className="size-3.5 text-muted-foreground/70" />
-                      <span>Valid Till: <span className="text-foreground">{quotation.valid_till}</span></span>
+                      <span>
+                        Valid Till: <span className="text-foreground">{quotation.valid_till}</span>
+                      </span>
                     </div>
                   )}
                 </div>
@@ -409,13 +421,18 @@ function QuotationDetailPage() {
                         <TableHead className="min-w-[180px]">Item Code / Name</TableHead>
                         <TableHead className="text-right w-[90px]">Qty</TableHead>
                         <TableHead className="text-right min-w-[110px]">Rate (PKR)</TableHead>
-                        <TableHead className="text-right min-w-[120px] pr-4">Amount (PKR)</TableHead>
+                        <TableHead className="text-right min-w-[120px] pr-4">
+                          Amount (PKR)
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-xs text-muted-foreground">
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-8 text-xs text-muted-foreground"
+                          >
                             No items in this quotation. Click "Edit" to add line items.
                           </TableCell>
                         </TableRow>
@@ -428,24 +445,33 @@ function QuotationDetailPage() {
                             <TableCell className="py-3">
                               <div className="font-semibold text-foreground">{it.item_code}</div>
                               {it.item_name && it.item_name !== it.item_code && (
-                                <div className="text-[11px] text-muted-foreground">{it.item_name}</div>
-                              )}
-                              {it.description && typeof it.description === "string" && it.description !== it.item_name && (
-                                <div className="text-[10px] text-muted-foreground/80 line-clamp-1 mt-0.5">
-                                  {it.description}
+                                <div className="text-[11px] text-muted-foreground">
+                                  {it.item_name}
                                 </div>
                               )}
+                              {it.description &&
+                                typeof it.description === "string" &&
+                                it.description !== it.item_name && (
+                                  <div className="text-[10px] text-muted-foreground/80 line-clamp-1 mt-0.5">
+                                    {it.description}
+                                  </div>
+                                )}
                             </TableCell>
                             <TableCell className="py-3 text-right font-medium text-foreground">
                               {Number(it.qty || 0).toLocaleString()}
                             </TableCell>
                             <TableCell className="py-3 text-right font-mono text-muted-foreground">
-                              {Number(it.rate || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="py-3 text-right font-mono font-semibold text-foreground pr-4">
-                              {Number(it.amount || (it.qty * it.rate) || 0).toLocaleString(undefined, {
+                              {Number(it.rate || 0).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                               })}
+                            </TableCell>
+                            <TableCell className="py-3 text-right font-mono font-semibold text-foreground pr-4">
+                              {Number(it.amount || it.qty * it.rate || 0).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                },
+                              )}
                             </TableCell>
                           </TableRow>
                         ))
@@ -464,7 +490,10 @@ function QuotationDetailPage() {
                     <div className="flex justify-between w-full sm:w-64 text-muted-foreground">
                       <span>Net Total:</span>
                       <strong className="text-foreground">
-                        PKR {Number(quotation.net_total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        PKR{" "}
+                        {Number(quotation.net_total).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </strong>
                     </div>
                   ) : null}
@@ -487,7 +516,8 @@ function QuotationDetailPage() {
                   <span>Convert to Sales Order</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Ready to book this order? Transfer all line items and customer details directly into an ERPNext Sales Order with 1 click.
+                  Ready to book this order? Transfer all line items and customer details directly
+                  into an ERPNext Sales Order with 1 click.
                 </p>
                 <Button
                   size="sm"
@@ -512,13 +542,19 @@ function QuotationDetailPage() {
                   </div>
 
                   <div>
-                    <span className="text-muted-foreground block text-[11px]">Customer / Party</span>
-                    <span className="font-semibold text-foreground">{quotation.party_name || "-"}</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Customer / Party
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {quotation.party_name || "-"}
+                    </span>
                   </div>
 
                   {quotation.crm_deal && (
                     <div>
-                      <span className="text-muted-foreground block text-[11px]">Linked CRM Deal</span>
+                      <span className="text-muted-foreground block text-[11px]">
+                        Linked CRM Deal
+                      </span>
                       <Link
                         to="/deals/$dealId"
                         params={{ dealId: quotation.crm_deal }}
@@ -538,7 +574,9 @@ function QuotationDetailPage() {
                   </div>
 
                   <div>
-                    <span className="text-muted-foreground block text-[11px]">Transaction Date</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Transaction Date
+                    </span>
                     <span className="text-foreground">{quotation.transaction_date || "-"}</span>
                   </div>
 

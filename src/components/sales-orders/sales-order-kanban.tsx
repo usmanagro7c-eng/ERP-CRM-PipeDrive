@@ -19,10 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useSubmitSalesOrder,
-  type SalesOrder,
-} from "@/hooks/use-sales-orders";
+import { useSubmitSalesOrder, type SalesOrder } from "@/hooks/use-sales-orders";
 import { cn } from "@/lib/utils";
 
 interface SalesOrderKanbanProps {
@@ -34,9 +31,21 @@ interface SalesOrderKanbanProps {
 
 const SALES_ORDER_STAGES = [
   { key: "Draft", label: "Draft Orders", color: "bg-slate-500/10 text-slate-700 border-slate-300" },
-  { key: "To Deliver and Bill", label: "To Deliver & Bill", color: "bg-blue-500/10 text-blue-700 border-blue-300" },
-  { key: "Completed", label: "Completed", color: "bg-emerald-500/10 text-emerald-700 border-emerald-300" },
-  { key: "Cancelled", label: "Cancelled / Closed", color: "bg-red-500/10 text-red-700 border-red-300" },
+  {
+    key: "To Deliver and Bill",
+    label: "To Deliver & Bill",
+    color: "bg-blue-500/10 text-blue-700 border-blue-300",
+  },
+  {
+    key: "Completed",
+    label: "Completed",
+    color: "bg-emerald-500/10 text-emerald-700 border-emerald-300",
+  },
+  {
+    key: "Cancelled",
+    label: "Cancelled / Closed",
+    color: "bg-red-500/10 text-red-700 border-red-300",
+  },
 ] as const;
 
 export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrderKanbanProps) {
@@ -85,10 +94,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
     <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
       {SALES_ORDER_STAGES.map((col) => {
         const list = grouped.get(col.key) ?? [];
-        const totalAmount = list.reduce(
-          (sum, o) => sum + (Number(o.grand_total) || 0),
-          0,
-        );
+        const totalAmount = list.reduce((sum, o) => sum + (Number(o.grand_total) || 0), 0);
 
         return (
           <div
@@ -98,9 +104,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
             {/* Stage Column Header */}
             <div className="flex items-center justify-between border-b bg-card/50 p-3 rounded-t-lg shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-xs text-foreground">
-                  {col.label}
-                </span>
+                <span className="font-semibold text-xs text-foreground">{col.label}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                   {list.length}
                 </span>
@@ -176,9 +180,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                       {order.delivery_date && (
                         <div className="mb-2 text-[10px] text-muted-foreground flex items-center gap-1">
                           <span>Delivery:</span>
-                          <span className="font-medium text-foreground">
-                            {order.delivery_date}
-                          </span>
+                          <span className="font-medium text-foreground">{order.delivery_date}</span>
                         </div>
                       )}
 

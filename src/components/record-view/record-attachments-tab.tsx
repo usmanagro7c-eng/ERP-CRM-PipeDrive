@@ -75,12 +75,7 @@ export function RecordAttachmentsTab({
           )}
           <span>Upload Attachment</span>
         </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" onChange={handleFileChange} className="hidden" />
       </div>
 
       {/* Drag & Drop Upload Zone */}

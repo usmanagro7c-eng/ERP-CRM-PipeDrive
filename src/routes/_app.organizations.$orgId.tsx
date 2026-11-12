@@ -26,11 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import {
   orgDetailOptions,
@@ -50,14 +46,7 @@ export const Route = createFileRoute("/_app/organizations/$orgId")({
 });
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 const INDUSTRIES = [
   "Accounting",
   "Advertising",
@@ -139,15 +128,18 @@ function OrganizationDetailPage() {
     }
   }, [organization]);
 
-  const orgName =
-    String(organization?.["organization_name"] || organization?.["name"] || orgId);
+  const orgName = String(organization?.["organization_name"] || organization?.["name"] || orgId);
 
   // Linked Deals: match by organization ID or Name
   const linkedDeals = useMemo(() => {
     const list = Array.isArray(dealsData) ? dealsData : [];
     return list.filter((deal) => {
-      const dealOrg = String(deal["organization"] || "").trim().toLowerCase();
-      const dealOrgName = String(deal["organization_name"] || "").trim().toLowerCase();
+      const dealOrg = String(deal["organization"] || "")
+        .trim()
+        .toLowerCase();
+      const dealOrgName = String(deal["organization_name"] || "")
+        .trim()
+        .toLowerCase();
       const currentId = orgId.trim().toLowerCase();
       const currentName = orgName.trim().toLowerCase();
       return (
@@ -163,7 +155,9 @@ function OrganizationDetailPage() {
   const linkedContacts = useMemo(() => {
     const list = Array.isArray(contactsData) ? contactsData : [];
     return list.filter((c) => {
-      const company = String(c["company_name"] || c["organization"] || "").trim().toLowerCase();
+      const company = String(c["company_name"] || c["organization"] || "")
+        .trim()
+        .toLowerCase();
       const currentId = orgId.trim().toLowerCase();
       const currentName = orgName.trim().toLowerCase();
       return company === currentId || company === currentName;
@@ -226,11 +220,17 @@ function OrganizationDetailPage() {
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Organizations / ☰ List / {orgName} */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-          <Link to="/organizations" className="hover:text-foreground transition-colors font-medium shrink-0">
+          <Link
+            to="/organizations"
+            className="hover:text-foreground transition-colors font-medium shrink-0"
+          >
             Organizations
           </Link>
           <span className="opacity-60 hidden sm:inline">/</span>
-          <Link to="/organizations" className="hidden sm:flex items-center gap-1 hover:text-foreground transition-colors shrink-0">
+          <Link
+            to="/organizations"
+            className="hidden sm:flex items-center gap-1 hover:text-foreground transition-colors shrink-0"
+          >
             <List className="size-3.5" />
             <span>List</span>
           </Link>
@@ -259,7 +259,9 @@ function OrganizationDetailPage() {
             className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors shrink-0"
           >
             <Plus className="size-3.5" />
-            <span><span className="hidden sm:inline">New </span>Deal</span>
+            <span>
+              <span className="hidden sm:inline">New </span>Deal
+            </span>
           </Button>
         </div>
       </div>
@@ -322,7 +324,9 @@ function OrganizationDetailPage() {
             <CollapsibleContent className="space-y-3.5 pt-1">
               {/* Organization Name */}
               <div className="space-y-1">
-                <label className="text-[11px] font-normal text-muted-foreground">Organization Name</label>
+                <label className="text-[11px] font-normal text-muted-foreground">
+                  Organization Name
+                </label>
                 <Input
                   value={sidebarValues.organization_name}
                   onChange={(e) => handleFieldChange("organization_name", e.target.value)}
@@ -333,7 +337,9 @@ function OrganizationDetailPage() {
 
               {/* Company Description */}
               <div className="space-y-1">
-                <label className="text-[11px] font-normal text-muted-foreground">Company Description</label>
+                <label className="text-[11px] font-normal text-muted-foreground">
+                  Company Description
+                </label>
                 <Textarea
                   value={sidebarValues.company_description}
                   onChange={(e) => handleFieldChange("company_description", e.target.value)}
@@ -361,10 +367,12 @@ function OrganizationDetailPage() {
                   value={sidebarValues.territory || ""}
                   onValueChange={(val) => {
                     handleFieldChange("territory", val);
-                    void saveMutation.mutateAsync({
-                      name: orgId,
-                      values: { territory: val },
-                    }).then(() => refetch());
+                    void saveMutation
+                      .mutateAsync({
+                        name: orgId,
+                        values: { territory: val },
+                      })
+                      .then(() => refetch());
                   }}
                 >
                   <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
@@ -387,10 +395,12 @@ function OrganizationDetailPage() {
                   value={sidebarValues.industry || ""}
                   onValueChange={(val) => {
                     handleFieldChange("industry", val);
-                    void saveMutation.mutateAsync({
-                      name: orgId,
-                      values: { industry: val },
-                    }).then(() => refetch());
+                    void saveMutation
+                      .mutateAsync({
+                        name: orgId,
+                        values: { industry: val },
+                      })
+                      .then(() => refetch());
                   }}
                 >
                   <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
@@ -408,15 +418,19 @@ function OrganizationDetailPage() {
 
               {/* No. of Employees */}
               <div className="space-y-1">
-                <label className="text-[11px] font-normal text-muted-foreground">No. of Employees</label>
+                <label className="text-[11px] font-normal text-muted-foreground">
+                  No. of Employees
+                </label>
                 <Select
                   value={sidebarValues.no_of_employees || ""}
                   onValueChange={(val) => {
                     handleFieldChange("no_of_employees", val);
-                    void saveMutation.mutateAsync({
-                      name: orgId,
-                      values: { no_of_employees: val },
-                    }).then(() => refetch());
+                    void saveMutation
+                      .mutateAsync({
+                        name: orgId,
+                        values: { no_of_employees: val },
+                      })
+                      .then(() => refetch());
                   }}
                 >
                   <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
@@ -460,7 +474,8 @@ function OrganizationDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              Deals <span className="ml-1 text-muted-foreground font-normal">{linkedDeals.length}</span>
+              Deals{" "}
+              <span className="ml-1 text-muted-foreground font-normal">{linkedDeals.length}</span>
             </button>
             <button
               type="button"
@@ -472,7 +487,10 @@ function OrganizationDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              Contacts <span className="ml-1 text-muted-foreground font-normal">{linkedContacts.length}</span>
+              Contacts{" "}
+              <span className="ml-1 text-muted-foreground font-normal">
+                {linkedContacts.length}
+              </span>
             </button>
           </div>
 
@@ -503,7 +521,9 @@ function OrganizationDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {linkedDeals.map((deal) => {
                     const dealName = String(deal["name"] || "");
-                    const orgTitle = String(deal["organization_name"] || deal["organization"] || dealName);
+                    const orgTitle = String(
+                      deal["organization_name"] || deal["organization"] || dealName,
+                    );
                     const status = String(deal["status"] || "Qualification");
                     const amount = Number(deal["annual_revenue"] || deal["deal_value"] || 0);
                     return (
@@ -581,7 +601,9 @@ function OrganizationDetailPage() {
                               {cName}
                             </h4>
                             {designation && (
-                              <p className="text-[11px] text-muted-foreground truncate">{designation}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {designation}
+                              </p>
                             )}
                           </div>
                         </div>

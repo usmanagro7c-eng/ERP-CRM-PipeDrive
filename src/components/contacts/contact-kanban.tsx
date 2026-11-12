@@ -1,13 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Building2,
-  Mail,
-  MoreVertical,
-  Phone,
-  Plus,
-  Briefcase,
-  User,
-} from "lucide-react";
+import { Building2, Mail, MoreVertical, Phone, Plus, Briefcase, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,10 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ContactStatusBadge,
-  getContactStatusStyle,
-} from "@/components/contacts/contact-badge";
+import { ContactStatusBadge, getContactStatusStyle } from "@/components/contacts/contact-badge";
 import { useSaveContact, useDeleteContact, type FrappeDocTypeMeta } from "@/hooks/use-contacts";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
@@ -94,10 +83,7 @@ export function ContactKanban({
         label: s.label || s.name,
         color: undefined,
       }));
-      return [
-        ...standard,
-        { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined },
-      ];
+      return [...standard, { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined }];
     }
 
     const field = (meta.fields ?? []).find((f) => f.fieldname === groupBy);
@@ -107,10 +93,7 @@ export function ContactKanban({
         label: opt,
         color: undefined,
       }));
-      return [
-        ...opts,
-        { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined },
-      ];
+      return [...opts, { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined }];
     }
 
     const set = new Set<string>();
@@ -123,10 +106,7 @@ export function ContactKanban({
       label: val,
       color: undefined,
     }));
-    return [
-      ...cols,
-      { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined },
-    ];
+    return [...cols, { key: UNASSIGNED_KEY, label: "Unassigned", color: undefined }];
   }, [groupBy, statuses, meta, rows]);
 
   const grouped = useMemo(() => {
@@ -238,6 +218,7 @@ export function ContactKanban({
                     className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
                     onClick={() => onAddInStatus(col.key)}
                     title={`Add contact in ${col.label}`}
+                    aria-label={`Add contact in ${col.label}`}
                   >
                     <Plus className="size-3.5" />
                   </Button>
@@ -296,6 +277,7 @@ export function ContactKanban({
                                 variant="ghost"
                                 size="icon"
                                 className="size-6 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer"
+                                title="More actions"
                               >
                                 <MoreVertical className="size-3.5" />
                               </Button>

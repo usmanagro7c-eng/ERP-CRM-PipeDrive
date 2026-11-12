@@ -1,12 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  ChevronDown,
-  RotateCcw,
-  ExternalLink,
-  Loader2,
-  Trash2,
-  Plus,
-} from "lucide-react";
+import { ChevronDown, RotateCcw, ExternalLink, Loader2, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -20,11 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { itemsListOptions } from "@/hooks/use-quotations";
 import { cn } from "@/lib/utils";
 
@@ -77,14 +66,7 @@ const INDUSTRIES = [
   "Transportation",
   "Other",
 ];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormDetails {
   organization: string;
@@ -100,13 +82,7 @@ interface FormDetails {
   deal_owner: string;
 }
 
-export function DealDataTab({
-  deal,
-  users = [],
-  onOpenModal,
-  onSave,
-  onReload,
-}: DealDataTabProps) {
+export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }: DealDataTabProps) {
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [productsOpen, setProductsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -117,14 +93,14 @@ export function DealDataTab({
   // Details initial state
   const initialDetails: FormDetails = useMemo(() => {
     const rawRevenue = deal["annual_revenue"] || deal["deal_value"] || "";
-    const revStr = rawRevenue !== "" && rawRevenue !== null && rawRevenue !== undefined
-      ? String(rawRevenue)
-      : "";
+    const revStr =
+      rawRevenue !== "" && rawRevenue !== null && rawRevenue !== undefined
+        ? String(rawRevenue)
+        : "";
 
     const rawProb = deal["probability"] || "";
-    const probStr = rawProb !== "" && rawProb !== null && rawProb !== undefined
-      ? String(rawProb)
-      : "";
+    const probStr =
+      rawProb !== "" && rawProb !== null && rawProb !== undefined ? String(rawProb) : "";
 
     return {
       organization: String(deal["organization_name"] || deal["organization"] || ""),
@@ -151,7 +127,14 @@ export function DealDataTab({
 
     return raw.map((item, idx) => ({
       id: String(item["name"] || item["id"] || `item-${idx}`),
-      item: String(item["product_code"] || item["product_name"] || item["item"] || item["item_code"] || item["item_name"] || ""),
+      item: String(
+        item["product_code"] ||
+          item["product_name"] ||
+          item["item"] ||
+          item["item_code"] ||
+          item["item_name"] ||
+          "",
+      ),
       rate: Number(item["rate"] || item["price_list_rate"] || 0),
       qty: Number(item["qty"] || 1),
     }));
@@ -197,7 +180,11 @@ export function DealDataTab({
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleProductRowChange = (id: string, field: "item" | "rate" | "qty", val: string | number) => {
+  const handleProductRowChange = (
+    id: string,
+    field: "item" | "rate" | "qty",
+    val: string | number,
+  ) => {
     setProducts((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
@@ -229,7 +216,9 @@ export function DealDataTab({
   const handleSave = async () => {
     if (!onSave || !isDirty) return;
 
-    const validProducts = products.filter((p) => typeof p.item === "string" && p.item.trim().length > 0);
+    const validProducts = products.filter(
+      (p) => typeof p.item === "string" && p.item.trim().length > 0,
+    );
     if (products.length > 0 && validProducts.length !== products.length) {
       toast.error("Please select a product for each line or delete empty rows.");
       return;
@@ -243,7 +232,9 @@ export function DealDataTab({
         company_description: details.company_description,
         industry: details.industry,
         no_of_employees: details.no_of_employees,
-        annual_revenue: details.annual_revenue ? Number(details.annual_revenue) || details.annual_revenue : 0,
+        annual_revenue: details.annual_revenue
+          ? Number(details.annual_revenue) || details.annual_revenue
+          : 0,
         website: details.website,
         closed_date: details.closed_date,
         next_step: details.next_step,
@@ -252,7 +243,10 @@ export function DealDataTab({
         deal_owner: details.deal_owner,
         deal_value:
           validProducts.length > 0
-            ? validProducts.reduce((sum, p) => sum + (Number(p.rate) || 0) * (Number(p.qty) || 1), 0)
+            ? validProducts.reduce(
+                (sum, p) => sum + (Number(p.rate) || 0) * (Number(p.qty) || 1),
+                0,
+              )
             : Number(deal["deal_value"] || 0),
         products: validProducts.map((p) => {
           const matched = availableItems.find(
@@ -521,7 +515,11 @@ export function DealDataTab({
         </Collapsible>
 
         {/* SECTION 2: PRODUCTS (Collapsible Child Table matching Frappe CRM) */}
-        <Collapsible open={productsOpen} onOpenChange={setProductsOpen} className="border-t border-border/60 pt-5 space-y-3">
+        <Collapsible
+          open={productsOpen}
+          onOpenChange={setProductsOpen}
+          className="border-t border-border/60 pt-5 space-y-3"
+        >
           <div className="flex items-center justify-between">
             <CollapsibleTrigger className="flex items-center gap-2 text-base font-medium text-foreground cursor-pointer hover:text-foreground/80">
               <span>Products</span>
@@ -549,9 +547,7 @@ export function DealDataTab({
               </div>
 
               {products.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  No Data
-                </div>
+                <div className="py-8 text-center text-xs text-muted-foreground">No Data</div>
               ) : (
                 <div className="divide-y divide-border/40">
                   {products.map((row, index) => (

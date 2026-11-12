@@ -271,7 +271,10 @@ function SalesOrdersPage() {
       <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 text-xs flex-1 min-w-0">
           {/* Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 min-w-[110px] max-w-[180px] sm:w-56">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex-1 min-w-[110px] max-w-[180px] sm:w-56"
+          >
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={term}
@@ -282,16 +285,18 @@ function SalesOrdersPage() {
           </form>
 
           {/* Status Quick Filter */}
-          <Select
-            value={statusFilter || "all"}
-            onValueChange={handleStatusChange}
-          >
-            <SelectTrigger className="h-7 text-xs px-2 sm:px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[120px]">
+          <Select value={statusFilter || "all"} onValueChange={handleStatusChange}>
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="h-7 text-xs px-2 sm:px-2.5 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[120px]"
+            >
               <span className="text-muted-foreground hidden sm:inline">Status:</span>
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+              <SelectItem value="all" className="text-xs">
+                All Statuses
+              </SelectItem>
               {SALES_ORDER_STATUSES.map((s) => (
                 <SelectItem key={s} value={s} className="text-xs">
                   {s}
@@ -358,7 +363,7 @@ function SalesOrdersPage() {
                 "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
                 pageSize === size
                   ? "bg-background text-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={() => setPageSize(size)}
             >
@@ -368,9 +373,7 @@ function SalesOrdersPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span>
-            {totalCount === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${totalCount}`}
-          </span>
+          <span>{totalCount === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${totalCount}`}</span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -395,11 +398,7 @@ function SalesOrdersPage() {
       </div>
 
       {/* Create / Edit Sales Order Modal */}
-      <SalesOrderFormModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        order={selectedOrder}
-      />
+      <SalesOrderFormModal open={createOpen} onOpenChange={setCreateOpen} order={selectedOrder} />
     </div>
   );
 }

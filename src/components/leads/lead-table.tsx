@@ -109,13 +109,7 @@ function SortButton({
   );
 }
 
-function LeadCellValue({
-  field,
-  row,
-}: {
-  field: FrappeDocField;
-  row: Record<string, unknown>;
-}) {
+function LeadCellValue({ field, row }: { field: FrappeDocField; row: Record<string, unknown> }) {
   const value = row[field.fieldname];
 
   if (field.fieldname === "status") {
@@ -259,12 +253,7 @@ export function LeadTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[200px] min-w-[190px]">
-              <SortButton
-                field="name"
-                label="Lead ID"
-                sort={sort}
-                onSortChange={onSortChange}
-              />
+              <SortButton field="name" label="Lead ID" sort={sort} onSortChange={onSortChange} />
             </TableHead>
             {activeFields.map((field) => (
               <TableHead key={field.fieldname}>
@@ -298,10 +287,7 @@ export function LeadTable({
                     <LeadCellValue field={field} row={row} />
                   </TableCell>
                 ))}
-                <TableCell
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -316,9 +302,7 @@ export function LeadTable({
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Lead
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Lead</DropdownMenuItem>
                       )}
                       {onConvert && (
                         <DropdownMenuItem
@@ -346,11 +330,7 @@ export function LeadTable({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete lead ${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete lead ${name}?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}

@@ -109,13 +109,7 @@ function SortButton({
   );
 }
 
-function LeadCellValue({
-  field,
-  row,
-}: {
-  field: FrappeDocField;
-  row: Record<string, unknown>;
-}) {
+function LeadCellValue({ field, row }: { field: FrappeDocField; row: Record<string, unknown> }) {
   const value = row[field.fieldname];
 
   if (field.fieldname === "status") {
@@ -178,7 +172,7 @@ function LeadCellValue({
 
   if (field.fieldname === "converted") {
     return value ? (
-      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+      <span className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
         <CheckCircle className="size-3.5" />
         Converted
       </span>
@@ -259,12 +253,7 @@ export function LeadTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[200px] min-w-[190px]">
-              <SortButton
-                field="name"
-                label="Lead ID"
-                sort={sort}
-                onSortChange={onSortChange}
-              />
+              <SortButton field="name" label="Lead ID" sort={sort} onSortChange={onSortChange} />
             </TableHead>
             {activeFields.map((field) => (
               <TableHead key={field.fieldname}>
@@ -298,16 +287,14 @@ export function LeadTable({
                     <LeadCellValue field={field} row={row} />
                   </TableCell>
                 ))}
-                <TableCell
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                         <span className="sr-only">Open menu</span>
@@ -316,9 +303,7 @@ export function LeadTable({
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Lead
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Lead</DropdownMenuItem>
                       )}
                       {onConvert && (
                         <DropdownMenuItem
@@ -346,11 +331,7 @@ export function LeadTable({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete lead ${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete lead ${name}?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}

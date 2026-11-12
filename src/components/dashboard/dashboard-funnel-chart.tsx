@@ -1,13 +1,5 @@
 import { useMemo } from "react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { type DashboardAxisChartData } from "@/lib/api";
 
 const STAGE_COLORS: Record<string, string> = {
@@ -37,9 +29,7 @@ export function DashboardFunnelChart({ data }: DashboardFunnelChartProps) {
     <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
       <div>
         <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
-        {data.subtitle && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>
-        )}
+        {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
       <div className="my-3 h-64 w-full">

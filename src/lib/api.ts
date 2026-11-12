@@ -385,15 +385,29 @@ export async function ensureOrganization(orgName: string): Promise<string> {
   const trimmed = orgName.trim();
   if (!trimmed) return "";
   try {
-    const existing = await getOrganization(trimmed);
-    return String(existing["name"] ?? trimmed);
-  } catch {
-    try {
-      const created = await createOrganization({ organization_name: trimmed });
-      return String(created["name"] ?? trimmed);
-    } catch {
-      return trimmed;
+    const matches = await listOrganizations({
+      search: trimmed,
+      searchField: "organization_name",
+      limit: 1,
+      start: 0,
+    });
+    const existing = matches.find(
+      (o) =>
+        String(o["organization_name"] ?? "")
+          .trim()
+          .toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) {
+      return String(existing["name"] ?? trimmed);
     }
+  } catch {
+    // fall through to create
+  }
+  try {
+    const created = await createOrganization({ organization_name: trimmed });
+    return String(created["name"] ?? trimmed);
+  } catch {
+    return trimmed;
   }
 }
 
@@ -415,6 +429,18 @@ export async function convertLeadToDeal(
     ...dealValues,
     lead: params.leadName,
   });
+
+  // 1b. Copy attachments from the lead to the new deal (best effort)
+  try {
+    const leadAttachments = await listAttachments(LEAD_DOCTYPE, params.leadName);
+    await Promise.all(
+      leadAttachments.map((att) =>
+        updateAttachment(att.name, DEAL_DOCTYPE, String(deal["name"] ?? "")).catch(() => {}),
+      ),
+    );
+  } catch {
+    // ignore; conversion still succeeds
+  }
 
   // 2. Mark the lead as converted
   let updatedLead: Record<string, unknown> = {};
@@ -556,7 +582,10 @@ function normalizeContactPayload(values: Record<string, unknown>): Record<string
   const payload: Record<string, unknown> = { ...values };
 
   const email = typeof payload["email_id"] === "string" ? payload["email_id"].trim() : "";
-  if (email && (!Array.isArray(payload["email_ids"]) || (payload["email_ids"] as unknown[]).length === 0)) {
+  if (
+    email &&
+    (!Array.isArray(payload["email_ids"]) || (payload["email_ids"] as unknown[]).length === 0)
+  ) {
     payload["email_ids"] = [{ email_id: email, is_primary: 1 }];
   }
 
@@ -564,12 +593,18 @@ function normalizeContactPayload(values: Record<string, unknown>): Record<string
     (typeof payload["mobile_no"] === "string" && payload["mobile_no"].trim()) ||
     (typeof payload["phone"] === "string" && payload["phone"].trim()) ||
     "";
-  if (phone && (!Array.isArray(payload["phone_nos"]) || (payload["phone_nos"] as unknown[]).length === 0)) {
+  if (
+    phone &&
+    (!Array.isArray(payload["phone_nos"]) || (payload["phone_nos"] as unknown[]).length === 0)
+  ) {
     payload["phone_nos"] = [{ phone, is_primary_mobile_no: 1 }];
   }
 
   const company = typeof payload["company_name"] === "string" ? payload["company_name"].trim() : "";
-  if (company && (!Array.isArray(payload["links"]) || (payload["links"] as unknown[]).length === 0)) {
+  if (
+    company &&
+    (!Array.isArray(payload["links"]) || (payload["links"] as unknown[]).length === 0)
+  ) {
     payload["links"] = [{ link_doctype: ORG_DOCTYPE, link_name: company }];
   }
 
@@ -591,10 +626,13 @@ export async function updateContact(
   name: string,
   values: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`, {
-    method: "PUT",
-    body: normalizeContactPayload(values),
-  });
+  const payload = await proxyRequest(
+    `api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: normalizeContactPayload(values),
+    },
+  );
   const data = unwrapResourceData<unknown>(payload);
   return (data ?? {}) as Record<string, unknown>;
 }
@@ -775,7 +813,7 @@ export async function syncDealProductsFromQuotation(
   if (!dealName || !Array.isArray(items) || items.length === 0) return;
   try {
     const total = items.reduce(
-      (sum, it) => sum + (Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0))),
+      (sum, it) => sum + (Number(it["amount"]) || Number(it["qty"] || 1) * Number(it["rate"] || 0)),
       0,
     );
     const products = items.map((it) => ({
@@ -783,8 +821,8 @@ export async function syncDealProductsFromQuotation(
       product_name: String(it["item_name"] || it["product_name"] || it["item_code"] || ""),
       qty: Number(it["qty"]) || 1,
       rate: Number(it["rate"]) || 0,
-      amount: Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0)),
-      net_amount: Number(it["amount"]) || (Number(it["qty"] || 1) * Number(it["rate"] || 0)),
+      amount: Number(it["amount"]) || Number(it["qty"] || 1) * Number(it["rate"] || 0),
+      net_amount: Number(it["amount"]) || Number(it["qty"] || 1) * Number(it["rate"] || 0),
     }));
     await updateDeal(dealName, {
       deal_value: total,
@@ -800,7 +838,9 @@ let defaultCompanyCache: { company: string; currency: string } | null = null;
 export async function getDefaultCompany(): Promise<{ company: string; currency: string }> {
   if (defaultCompanyCache) return defaultCompanyCache;
   try {
-    const payload = await proxyRequest("api/resource/Company?fields=[\"name\",\"default_currency\"]&limit_page_length=1");
+    const payload = await proxyRequest(
+      'api/resource/Company?fields=["name","default_currency"]&limit_page_length=1',
+    );
     const data = unwrapResourceData<Array<{ name: string; default_currency?: string }>>(payload);
     if (Array.isArray(data) && data[0]?.name) {
       defaultCompanyCache = {
@@ -815,9 +855,7 @@ export async function getDefaultCompany(): Promise<{ company: string; currency: 
   return { company: "AGROVISIONS", currency: "PKR" };
 }
 
-export async function createQuotation(
-  values: Record<string, unknown>,
-): Promise<Quotation> {
+export async function createQuotation(values: Record<string, unknown>): Promise<Quotation> {
   const { company, currency } = await getDefaultCompany();
   const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}`, {
     method: "POST",
@@ -837,7 +875,10 @@ export async function createQuotation(
   const quotation = (data ?? {}) as Quotation;
 
   if (values["crm_deal"] && Array.isArray(values["items"]) && values["items"].length > 0) {
-    await syncDealProductsFromQuotation(String(values["crm_deal"]), values["items"] as Array<Record<string, unknown>>);
+    await syncDealProductsFromQuotation(
+      String(values["crm_deal"]),
+      values["items"] as Array<Record<string, unknown>>,
+    );
   }
 
   return quotation;
@@ -859,7 +900,10 @@ export async function updateQuotation(
     const quotation = (data ?? {}) as Quotation;
 
     if (values["crm_deal"] && Array.isArray(values["items"]) && values["items"].length > 0) {
-      await syncDealProductsFromQuotation(String(values["crm_deal"]), values["items"] as Array<Record<string, unknown>>);
+      await syncDealProductsFromQuotation(
+        String(values["crm_deal"]),
+        values["items"] as Array<Record<string, unknown>>,
+      );
     }
 
     return quotation;
@@ -907,12 +951,9 @@ export async function cancelQuotation(name: string): Promise<Quotation> {
 }
 
 export async function deleteQuotation(name: string): Promise<void> {
-  await proxyRequest(
-    `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
-    {
-      method: "DELETE",
-    },
-  );
+  await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function listSalesOrders(params: ListParams): Promise<SalesOrder[]> {
@@ -946,9 +987,7 @@ export async function getSalesOrder(name: string): Promise<SalesOrder> {
   return data as SalesOrder;
 }
 
-export async function createSalesOrder(
-  values: Record<string, unknown>,
-): Promise<SalesOrder> {
+export async function createSalesOrder(values: Record<string, unknown>): Promise<SalesOrder> {
   const { company, currency } = await getDefaultCompany();
   const today = new Date().toISOString().split("T")[0];
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
@@ -985,9 +1024,7 @@ export async function createSalesOrderFromQuotation(
   deliveryDate?: string,
 ): Promise<SalesOrder> {
   const fullQuotation =
-    quotation.items && quotation.items.length > 0
-      ? quotation
-      : await getQuotation(quotation.name);
+    quotation.items && quotation.items.length > 0 ? quotation : await getQuotation(quotation.name);
 
   const { company, currency } = await getDefaultCompany();
   const today = new Date().toISOString().split("T")[0];
@@ -1030,7 +1067,10 @@ export interface CrmComment {
   reference_name?: string;
 }
 
-export async function listComments(referenceDoctype: string, referenceName: string): Promise<CrmComment[]> {
+export async function listComments(
+  referenceDoctype: string,
+  referenceName: string,
+): Promise<CrmComment[]> {
   try {
     const filters = JSON.stringify([
       ["reference_doctype", "=", referenceDoctype],
@@ -1092,7 +1132,10 @@ export interface CrmAttachment {
   attached_to_name?: string;
 }
 
-export async function listAttachments(attachedToDocType: string, attachedToName: string): Promise<CrmAttachment[]> {
+export async function listAttachments(
+  attachedToDocType: string,
+  attachedToName: string,
+): Promise<CrmAttachment[]> {
   try {
     const filters = JSON.stringify([
       ["attached_to_doctype", "=", attachedToDocType],
@@ -1113,9 +1156,34 @@ export async function listAttachments(attachedToDocType: string, attachedToName:
   }
 }
 
+/** Normalize a Frappe file URL into an app-origin proxied path. */
+export function proxiedFileUrl(fileUrl: string | null | undefined): string {
+  if (!fileUrl) return "";
+  try {
+    if (/^https?:\/\//i.test(fileUrl)) {
+      const u = new URL(fileUrl);
+      return u.pathname + u.search;
+    }
+  } catch {
+    // fall through
+  }
+  return fileUrl;
+}
+
 export async function deleteAttachment(name: string): Promise<void> {
   await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
+  });
+}
+
+export async function updateAttachment(
+  name: string,
+  attachedToDocType: string,
+  attachedToName: string,
+): Promise<void> {
+  await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: { attached_to_doctype: attachedToDocType, attached_to_name: attachedToName },
   });
 }
 
@@ -1152,11 +1220,13 @@ export interface CrmNote {
   modified?: string;
 }
 
-export async function listNotes(params: {
-  search?: string | undefined;
-  reference_doctype?: string | undefined;
-  reference_docname?: string | undefined;
-} = {}): Promise<CrmNote[]> {
+export async function listNotes(
+  params: {
+    search?: string | undefined;
+    reference_doctype?: string | undefined;
+    reference_docname?: string | undefined;
+  } = {},
+): Promise<CrmNote[]> {
   try {
     const filters: Array<[string, string, string]> = [];
     if (params.search) {
@@ -1231,11 +1301,13 @@ export interface CrmCallLog {
   creation?: string | undefined;
 }
 
-export async function listCallLogs(params: {
-  search?: string | undefined;
-  reference_doctype?: string | undefined;
-  reference_docname?: string | undefined;
-} = {}): Promise<CrmCallLog[]> {
+export async function listCallLogs(
+  params: {
+    search?: string | undefined;
+    reference_doctype?: string | undefined;
+    reference_docname?: string | undefined;
+  } = {},
+): Promise<CrmCallLog[]> {
   try {
     const filters: Array<[string, string, string]> = [];
     if (params.reference_doctype && params.reference_docname) {
@@ -1243,7 +1315,18 @@ export async function listCallLogs(params: {
       filters.push(["reference_docname", "=", params.reference_docname]);
     }
     const query = new URLSearchParams({
-      fields: JSON.stringify(["name", "type", "status", "duration", "from", "to", "note", "reference_doctype", "reference_docname", "creation"]),
+      fields: JSON.stringify([
+        "name",
+        "type",
+        "status",
+        "duration",
+        "from",
+        "to",
+        "note",
+        "reference_doctype",
+        "reference_docname",
+        "creation",
+      ]),
       order_by: "creation desc",
       limit_page_length: "50",
     });
@@ -1282,20 +1365,30 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
   return (data ?? {}) as CrmCallLog;
 }
 
-export async function updateCallLog(name: string, values: Partial<CrmCallLog>): Promise<CrmCallLog> {
-  const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}/${encodeURIComponent(name)}`, {
-    method: "PUT",
-    body: {
-      ...(values.type ? { type: values.type } : {}),
-      ...(values.status ? { status: values.status } : {}),
-      ...(values.duration !== undefined ? { duration: values.duration } : {}),
-      ...(values.to !== undefined ? { to: values.to } : {}),
-      ...(values.from !== undefined ? { from: values.from } : {}),
-      ...(values.summary || values.note ? { note: values.summary || values.note } : {}),
-      ...(values.reference_doctype !== undefined ? { reference_doctype: values.reference_doctype } : {}),
-      ...(values.reference_docname !== undefined ? { reference_docname: values.reference_docname } : {}),
+export async function updateCallLog(
+  name: string,
+  values: Partial<CrmCallLog>,
+): Promise<CrmCallLog> {
+  const payload = await proxyRequest(
+    `api/resource/${CALL_LOG_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: {
+        ...(values.type ? { type: values.type } : {}),
+        ...(values.status ? { status: values.status } : {}),
+        ...(values.duration !== undefined ? { duration: values.duration } : {}),
+        ...(values.to !== undefined ? { to: values.to } : {}),
+        ...(values.from !== undefined ? { from: values.from } : {}),
+        ...(values.summary || values.note ? { note: values.summary || values.note } : {}),
+        ...(values.reference_doctype !== undefined
+          ? { reference_doctype: values.reference_doctype }
+          : {}),
+        ...(values.reference_docname !== undefined
+          ? { reference_docname: values.reference_docname }
+          : {}),
+      },
     },
-  });
+  );
   const data = unwrapResourceData<unknown>(payload);
   return (data ?? {}) as CrmCallLog;
 }
@@ -1524,7 +1617,10 @@ export interface CrmActivityEvent {
   other_versions?: Array<Record<string, unknown>>;
 }
 
-export async function getRecordActivities(doctype: string, name: string): Promise<CrmActivityEvent[]> {
+export async function getRecordActivities(
+  doctype: string,
+  name: string,
+): Promise<CrmActivityEvent[]> {
   try {
     const payload = await proxyRequest("api/method/crm.api.activities.get_activities", {
       method: "POST",

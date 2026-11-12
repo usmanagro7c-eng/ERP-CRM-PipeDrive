@@ -23,17 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import {
-  contactDetailOptions,
-  useSaveContact,
-  useDeleteContact,
-} from "@/hooks/use-contacts";
+import { contactDetailOptions, useSaveContact, useDeleteContact } from "@/hooks/use-contacts";
 import { dealListOptions } from "@/hooks/use-deals";
 import { ContactFormModal } from "@/components/contacts/contact-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
@@ -139,9 +131,23 @@ function ContactDetailPage() {
       const dContact = String(d["contact"] || d["contact_person"] || "");
       const dEmail = String(d["email"] || "");
       const dOrg = String(d["organization"] || d["organization_name"] || "");
-      if (dContact && (dContact === contactId || dContact.toLowerCase() === contactName.toLowerCase())) return true;
-      if (sidebarValues.email && dEmail && dEmail.toLowerCase() === sidebarValues.email.toLowerCase()) return true;
-      if (sidebarValues.organization && dOrg && dOrg.toLowerCase() === sidebarValues.organization.toLowerCase()) return true;
+      if (
+        dContact &&
+        (dContact === contactId || dContact.toLowerCase() === contactName.toLowerCase())
+      )
+        return true;
+      if (
+        sidebarValues.email &&
+        dEmail &&
+        dEmail.toLowerCase() === sidebarValues.email.toLowerCase()
+      )
+        return true;
+      if (
+        sidebarValues.organization &&
+        dOrg &&
+        dOrg.toLowerCase() === sidebarValues.organization.toLowerCase()
+      )
+        return true;
       return false;
     });
   }, [dealsData, contactId, contactName, sidebarValues.email, sidebarValues.organization]);
@@ -197,12 +203,18 @@ function ContactDetailPage() {
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Contacts / ☰ List / {contactName} */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
-          <Link to="/contacts" className="hover:text-foreground transition-colors font-medium shrink-0">
+          <Link
+            to="/contacts"
+            className="hover:text-foreground transition-colors font-medium shrink-0"
+          >
             Contacts
           </Link>
           <span className="hidden sm:inline-flex items-center gap-1 opacity-60">
             /
-            <Link to="/contacts" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <Link
+              to="/contacts"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
               <List className="size-3.5" />
               <span>List</span>
             </Link>
@@ -240,7 +252,9 @@ function ContactDetailPage() {
               <div className="min-w-0">
                 <h2 className="font-bold text-base text-foreground truncate">{contactName}</h2>
                 {sidebarValues.designation && (
-                  <p className="text-xs text-muted-foreground truncate">{sidebarValues.designation}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {sidebarValues.designation}
+                  </p>
                 )}
               </div>
             </div>
@@ -258,10 +272,16 @@ function ContactDetailPage() {
           </div>
 
           {/* Collapsible Details Section with Key-Value Rows matching Frappe CRM */}
-          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2 border-t border-border/60 pt-4">
+          <Collapsible
+            open={detailsOpen}
+            onOpenChange={setDetailsOpen}
+            className="space-y-2 border-t border-border/60 pt-4"
+          >
             <div className="flex items-center justify-between w-full text-xs font-semibold text-foreground">
               <CollapsibleTrigger className="flex items-center gap-1.5 cursor-pointer hover:text-foreground/80">
-                <ChevronDown className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")} />
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", !detailsOpen && "-rotate-90")}
+                />
                 <span>Details</span>
               </CollapsibleTrigger>
               <button
@@ -398,7 +418,9 @@ function ContactDetailPage() {
                 <span className="text-muted-foreground truncate">Organization</span>
                 <Input
                   value={sidebarValues.organization}
-                  onChange={(e) => setSidebarValues((p) => ({ ...p, organization: e.target.value }))}
+                  onChange={(e) =>
+                    setSidebarValues((p) => ({ ...p, organization: e.target.value }))
+                  }
                   onBlur={(e) => void handleFieldSave("company_name", e.target.value)}
                   placeholder="Add Organization..."
                   className="h-6 w-full border-0 bg-transparent px-1 py-0 text-xs text-foreground placeholder:text-muted-foreground/60 hover:bg-muted/40 focus:ring-1 focus:ring-ring focus:bg-background rounded shadow-none"
@@ -436,9 +458,7 @@ function ContactDetailPage() {
         <div className="flex-none lg:flex-1 flex flex-col min-w-0 bg-background">
           {/* Tab Header Bar */}
           <div className="flex items-center border-b border-border/70 bg-card/20 px-4 shrink-0 sm:px-6">
-            <button
-              className="flex items-center gap-2 px-3 py-3 text-xs font-semibold border-b-2 border-primary text-foreground -mb-px"
-            >
+            <button className="flex items-center gap-2 px-3 py-3 text-xs font-semibold border-b-2 border-primary text-foreground -mb-px">
               <Briefcase className="size-3.5" />
               <span>Deals</span>
               <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-secondary text-muted-foreground font-mono">
@@ -473,9 +493,9 @@ function ContactDetailPage() {
                   const dealId = String(deal["name"] || "");
                   const title = String(
                     deal["deal_name"] ||
-                    deal["organization_name"] ||
-                    deal["organization"] ||
-                    dealId,
+                      deal["organization_name"] ||
+                      deal["organization"] ||
+                      dealId,
                   );
                   const status = String(deal["status"] || "Qualification");
                   const value = Number(deal["annual_revenue"] || deal["deal_value"] || 0);

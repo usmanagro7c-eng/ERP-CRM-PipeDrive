@@ -88,9 +88,7 @@ export function ActivityKanban({
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
     return (meta.fields ?? []).filter(
-      (f) =>
-        (f.fieldtype === "Select" || f.fieldtype === "Link") &&
-        !f.hidden,
+      (f) => (f.fieldtype === "Select" || f.fieldtype === "Link") && !f.hidden,
     );
   }, [meta]);
 
@@ -136,9 +134,7 @@ export function ActivityKanban({
     for (const row of rows) {
       const val = row[groupBy];
       const key =
-        typeof val === "string" && val.trim() && map.has(val.trim())
-          ? val.trim()
-          : UNASSIGNED_KEY;
+        typeof val === "string" && val.trim() && map.has(val.trim()) ? val.trim() : UNASSIGNED_KEY;
       const list = map.get(key);
       if (list) list.push(row);
       else map.set(key, [row]);
@@ -173,7 +169,7 @@ export function ActivityKanban({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectTrigger aria-label="Group tasks by" className="h-8 w-44 text-xs">
               <SelectValue placeholder="Group by field..." />
             </SelectTrigger>
             <SelectContent>
@@ -232,9 +228,7 @@ export function ActivityKanban({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
-                    <h3 className="font-semibold text-xs text-foreground truncate">
-                      {col.label}
-                    </h3>
+                    <h3 className="font-semibold text-xs text-foreground truncate">{col.label}</h3>
                     <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-mono">
                       {activities.length}
                     </Badge>
@@ -264,7 +258,7 @@ export function ActivityKanban({
                 ) : activities.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
                     <p className="italic">No tasks here</p>
-                    <p className="text-[10px] opacity-75">Drag tasks to move</p>
+                    <p className="text-[10px] text-muted-foreground">Drag tasks to move</p>
                   </div>
                 ) : (
                   activities.map((act) => {
@@ -295,7 +289,9 @@ export function ActivityKanban({
                         onClick={() => onRowClick?.(name)}
                         className={cn(
                           "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
-                          draggedActivityName === name ? "opacity-40 border-dashed" : "border-border",
+                          draggedActivityName === name
+                            ? "opacity-40 border-dashed"
+                            : "border-border",
                         )}
                       >
                         {/* Top row: Checkbox, Title & 3-dots */}
@@ -314,7 +310,7 @@ export function ActivityKanban({
                               title={isDone ? "Mark as Todo" : "Mark as Done"}
                             >
                               {isDone ? (
-                                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                                <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" />
                               ) : (
                                 <Circle className="size-4 opacity-50 group-hover:opacity-100" />
                               )}
@@ -335,16 +331,14 @@ export function ActivityKanban({
                             </div>
                           </div>
 
-                          <div
-                            className="shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                                  aria-label="More actions"
                                 >
                                   <MoreVertical className="size-3.5" />
                                 </Button>
@@ -399,17 +393,13 @@ export function ActivityKanban({
 
                         {/* Priority & Due Date */}
                         <div className="mt-2.5 flex items-center justify-between gap-2">
-                          {Boolean(priority) && (
-                            <ActivityPriorityBadge priority={priority} />
-                          )}
+                          {Boolean(priority) && <ActivityPriorityBadge priority={priority} />}
 
                           {Boolean(dueDate) && (
                             <div
                               className={cn(
                                 "flex items-center gap-1 text-[11px]",
-                                overdue
-                                  ? "text-destructive font-medium"
-                                  : "text-muted-foreground",
+                                overdue ? "text-destructive font-medium" : "text-muted-foreground",
                               )}
                               title={overdue ? "Overdue activity!" : "Due date"}
                             >
@@ -425,7 +415,7 @@ export function ActivityKanban({
 
                         {/* Linked Entity & Assignee */}
                         <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
-                          {Boolean(docName) ? (
+                          {docName ? (
                             <div
                               className="flex items-center gap-1 truncate max-w-[140px]"
                               title={`Related to ${docType}: ${docName}`}

@@ -1,13 +1,5 @@
 import { useMemo } from "react";
-import {
-  Building2,
-  Mail,
-  MoreVertical,
-  Phone,
-  User,
-  CircleSlash,
-  Briefcase,
-} from "lucide-react";
+import { Building2, Mail, MoreVertical, Phone, User, CircleSlash, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -90,14 +82,11 @@ export function ContactGrid({
         const firstName = String(contact["first_name"] ?? "");
         const lastName = String(contact["last_name"] ?? "");
         const fullName =
-          String(contact["full_name"] ?? "").trim() ||
-          `${firstName} ${lastName}`.trim() ||
-          name;
+          String(contact["full_name"] ?? "").trim() || `${firstName} ${lastName}`.trim() || name;
         const status = String(contact["status"] ?? "Passive");
         const email = String(contact["email_id"] ?? "");
         const phone =
-          String(contact["mobile_no"] ?? "").trim() ||
-          String(contact["phone"] ?? "").trim();
+          String(contact["mobile_no"] ?? "").trim() || String(contact["phone"] ?? "").trim();
         const company = String(contact["company_name"] ?? "");
         const designation = String(contact["designation"] ?? "");
 
@@ -129,6 +118,7 @@ export function ContactGrid({
                     variant="ghost"
                     size="icon"
                     className="size-7 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer shrink-0"
+                    aria-label="More actions"
                   >
                     <MoreVertical className="size-4" />
                   </Button>

@@ -250,24 +250,24 @@ export function defaultListColumns(meta: FrappeDocTypeMeta, max = 7): string[] {
             "lead_owner",
             "source",
           ]
-      : meta.name === "CRM Task"
-        ? [
-            "title",
-            "status",
-            "priority",
-            "due_date",
-            "assigned_to",
-            "reference_doctype",
-            "reference_docname",
-          ]
-        : [
-            "organization_name",
-            "website",
-            "industry",
-            "territory",
-            "no_of_employees",
-            "annual_revenue",
-          ];
+        : meta.name === "CRM Task"
+          ? [
+              "title",
+              "status",
+              "priority",
+              "due_date",
+              "assigned_to",
+              "reference_doctype",
+              "reference_docname",
+            ]
+          : [
+              "organization_name",
+              "website",
+              "industry",
+              "territory",
+              "no_of_employees",
+              "annual_revenue",
+            ];
   const picked: string[] = [];
   for (const name of preferred) {
     if (byName.has(name)) picked.push(name);

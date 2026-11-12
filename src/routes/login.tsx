@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Leaf, Loader2 } from "lucide-react";
@@ -16,13 +16,15 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [usr, setUsr] = useState("");
-  const [pwd, setPwd] = useState("");
+  const usrRef = useRef<HTMLInputElement>(null);
+  const pwdRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    const usr = usrRef.current?.value ?? "";
+    const pwd = pwdRef.current?.value ?? "";
     setError(null);
     setPending(true);
     try {
@@ -54,10 +56,10 @@ function LoginPage() {
             <Label htmlFor="usr">Username or email</Label>
             <Input
               id="usr"
+              ref={usrRef}
               autoComplete="username"
               autoFocus
-              value={usr}
-              onChange={(event) => setUsr(event.target.value)}
+              defaultValue=""
               disabled={pending}
             />
           </div>
@@ -65,10 +67,10 @@ function LoginPage() {
             <Label htmlFor="pwd">Password</Label>
             <Input
               id="pwd"
+              ref={pwdRef}
               type="password"
               autoComplete="current-password"
-              value={pwd}
-              onChange={(event) => setPwd(event.target.value)}
+              defaultValue=""
               disabled={pending}
             />
           </div>
@@ -77,7 +79,7 @@ function LoginPage() {
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={pending || !usr || !pwd}>
+          <Button type="submit" className="w-full" disabled={pending}>
             {pending && <Loader2 className="size-4 animate-spin" />}
             Sign in
           </Button>

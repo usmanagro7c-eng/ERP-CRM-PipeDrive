@@ -35,11 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -78,17 +74,12 @@ function getDefaultCloseDate(): string {
   return d.toISOString().split("T")[0] ?? "";
 }
 
-export function ConvertLeadModal({
-  open,
-  onOpenChange,
-  lead,
-}: ConvertLeadModalProps) {
+export function ConvertLeadModal({ open, onOpenChange, lead }: ConvertLeadModalProps) {
   const navigate = useNavigate();
   const convertMutation = useConvertLeadToDeal();
 
   const { data: dealStatuses = [] } = useQuery(dealStatusesOptions());
-  const { data: orgOptions = [], isLoading: orgsLoading } =
-    useLinkOptions("CRM Organization");
+  const { data: orgOptions = [], isLoading: orgsLoading } = useLinkOptions("CRM Organization");
 
   // Lead display properties
   const leadName = useMemo(() => {
@@ -143,9 +134,7 @@ export function ConvertLeadModal({
       setDealValue(rev ? String(rev) : "");
 
       const firstStage =
-        dealStatuses.length > 0 && dealStatuses[0]
-          ? dealStatuses[0].name
-          : "Qualification";
+        dealStatuses.length > 0 && dealStatuses[0] ? dealStatuses[0].name : "Qualification";
       setStage(firstStage);
 
       setExpectedCloseDate(getDefaultCloseDate());
@@ -380,11 +369,7 @@ export function ConvertLeadModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Deal Stage</Label>
-              <Select
-                value={stage}
-                onValueChange={setStage}
-                disabled={convertMutation.isPending}
-              >
+              <Select value={stage} onValueChange={setStage} disabled={convertMutation.isPending}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Select stage" />
                 </SelectTrigger>
@@ -471,7 +456,10 @@ export function ConvertLeadModal({
 
           {/* Expected Close Date */}
           <div className="space-y-1.5">
-            <Label htmlFor="deal-close-date" className="text-xs font-semibold flex items-center gap-1">
+            <Label
+              htmlFor="deal-close-date"
+              className="text-xs font-semibold flex items-center gap-1"
+            >
               <Calendar className="size-3.5 text-muted-foreground" />
               Expected Close Date
             </Label>

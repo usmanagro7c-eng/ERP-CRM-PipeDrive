@@ -5,13 +5,15 @@ import type { CrmTask } from "@/lib/api";
 
 export const TASKS_QUERY_ROOT = "crm_tasks";
 
-export function tasksListOptions(params: {
-  search?: string | undefined;
-  status?: string | undefined;
-  priority?: string | undefined;
-  reference_doctype?: string | undefined;
-  reference_docname?: string | undefined;
-} = {}) {
+export function tasksListOptions(
+  params: {
+    search?: string | undefined;
+    status?: string | undefined;
+    priority?: string | undefined;
+    reference_doctype?: string | undefined;
+    reference_docname?: string | undefined;
+  } = {},
+) {
   const filters: Array<[string, string, string]> = [];
   if (params.status && params.status !== "all") {
     filters.push(["status", "=", params.status]);

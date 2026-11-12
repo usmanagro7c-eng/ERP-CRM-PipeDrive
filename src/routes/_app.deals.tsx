@@ -47,6 +47,7 @@ import {
   dealStatusesOptions,
   errorMessage,
 } from "@/hooks/use-deals";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { defaultListColumns, isDisplayField } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
@@ -280,6 +281,16 @@ function DealsPage() {
     });
   }
 
+  // Search while typing; pressing Enter still works (submitSearch above).
+  const debouncedSearchText = useDebouncedValue(searchText, 350);
+  useEffect(() => {
+    const next = debouncedSearchText.trim();
+    if (next === (search.q ?? "")) return;
+    void navigate({
+      search: (prev) => ({ ...prev, q: next || undefined, page: undefined }),
+    });
+  }, [debouncedSearchText, search.q, navigate]);
+
   const handleEditDeal = (deal: Record<string, unknown>) => {
     setEditingDeal(deal);
     setModalInitialDoc(null);
@@ -363,7 +374,10 @@ function DealsPage() {
       <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0 flex-1">
           {/* Search Input */}
-          <form onSubmit={submitSearch} className="relative flex-1 min-w-[110px] max-w-[180px] sm:max-w-[210px]">
+          <form
+            onSubmit={submitSearch}
+            className="relative flex-1 min-w-[110px] max-w-[180px] sm:max-w-[210px]"
+          >
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
@@ -378,12 +392,17 @@ function DealsPage() {
             value={statusFilter}
             onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
           >
-            <SelectTrigger className="h-7 text-xs px-2 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[110px] shrink-0">
+            <SelectTrigger
+              aria-label="Filter deals by status"
+              className="h-7 text-xs px-2 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[110px] shrink-0"
+            >
               <span className="hidden sm:inline text-muted-foreground">Status:</span>
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+              <SelectItem value="all" className="text-xs">
+                All Statuses
+              </SelectItem>
               {stages.map((s) => (
                 <SelectItem key={s.name} value={s.name} className="text-xs">
                   {s.name}
@@ -531,7 +550,7 @@ function DealsPage() {
                           "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
                           pageSize === size
                             ? "bg-background text-foreground shadow-xs font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
                         )}
                         onClick={() => setPageSize(size)}
                       >
@@ -541,13 +560,12 @@ function DealsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span>
-                      {total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}
-                    </span>
+                    <span>{total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}</span>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Previous page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page <= 1}
                         onClick={() =>
@@ -561,6 +579,7 @@ function DealsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Next page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page >= pageCount}
                         onClick={() =>

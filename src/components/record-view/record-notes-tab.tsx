@@ -5,21 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  notesListOptions,
-  useSaveNote,
-  useDeleteNote,
-} from "@/hooks/use-notes";
+import { notesListOptions, useSaveNote, useDeleteNote } from "@/hooks/use-notes";
 
 interface RecordNotesTabProps {
   referenceDoctype: string;
   referenceName: string;
 }
 
-export function RecordNotesTab({
-  referenceDoctype,
-  referenceName,
-}: RecordNotesTabProps) {
+export function RecordNotesTab({ referenceDoctype, referenceName }: RecordNotesTabProps) {
   const { data: notes = [], isLoading } = useQuery(
     notesListOptions({
       reference_doctype: referenceDoctype,

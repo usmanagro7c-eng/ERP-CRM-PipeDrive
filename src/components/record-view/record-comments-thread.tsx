@@ -4,11 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  commentsListOptions,
-  useAddComment,
-  useDeleteComment,
-} from "@/hooks/use-comments";
+import { commentsListOptions, useAddComment, useDeleteComment } from "@/hooks/use-comments";
 
 interface RecordCommentsThreadProps {
   referenceDoctype: string;

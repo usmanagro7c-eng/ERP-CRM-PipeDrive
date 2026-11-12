@@ -4,11 +4,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,14 +63,7 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = [
-  "All Territories",
-  "Pakistan",
-  "Punjab",
-  "Sindh",
-  "KPK",
-  "Balochistan",
-];
+const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormDataState {
   // Org
@@ -115,12 +104,7 @@ const defaultFormData: FormDataState = {
   deal_owner: "",
 };
 
-export function DealFormModal({
-  open,
-  onOpenChange,
-  deal,
-  initialValues,
-}: DealFormModalProps) {
+export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealFormModalProps) {
   const isEdit = Boolean(deal);
   const saveMutation = useSaveDeal();
   const { data: users = [] } = useCrmUsers();
@@ -150,7 +134,9 @@ export function DealFormModal({
           organization: String(deal["organization_name"] || deal["organization"] || ""),
           website: String(deal["website"] || ""),
           territory: String(deal["territory"] || ""),
-          annual_revenue: deal["annual_revenue"] ? `PKR ${Number(deal["annual_revenue"]).toLocaleString()}` : "",
+          annual_revenue: deal["annual_revenue"]
+            ? `PKR ${Number(deal["annual_revenue"]).toLocaleString()}`
+            : "",
           company_description: String(deal["company_description"] || ""),
           no_of_employees: String(deal["no_of_employees"] || ""),
           industry: String(deal["industry"] || ""),
@@ -224,7 +210,6 @@ export function DealFormModal({
         name: deal ? String(deal["name"]) : undefined,
         values: payload,
       });
-      toast.success(isEdit ? "Deal updated successfully" : "Deal created successfully");
       onOpenChange(false);
     } catch {
       // toast shown by hook
@@ -255,7 +240,11 @@ export function DealFormModal({
               className="size-7 text-muted-foreground hover:text-foreground cursor-pointer rounded-md"
               title={isFullscreen ? "Minimize" : "Maximize"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"
@@ -275,7 +264,9 @@ export function DealFormModal({
           {!isEdit && (
             <div className="flex items-center gap-6 text-xs text-muted-foreground pb-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-normal text-muted-foreground">Choose Existing Organization</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Choose Existing Organization
+                </span>
                 <Switch
                   checked={chooseExistingOrg}
                   onCheckedChange={setChooseExistingOrg}
@@ -283,7 +274,9 @@ export function DealFormModal({
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-normal text-muted-foreground">Choose Existing Contact</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Choose Existing Contact
+                </span>
                 <Switch
                   checked={chooseExistingContact}
                   onCheckedChange={setChooseExistingContact}
@@ -297,7 +290,9 @@ export function DealFormModal({
           <div>
             {chooseExistingOrg ? (
               <div className="space-y-1.5">
-                <Label className="text-xs font-normal text-muted-foreground">Select Existing Organization *</Label>
+                <Label className="text-xs font-normal text-muted-foreground">
+                  Select Existing Organization *
+                </Label>
                 <Select value={selectedOrgName} onValueChange={setSelectedOrgName}>
                   <SelectTrigger className="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md">
                     <SelectValue placeholder="Select Organization..." />
@@ -306,7 +301,11 @@ export function DealFormModal({
                     {(existingOrgs as Array<Record<string, unknown>>).map((org) => {
                       const orgTitle = String(org["organization_name"] || org["name"]);
                       return (
-                        <SelectItem key={String(org["name"])} value={orgTitle} className="text-xs cursor-pointer">
+                        <SelectItem
+                          key={String(org["name"])}
+                          value={orgTitle}
+                          className="text-xs cursor-pointer"
+                        >
                           {orgTitle}
                         </SelectItem>
                       );
@@ -318,7 +317,9 @@ export function DealFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3.5">
                 {/* Row 1: Organization Name | Website | No. of Employees */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Organization Name</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Organization Name
+                  </Label>
                   <Input
                     value={formData.organization}
                     onChange={(e) => handleChange("organization", e.target.value)}
@@ -337,7 +338,9 @@ export function DealFormModal({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">No. of Employees</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    No. of Employees
+                  </Label>
                   <Select
                     value={formData.no_of_employees || undefined}
                     onValueChange={(val) => handleChange("no_of_employees", val)}
@@ -375,7 +378,9 @@ export function DealFormModal({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Annual Revenue</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Annual Revenue
+                  </Label>
                   <Input
                     value={formData.annual_revenue}
                     onChange={(e) => handleChange("annual_revenue", e.target.value)}
@@ -404,7 +409,9 @@ export function DealFormModal({
 
                 {/* Row 3: Company Description (spanning 2 columns) */}
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Company Description</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Company Description
+                  </Label>
                   <Textarea
                     value={formData.company_description}
                     onChange={(e) => handleChange("company_description", e.target.value)}
@@ -424,7 +431,9 @@ export function DealFormModal({
           <div>
             {chooseExistingContact ? (
               <div className="space-y-1.5">
-                <Label className="text-xs font-normal text-muted-foreground">Select Existing Contact</Label>
+                <Label className="text-xs font-normal text-muted-foreground">
+                  Select Existing Contact
+                </Label>
                 <Select value={selectedContactName} onValueChange={setSelectedContactName}>
                   <SelectTrigger className="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md">
                     <SelectValue placeholder="Select Contact..." />
@@ -434,7 +443,11 @@ export function DealFormModal({
                       const name = String(c["first_name"] || c["name"] || "Contact");
                       const email = String(c["email"] || "");
                       return (
-                        <SelectItem key={String(c["name"])} value={String(c["name"])} className="text-xs cursor-pointer">
+                        <SelectItem
+                          key={String(c["name"])}
+                          value={String(c["name"])}
+                          className="text-xs cursor-pointer"
+                        >
                           {name} {email ? `(${email})` : ""}
                         </SelectItem>
                       );
@@ -494,7 +507,9 @@ export function DealFormModal({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-muted-foreground">Primary mobile no</Label>
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Primary mobile no
+                  </Label>
                   <Input
                     value={formData.mobile_no}
                     onChange={(e) => handleChange("mobile_no", e.target.value)}
@@ -530,10 +545,7 @@ export function DealFormModal({
               <Label className="text-xs font-normal text-muted-foreground">
                 Status <span className="text-destructive">*</span>
               </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) => handleChange("status", val)}
-              >
+              <Select value={formData.status} onValueChange={(val) => handleChange("status", val)}>
                 <SelectTrigger className="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-foreground inline-block" />
@@ -589,9 +601,7 @@ export function DealFormModal({
               disabled={saveMutation.isPending}
               className="h-8 text-xs px-5 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
             >
-              {saveMutation.isPending ? (
-                <Loader2 className="size-3.5 animate-spin mr-1" />
-              ) : null}
+              {saveMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
               <span>{isEdit ? "Save Changes" : "Create"}</span>
             </Button>
           </div>

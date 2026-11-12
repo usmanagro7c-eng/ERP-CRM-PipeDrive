@@ -4,11 +4,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -90,8 +86,7 @@ export function SalesOrderFormModal({
         })),
       );
     } else {
-      const defaultCustomer =
-        initialValues?.customer || customerOptions[0]?.name || "";
+      const defaultCustomer = initialValues?.customer || customerOptions[0]?.name || "";
       setCustomer(defaultCustomer);
       setTransactionDate(today);
       setDeliveryDate(nextWeek);
@@ -134,7 +129,7 @@ export function SalesOrderFormModal({
         qty: Number(item.qty) || 1,
         rate: Number(item.rate) || 0,
         discount_percentage: Number(item.discount_percentage) || 0,
-        amount: Number(item.amount) || (Number(item.qty || 1) * Number(item.rate || 0)),
+        amount: Number(item.amount) || Number(item.qty || 1) * Number(item.rate || 0),
         delivery_date: deliveryDate,
         ...(initialValues?.quotation_ref ? { prevdoc_docname: initialValues.quotation_ref } : {}),
       })),
@@ -183,8 +178,8 @@ export function SalesOrderFormModal({
               {order
                 ? `Edit Sales Order: ${order.name}`
                 : initialValues?.quotation_ref
-                ? `Convert to Sales Order (${initialValues.quotation_ref})`
-                : "Create Sales Order"}
+                  ? `Convert to Sales Order (${initialValues.quotation_ref})`
+                  : "Create Sales Order"}
             </DialogTitle>
           </div>
           <div className="flex items-center gap-1">
@@ -196,7 +191,11 @@ export function SalesOrderFormModal({
               className="size-7 text-muted-foreground hover:text-foreground cursor-pointer rounded-md"
               title={isFullscreen ? "Minimize" : "Maximize"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"
@@ -239,9 +238,15 @@ export function SalesOrderFormModal({
                   <SelectValue placeholder="Sales" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Sales" className="text-xs">Sales</SelectItem>
-                  <SelectItem value="Maintenance" className="text-xs">Maintenance</SelectItem>
-                  <SelectItem value="Shopping Cart" className="text-xs">Shopping Cart</SelectItem>
+                  <SelectItem value="Sales" className="text-xs">
+                    Sales
+                  </SelectItem>
+                  <SelectItem value="Maintenance" className="text-xs">
+                    Maintenance
+                  </SelectItem>
+                  <SelectItem value="Shopping Cart" className="text-xs">
+                    Shopping Cart
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -325,9 +330,7 @@ export function SalesOrderFormModal({
             onClick={() => void handleSaveOrder(true)}
             className="h-8 text-xs px-5 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs gap-1.5"
           >
-            {isSubmittingDirect ? (
-              <Loader2 className="size-3.5 animate-spin mr-1" />
-            ) : null}
+            {isSubmittingDirect ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
             <span>Submit Sales Order</span>
           </Button>
         </div>

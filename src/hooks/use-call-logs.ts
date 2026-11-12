@@ -5,11 +5,13 @@ import type { CrmCallLog } from "@/lib/api";
 
 export const CALL_LOGS_QUERY_ROOT = "crm_call_logs";
 
-export function callLogsListOptions(params: {
-  search?: string | undefined;
-  reference_doctype?: string | undefined;
-  reference_docname?: string | undefined;
-} = {}) {
+export function callLogsListOptions(
+  params: {
+    search?: string | undefined;
+    reference_doctype?: string | undefined;
+    reference_docname?: string | undefined;
+  } = {},
+) {
   return queryOptions({
     queryKey: [CALL_LOGS_QUERY_ROOT, "list", params],
     queryFn: () => api.listCallLogs(params),

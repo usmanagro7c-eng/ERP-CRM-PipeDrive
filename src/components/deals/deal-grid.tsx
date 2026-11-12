@@ -66,7 +66,11 @@ export function DealGrid({
 
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
-    return stageKey.toLowerCase().includes("lost") || stage?.label?.toLowerCase().includes("lost") || false;
+    return (
+      stageKey.toLowerCase().includes("lost") ||
+      stage?.label?.toLowerCase().includes("lost") ||
+      false
+    );
   }
 
   async function handleMove(dealName: string, targetStage: string) {
@@ -117,8 +121,7 @@ export function DealGrid({
       {rows.map((row) => {
         const name = String(row["name"] ?? "");
         const orgName =
-          String(row["organization_name"] ?? "") ||
-          String(row["organization"] ?? "Unnamed Deal");
+          String(row["organization_name"] ?? "") || String(row["organization"] ?? "Unnamed Deal");
         const stage = String(row["status"] ?? "");
         const dealValue = row["deal_value"];
         const currency = (row["currency"] as string) || "PKR";
@@ -154,21 +157,17 @@ export function DealGrid({
                     <Building2 className="size-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">{orgName}</span>
                   </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {name}
-                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground">{name}</span>
                 </div>
 
-                <div
-                  className="shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                       </Button>
@@ -176,9 +175,7 @@ export function DealGrid({
                     <DropdownMenuContent align="end" className="w-48 text-xs">
                       <DropdownMenuLabel>Deal Actions</DropdownMenuLabel>
                       {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(row)}>
-                          Edit Deal
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(row)}>Edit Deal</DropdownMenuItem>
                       )}
                       <MoveToSubmenu
                         label="Move to Stage"
@@ -201,11 +198,7 @@ export function DealGrid({
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to delete deal ${name}?`,
-                            )
-                          ) {
+                          if (window.confirm(`Are you sure you want to delete deal ${name}?`)) {
                             void deleteMutation.mutate(name);
                           }
                         }}
@@ -254,7 +247,7 @@ export function DealGrid({
 
             {/* Footer row: Close date & Owner */}
             <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-2.5 text-xs text-muted-foreground">
-              {Boolean(closeDate) ? (
+              {closeDate ? (
                 <div className="flex items-center gap-1.5">
                   <Calendar className="size-3.5 opacity-70" />
                   <span>{String(closeDate)}</span>

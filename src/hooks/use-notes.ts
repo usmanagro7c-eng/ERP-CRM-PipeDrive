@@ -5,11 +5,13 @@ import type { CrmNote } from "@/lib/api";
 
 export const NOTES_QUERY_ROOT = "crm_notes";
 
-export function notesListOptions(params: {
-  search?: string | undefined;
-  reference_doctype?: string | undefined;
-  reference_docname?: string | undefined;
-} = {}) {
+export function notesListOptions(
+  params: {
+    search?: string | undefined;
+    reference_doctype?: string | undefined;
+    reference_docname?: string | undefined;
+  } = {},
+) {
   return queryOptions({
     queryKey: [NOTES_QUERY_ROOT, "list", params],
     queryFn: () => api.listNotes(params),

@@ -13,11 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  callLogsListOptions,
-  useSaveCallLog,
-  useDeleteCallLog,
-} from "@/hooks/use-call-logs";
+import { callLogsListOptions, useSaveCallLog, useDeleteCallLog } from "@/hooks/use-call-logs";
 
 interface RecordCallsTabProps {
   referenceDoctype: string;

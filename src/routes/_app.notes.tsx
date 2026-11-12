@@ -16,11 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  notesListOptions,
-  useDeleteNote,
-  type CrmNote,
-} from "@/hooks/use-notes";
+import { notesListOptions, useDeleteNote, type CrmNote } from "@/hooks/use-notes";
 import { NoteFormModal } from "@/components/notes/note-form-modal";
 import { cn } from "@/lib/utils";
 
@@ -61,9 +57,11 @@ function NotesPage() {
   const [searchTitle, setSearchTitle] = useState("");
   const [searchContent, setSearchContent] = useState("");
 
-  const { data: notes = [], isLoading, refetch } = useQuery(
-    notesListOptions({ search: searchTitle || undefined }),
-  );
+  const {
+    data: notes = [],
+    isLoading,
+    refetch,
+  } = useQuery(notesListOptions({ search: searchTitle || undefined }));
   const deleteMutation = useDeleteNote();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -188,7 +186,8 @@ function NotesPage() {
             </div>
             <h3 className="text-base font-semibold text-foreground">No notes yet</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-              Notes keep what you learned on a call or in a meeting next to the lead or deal it belongs to.
+              Notes keep what you learned on a call or in a meeting next to the lead or deal it
+              belongs to.
             </p>
             <Button
               size="sm"
@@ -242,7 +241,10 @@ function NotesPage() {
                   <div className="pt-3 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground mt-3">
                     {/* Linked Record badge */}
                     {note.reference_docname ? (
-                      <Badge variant="outline" className="text-[10px] font-mono font-normal truncate max-w-[140px] px-1.5 py-0">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-mono font-normal truncate max-w-[140px] px-1.5 py-0"
+                      >
                         {note.reference_doctype ? `${note.reference_doctype}: ` : ""}
                         {note.reference_docname}
                       </Badge>
@@ -255,7 +257,9 @@ function NotesPage() {
                       <div className="size-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[9px] font-semibold">
                         {authorInitial}
                       </div>
-                      <span className="text-[11px]">{formatRelativeTime(note.modified || note.creation)}</span>
+                      <span className="text-[11px]">
+                        {formatRelativeTime(note.modified || note.creation)}
+                      </span>
                     </div>
                   </div>
                 </div>

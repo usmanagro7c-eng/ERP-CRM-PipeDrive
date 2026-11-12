@@ -21,11 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useSubmitQuotation,
-  useDeleteQuotation,
-  type Quotation,
-} from "@/hooks/use-quotations";
+import { useSubmitQuotation, useDeleteQuotation, type Quotation } from "@/hooks/use-quotations";
 import { useCreateSalesOrderFromQuotation } from "@/hooks/use-sales-orders";
 
 interface QuotationGridProps {
@@ -40,21 +36,30 @@ function QuotationStatusBadge({ status }: { status: string }) {
   const s = (status || "Draft").toLowerCase();
   if (s === "open") {
     return (
-      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium">
+      <Badge
+        variant="outline"
+        className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-[11px] font-medium"
+      >
         Open
       </Badge>
     );
   }
   if (s === "ordered") {
     return (
-      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium">
+      <Badge
+        variant="outline"
+        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[11px] font-medium"
+      >
         Ordered
       </Badge>
     );
   }
   if (s === "lost" || s === "cancelled") {
     return (
-      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium">
+      <Badge
+        variant="outline"
+        className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium"
+      >
         {status}
       </Badge>
     );
@@ -210,7 +215,7 @@ export function QuotationGrid({
                       {isDraft && (
                         <DropdownMenuItem
                           onClick={() => handleSubmit(row)}
-                          className="gap-2 cursor-pointer text-blue-600"
+                          className="gap-2 cursor-pointer text-blue-700 dark:text-blue-400"
                         >
                           <CheckCircle2 className="size-3.5" />
                           <span>Submit Quotation</span>
@@ -262,15 +267,11 @@ export function QuotationGrid({
                   <Calendar className="size-3" />
                   <span>{row.transaction_date}</span>
                 </span>
-                {row.valid_till && (
-                  <span>Valid till: {row.valid_till}</span>
-                )}
+                {row.valid_till && <span>Valid till: {row.valid_till}</span>}
               </div>
 
               <div className="flex items-baseline justify-between pt-1">
-                <span className="text-[11px] font-medium text-muted-foreground">
-                  Grand Total:
-                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">Grand Total:</span>
                 <span className="text-base font-bold text-primary">
                   PKR {Number(row.grand_total || 0).toLocaleString()}
                 </span>

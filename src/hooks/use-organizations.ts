@@ -59,6 +59,12 @@ export function useLinkOptions(doctype: string | undefined) {
     queryFn: () => api.getLinkOptions(doctype!),
     enabled: Boolean(doctype),
     staleTime: 5 * 60 * 1000,
+    // A missing/forbidden link target will never succeed on retry, and the
+    // default retries turn one 404 into a burst of console errors.
+    retry: (failureCount, error) =>
+      !(error instanceof api.FrappeApiError) || ![403, 404].includes(error.status)
+        ? failureCount < 2
+        : false,
   });
 }
 

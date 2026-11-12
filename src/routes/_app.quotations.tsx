@@ -112,7 +112,8 @@ function QuotationsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
-  const [salesOrderInitialValues, setSalesOrderInitialValues] = useState<SalesOrderInitialValues | null>(null);
+  const [salesOrderInitialValues, setSalesOrderInitialValues] =
+    useState<SalesOrderInitialValues | null>(null);
   const [localView, setLocalView] = useState<ViewMode>(search.view ?? "table");
   const [pageSize, setPageSize] = useState<number>(20);
 
@@ -195,7 +196,7 @@ function QuotationsPage() {
         item_name: item.item_name || item.item_code,
         qty: item.qty,
         rate: item.rate,
-        amount: item.amount ?? (item.qty * item.rate),
+        amount: item.amount ?? item.qty * item.rate,
       })),
       quotation_ref: quotation.name,
     });
@@ -259,7 +260,10 @@ function QuotationsPage() {
 
           {/* Status Dropdown Filter */}
           <Select value={search.status ?? "all"} onValueChange={handleStatusChange}>
-            <SelectTrigger className="h-7 text-xs w-24 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground shrink-0">
+            <SelectTrigger
+              aria-label="Filter quotations by status"
+              className="h-7 text-xs w-24 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground shrink-0"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -277,7 +281,12 @@ function QuotationsPage() {
           {/* View Switcher Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs text-muted-foreground border-border/60 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs text-muted-foreground border-border/60 shrink-0"
+                aria-label="{currentViewObj.label}"
+              >
                 <CurrentIcon className="size-3.5 text-muted-foreground" />
                 <span className="hidden sm:inline">{currentViewObj.label}</span>
                 <ChevronDown className="size-3 opacity-60" />
@@ -356,7 +365,9 @@ function QuotationsPage() {
         <div
           className={cn(
             "flex-1 min-h-0 flex flex-col",
-            activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-y-auto p-4 sm:p-6",
+            activeView === "kanban"
+              ? "overflow-hidden p-4 sm:p-6 pb-2"
+              : "overflow-y-auto p-4 sm:p-6",
           )}
         >
           {activeView === "table" ? (

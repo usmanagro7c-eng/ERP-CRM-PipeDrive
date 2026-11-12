@@ -427,6 +427,18 @@ export async function convertLeadToDeal(
     lead: params.leadName,
   });
 
+  // 1b. Copy attachments from the lead to the new deal (best effort)
+  try {
+    const leadAttachments = await listAttachments(LEAD_DOCTYPE, params.leadName);
+    await Promise.all(
+      leadAttachments.map((att) =>
+        updateAttachment(att.name, DEAL_DOCTYPE, String(deal["name"] ?? "")).catch(() => {}),
+      ),
+    );
+  } catch {
+    // ignore; conversion still succeeds
+  }
+
   // 2. Mark the lead as converted
   let updatedLead: Record<string, unknown> = {};
   try {
@@ -1144,6 +1156,17 @@ export async function listAttachments(
 export async function deleteAttachment(name: string): Promise<void> {
   await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",
+  });
+}
+
+export async function updateAttachment(
+  name: string,
+  attachedToDocType: string,
+  attachedToName: string,
+): Promise<void> {
+  await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    body: { attached_to_doctype: attachedToDocType, attached_to_name: attachedToName },
   });
 }
 

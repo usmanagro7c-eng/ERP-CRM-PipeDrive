@@ -43,3 +43,7 @@ test-results/
 playwright-report/
 e2e
 
+# Lighthouse / UI audit output
+ui-audit/lighthouse/
+.ui-audit-cache/
+

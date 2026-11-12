@@ -9,7 +9,12 @@ test.describe("smoke", () => {
   test("organizations list renders", async ({ page }) => {
     await login(page);
     await page.goto("/organizations");
-    await expect(page.getByText(/organization/i).first()).toBeVisible({ timeout: 20000 });
+    // Target the page content, not the nav label: the mobile nav also contains
+    // a hidden "Organizations" span, which `getByText` would match first.
+    await expect(page.getByPlaceholder(/search organizations/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole("link", { name: /ORG-\d{3}/ }).first()).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test("no horizontal overflow on mobile", async ({ page }) => {

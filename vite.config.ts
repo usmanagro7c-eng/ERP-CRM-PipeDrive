@@ -35,6 +35,18 @@ export default defineConfig(({ command }) => ({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    watch: {
+      // Generated artifacts (audit reports, screenshots, test output) must not be
+      // watched: writing them while the watcher registers them crashes dev with EBUSY.
+      ignored: [
+        "**/ui-audit/**",
+        "**/.ui-audit-cache/**",
+        "**/test-results/**",
+        "**/playwright-report/**",
+      ],
+    },
+  },
   plugins: [
     ...(command === "build"
       ? [

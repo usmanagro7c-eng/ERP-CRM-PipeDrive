@@ -37,3 +37,6 @@ dist-ssr
 
 # Playwright MCP artifacts
 .playwright-mcp/
+node_modules_old/
+.agents/skills/
+

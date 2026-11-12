@@ -50,6 +50,14 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
+  --color-won: var(--won);
+  --color-won-foreground: var(--won-foreground);
+  --color-lost: var(--lost);
+  --color-lost-foreground: var(--lost-foreground);
+  --color-open: var(--open);
+  --color-open-foreground: var(--open-foreground);
+  --color-overdue: var(--overdue);
+  --color-overdue-foreground: var(--overdue-foreground);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -84,6 +92,14 @@
   --border: oklch(0.916 0.012 150);
   --input: oklch(0.916 0.012 150);
   --ring: oklch(0.62 0.1 158);
+  --won: oklch(0.62 0.17 150);
+  --won-foreground: oklch(0.985 0.01 150);
+  --lost: oklch(0.6 0.22 25);
+  --lost-foreground: oklch(0.985 0.01 25);
+  --open: oklch(0.6 0.16 250);
+  --open-foreground: oklch(0.985 0.01 250);
+  --overdue: oklch(0.78 0.15 75);
+  --overdue-foreground: oklch(0.2 0.05 75);
   --chart-1: oklch(0.56 0.115 158);
   --chart-2: oklch(0.65 0.1 130);
   --chart-3: oklch(0.45 0.08 165);
@@ -119,6 +135,14 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.62 0.1 158);
+  --won: oklch(0.7 0.15 150);
+  --won-foreground: oklch(0.17 0.015 160);
+  --lost: oklch(0.72 0.19 25);
+  --lost-foreground: oklch(0.985 0.01 25);
+  --open: oklch(0.7 0.15 250);
+  --open-foreground: oklch(0.17 0.015 160);
+  --overdue: oklch(0.8 0.14 75);
+  --overdue-foreground: oklch(0.17 0.015 75);
   --chart-1: oklch(0.68 0.13 158);
   --chart-2: oklch(0.72 0.11 130);
   --chart-3: oklch(0.6 0.09 165);
@@ -288,4 +312,10 @@
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+/* Safe area helpers for mobile */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left { padding-left: env(safe-area-inset-left); }
+.safe-right { padding-right: env(safe-area-inset-right); }
 

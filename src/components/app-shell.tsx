@@ -187,6 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
@@ -280,31 +281,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main App Content Area */}
       <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
         {/* Mobile Header (Only visible on screens < md) */}
-        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background px-4 py-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8">
-                  <Menu className="size-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 flex flex-col bg-[#fafafa] dark:bg-[#141416]">
-                <SheetHeader className="p-3 border-b border-border">
-                  <SheetTitle className="sr-only">Navigation</SheetTitle>
-                  <WorkspaceSwitcher />
-                </SheetHeader>
-                <nav className="flex-1 overflow-y-auto py-3">
-                  <NavLinks onItemClick={() => setMobileOpen(false)} />
-                </nav>
-              </SheetContent>
-            </Sheet>
-
-            <div className="flex items-center gap-1.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-pink-600 text-white font-bold text-xs">
-                C
-              </div>
-              <span className="text-xs font-semibold">AgroCRM</span>
+        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 py-2 shrink-0 safe-top">
+          <div className="flex items-center gap-1.5">
+            <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+              C
             </div>
+            <span className="text-sm font-semibold">AgroCRM</span>
           </div>
 
           <div className="flex items-center gap-1">
@@ -312,7 +294,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={() => setCommandOpen(true)}
-              className="size-8 text-muted-foreground"
+              className="size-9 text-muted-foreground"
+              aria-label="Search"
             >
               <Search className="size-4" />
             </Button>
@@ -321,6 +304,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page Children (Starts directly at page top without redundant desktop header) */}
         <main className="min-w-0 flex-1 h-full overflow-hidden flex flex-col">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <nav
+          className="md:hidden shrink-0 border-t border-border bg-background/95 backdrop-blur safe-bottom"
+          aria-label="Mobile"
+        >
+          <div className="flex items-center justify-around px-1 py-1">
+            {[
+              { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+              { label: "Leads", to: "/leads", icon: Target },
+              { label: "Deals", to: "/deals", icon: Columns3 },
+              { label: "Contacts", to: "/contacts", icon: Users },
+            ].map((item) => {
+              const active =
+                item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors min-h-[44px]",
+                    active ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  <item.icon className="size-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-muted-foreground min-h-[44px]"
+                  aria-label="More"
+                >
+                  <Menu className="size-5" />
+                  <span>More</span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[80vh] p-0 flex flex-col">
+                <SheetHeader className="p-3 border-b border-border">
+                  <SheetTitle className="sr-only">More navigation</SheetTitle>
+                  <WorkspaceSwitcher />
+                </SheetHeader>
+                <nav className="flex-1 overflow-y-auto py-3">
+                  <NavLinks onItemClick={() => setMobileOpen(false)} />
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </nav>
       </div>
 
       {/* Global Command Palette Dialog */}

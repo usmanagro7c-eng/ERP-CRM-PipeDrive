@@ -202,7 +202,6 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
         name: docName,
         values: payload,
       });
-      toast.success(isEdit ? "Lead updated successfully" : "Lead created successfully");
       onOpenChange(false);
     } catch {
       // toast shown by hook

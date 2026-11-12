@@ -210,7 +210,6 @@ export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealF
         name: deal ? String(deal["name"]) : undefined,
         values: payload,
       });
-      toast.success(isEdit ? "Deal updated successfully" : "Deal created successfully");
       onOpenChange(false);
     } catch {
       // toast shown by hook

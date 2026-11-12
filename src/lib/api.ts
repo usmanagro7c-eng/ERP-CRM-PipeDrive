@@ -385,15 +385,26 @@ export async function ensureOrganization(orgName: string): Promise<string> {
   const trimmed = orgName.trim();
   if (!trimmed) return "";
   try {
-    const existing = await getOrganization(trimmed);
-    return String(existing["name"] ?? trimmed);
-  } catch {
-    try {
-      const created = await createOrganization({ organization_name: trimmed });
-      return String(created["name"] ?? trimmed);
-    } catch {
-      return trimmed;
+    const matches = await listOrganizations({
+      search: trimmed,
+      searchField: "organization_name",
+      limit: 1,
+      start: 0,
+    });
+    const existing = matches.find(
+      (o) => String(o["organization_name"] ?? "").trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) {
+      return String(existing["name"] ?? trimmed);
     }
+  } catch {
+    // fall through to create
+  }
+  try {
+    const created = await createOrganization({ organization_name: trimmed });
+    return String(created["name"] ?? trimmed);
+  } catch {
+    return trimmed;
   }
 }
 

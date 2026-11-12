@@ -24,10 +24,7 @@ interface RecordTasksTabProps {
   referenceName: string;
 }
 
-export function RecordTasksTab({
-  referenceDoctype,
-  referenceName,
-}: RecordTasksTabProps) {
+export function RecordTasksTab({ referenceDoctype, referenceName }: RecordTasksTabProps) {
   const { data: tasks = [], isLoading } = useQuery(
     tasksListOptions({
       reference_doctype: referenceDoctype,
@@ -65,11 +62,11 @@ export function RecordTasksTab({
   function getPriorityColor(priority: string) {
     switch (priority?.toLowerCase()) {
       case "urgent":
-        return "bg-rose-500/10 text-rose-600 border-rose-200";
+        return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200";
       case "high":
-        return "bg-amber-500/10 text-amber-600 border-amber-200";
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200";
       case "medium":
-        return "bg-blue-500/10 text-blue-600 border-blue-200";
+        return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200";
       default:
         return "bg-muted text-muted-foreground border-border";
     }
@@ -166,9 +163,7 @@ export function RecordTasksTab({
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <button
-                    onClick={() =>
-                      toggleMutation.mutate({ name: t.name, currentStatus: t.status })
-                    }
+                    onClick={() => toggleMutation.mutate({ name: t.name, currentStatus: t.status })}
                     className="text-muted-foreground hover:text-primary cursor-pointer shrink-0"
                     title={isCompleted ? "Mark incomplete" : "Mark complete"}
                   >
@@ -203,7 +198,10 @@ export function RecordTasksTab({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${getPriorityColor(t.priority)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] h-4 px-1.5 ${getPriorityColor(t.priority)}`}
+                  >
                     {t.priority || "Medium"}
                   </Badge>
                   <button

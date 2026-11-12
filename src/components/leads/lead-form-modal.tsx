@@ -3,12 +3,7 @@ import { Loader2, Maximize2, Minimize2, X, User as UserIcon } from "lucide-react
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,12 +99,7 @@ const defaultFormData: FormDataState = {
   lead_owner: "",
 };
 
-export function LeadFormModal({
-  open,
-  onOpenChange,
-  lead,
-  initialValues,
-}: LeadFormModalProps) {
+export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadFormModalProps) {
   const isEdit = Boolean(lead);
   const docName = lead ? String(lead["name"]) : undefined;
   const saveMutation = useSaveLead();
@@ -154,13 +144,38 @@ export function LeadFormModal({
   }, [open, lead, initialValues, users]);
 
   const handleChange = (field: keyof FormDataState, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "email") {
+        const email = value.trim().toLowerCase();
+        if (email && email === (prev.lead_owner || "").trim().toLowerCase()) {
+          next.lead_owner = "";
+        }
+      }
+      if (field === "lead_owner") {
+        const owner = value.trim().toLowerCase();
+        if (owner && owner === (prev.email || "").trim().toLowerCase()) {
+          // keep selection but warn handled at submit
+        }
+      }
+      return next;
+    });
   };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!formData.first_name.trim()) {
       toast.error("Please provide First Name");
+      return;
+    }
+    if (
+      formData.lead_owner.trim() &&
+      formData.email.trim() &&
+      formData.lead_owner.trim().toLowerCase() === formData.email.trim().toLowerCase()
+    ) {
+      toast.error(
+        "Lead Owner cannot be the same as the Lead Email Address. Please choose a different owner.",
+      );
       return;
     }
 
@@ -187,7 +202,6 @@ export function LeadFormModal({
         name: docName,
         values: payload,
       });
-      toast.success(isEdit ? "Lead updated successfully" : "Lead created successfully");
       onOpenChange(false);
     } catch {
       // toast shown by hook
@@ -218,7 +232,11 @@ export function LeadFormModal({
               className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
               title={isFullscreen ? "Minimize" : "Maximize"}
             >
-              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="size-3.5" />
+              ) : (
+                <Maximize2 className="size-3.5" />
+              )}
             </Button>
             <Button
               type="button"

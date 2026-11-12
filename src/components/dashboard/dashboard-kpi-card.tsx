@@ -12,7 +12,7 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
     const suffix = data.suffix ?? "";
     const num = data.value;
     if (typeof num !== "number") return `${prefix}${num ?? 0}${suffix}`;
-    
+
     // Format with commas if large number
     const formattedNum = num.toLocaleString("en-PK");
     return `${prefix}${formattedNum}${suffix}`;
@@ -59,10 +59,10 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
           <div
             className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-all duration-150 ${
               isGood
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
                 : isBad
-                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                : "bg-muted text-muted-foreground border border-border"
+                  ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20"
+                  : "bg-muted text-muted-foreground border border-border"
             }`}
           >
             {isPositive && <TrendingUp className="h-3 w-3 stroke-[2.5]" />}

@@ -1,9 +1,4 @@
-import {
-  keepPreviousData,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
@@ -34,7 +29,10 @@ export function activityListOptions(variables: ActivityListVariables) {
   });
 }
 
-export function activityCountOptions(search: string, filters: Array<[string, string, string]> = []) {
+export function activityCountOptions(
+  search: string,
+  filters: Array<[string, string, string]> = [],
+) {
   return queryOptions({
     queryKey: [ACTIVITY_QUERY_ROOT, "count", search, filters],
     queryFn: () => api.countTasks(search, filters),

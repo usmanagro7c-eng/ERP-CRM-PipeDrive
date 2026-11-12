@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Bell,
   Building2,
   CalendarClock,
@@ -34,16 +35,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
+import { toggleTheme as toggleThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -59,22 +55,37 @@ const NAV_ITEMS = [
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
 ] as const;
 
-function NavLinks({
-  collapsed,
-  onItemClick,
-}: {
-  collapsed?: boolean;
-  onItemClick?: () => void;
-}) {
+/**
+ * The mock backend serves fake records. When the dev server runs against it the
+ * whole UI is flagged, so nobody mistakes seeded data for live CRM data.
+ */
+const IS_TEST_DATA = import.meta.env["VITE_TEST_DATA"] === "1";
+
+function TestDataBadge({ collapsed }: { collapsed?: boolean }) {
+  if (!IS_TEST_DATA) return null;
+  return (
+    <div
+      role="status"
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300",
+        collapsed && "justify-center px-1",
+      )}
+      title="This dev server is connected to the mock Frappe backend. The records below are generated test data, not live CRM data."
+    >
+      <AlertTriangle className="size-3 shrink-0" />
+      {!collapsed && <span className="truncate">TEST DATA · mock backend</span>}
+    </div>
+  );
+}
+
+function NavLinks({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="flex flex-col gap-0.5 px-2">
       {NAV_ITEMS.map((item) => {
         const active =
-          item.to === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.to);
+          item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
 
         return (
           <Link
@@ -119,10 +130,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   });
 
   function toggleTheme() {
-    if (typeof document !== "undefined") {
-      const isCurrentlyDark = document.documentElement.classList.toggle("dark");
-      setIsDark(isCurrentlyDark);
-    }
+    setIsDark(toggleThemeMode() === "dark");
   }
 
   async function signOut() {
@@ -144,10 +152,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         >
           {/* Brand Icon */}
           <div className="flex size-7 items-center justify-center rounded-lg bg-pink-600 text-white shrink-0 shadow-xs">
-            <svg
-              className="size-4 fill-current"
-              viewBox="0 0 24 24"
-            >
+            <svg className="size-4 fill-current" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
@@ -174,7 +179,10 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => void signOut()} className="cursor-pointer gap-2 text-destructive">
+        <DropdownMenuItem
+          onClick={() => void signOut()}
+          className="cursor-pointer gap-2 text-destructive"
+        >
           <LogOut className="size-3.5" />
           <span>Sign Out</span>
         </DropdownMenuItem>
@@ -187,6 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
@@ -200,6 +209,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Workspace Switcher Header */}
         <div className="px-2 pt-2.5 pb-1">
           <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+
+        <div className="px-2 pb-1">
+          <TestDataBadge collapsed={collapsed} />
         </div>
 
         {/* Quick Actions (Search & Notifications) */}
@@ -280,31 +293,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main App Content Area */}
       <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
         {/* Mobile Header (Only visible on screens < md) */}
-        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background px-4 py-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8">
-                  <Menu className="size-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 flex flex-col bg-[#fafafa] dark:bg-[#141416]">
-                <SheetHeader className="p-3 border-b border-border">
-                  <SheetTitle className="sr-only">Navigation</SheetTitle>
-                  <WorkspaceSwitcher />
-                </SheetHeader>
-                <nav className="flex-1 overflow-y-auto py-3">
-                  <NavLinks onItemClick={() => setMobileOpen(false)} />
-                </nav>
-              </SheetContent>
-            </Sheet>
-
-            <div className="flex items-center gap-1.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-pink-600 text-white font-bold text-xs">
-                C
-              </div>
-              <span className="text-xs font-semibold">AgroCRM</span>
+        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 py-2 shrink-0 safe-top">
+          <div className="flex items-center gap-1.5">
+            <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+              C
             </div>
+            <span className="text-sm font-semibold">AgroCRM</span>
+            <TestDataBadge />
           </div>
 
           <div className="flex items-center gap-1">
@@ -312,7 +307,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={() => setCommandOpen(true)}
-              className="size-8 text-muted-foreground"
+              className="size-9 text-muted-foreground"
+              aria-label="Search"
             >
               <Search className="size-4" />
             </Button>
@@ -321,6 +317,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page Children (Starts directly at page top without redundant desktop header) */}
         <main className="min-w-0 flex-1 h-full overflow-hidden flex flex-col">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <nav
+          className="md:hidden shrink-0 border-t border-border bg-background/95 backdrop-blur safe-bottom"
+          aria-label="Mobile"
+        >
+          <div className="flex items-center justify-around px-1 py-1">
+            {[
+              { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+              { label: "Leads", to: "/leads", icon: Target },
+              { label: "Deals", to: "/deals", icon: Columns3 },
+              { label: "Contacts", to: "/contacts", icon: Users },
+            ].map((item) => {
+              const active =
+                item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors min-h-[44px]",
+                    active ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  <item.icon className="size-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-muted-foreground min-h-[44px]"
+                  aria-label="More"
+                >
+                  <Menu className="size-5" />
+                  <span>More</span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[80vh] p-0 flex flex-col">
+                <SheetHeader className="p-3 border-b border-border">
+                  <SheetTitle className="sr-only">More navigation</SheetTitle>
+                  <WorkspaceSwitcher />
+                </SheetHeader>
+                <nav className="flex-1 overflow-y-auto py-3">
+                  <NavLinks onItemClick={() => setMobileOpen(false)} />
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </nav>
       </div>
 
       {/* Global Command Palette Dialog */}

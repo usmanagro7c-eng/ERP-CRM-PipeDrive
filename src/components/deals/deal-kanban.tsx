@@ -148,9 +148,7 @@ export function DealKanban({
     for (const row of rows) {
       const val = row[groupBy];
       const key =
-        typeof val === "string" && val.trim() && map.has(val.trim())
-          ? val.trim()
-          : UNASSIGNED_KEY;
+        typeof val === "string" && val.trim() && map.has(val.trim()) ? val.trim() : UNASSIGNED_KEY;
       const list = map.get(key);
       if (list) list.push(row);
       else map.set(key, [row]);
@@ -176,10 +174,7 @@ export function DealKanban({
 
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
-    return (
-      stageKey.toLowerCase().includes("lost") ||
-      stage?.type?.toLowerCase() === "lost"
-    );
+    return stageKey.toLowerCase().includes("lost") || stage?.type?.toLowerCase() === "lost";
   }
 
   const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
@@ -199,7 +194,7 @@ export function DealKanban({
     }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
     setMovingDeals((prev) => ({ ...prev, [dealName]: targetColKey }));
-    
+
     // Check if target stage is "Won"
     if (targetColKey.toLowerCase().includes("won")) {
       triggerConfetti();
@@ -228,7 +223,7 @@ export function DealKanban({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectTrigger aria-label="Group deals by" className="h-8 w-44 text-xs">
               <SelectValue placeholder="Group by field..." />
             </SelectTrigger>
             <SelectContent>
@@ -293,9 +288,7 @@ export function DealKanban({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
-                    <h3 className="font-semibold text-xs text-foreground truncate">
-                      {col.label}
-                    </h3>
+                    <h3 className="font-semibold text-xs text-foreground truncate">{col.label}</h3>
                     <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-mono">
                       {deals.length}
                     </Badge>
@@ -337,7 +330,7 @@ export function DealKanban({
                 ) : deals.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                     <p className="italic">No deals here</p>
-                    <p className="text-[10px] opacity-75">Drag deals to move</p>
+                    <p className="text-[10px] text-muted-foreground">Drag deals to move</p>
                   </div>
                 ) : (
                   deals.map((deal) => {
@@ -370,7 +363,9 @@ export function DealKanban({
                         onClick={() => onRowClick?.(name)}
                         className={cn(
                           "group relative overflow-hidden rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 cursor-grab active:cursor-grabbing active:scale-[0.98] shrink-0",
-                          draggedDealName === name ? "opacity-40 border-dashed" : "border-border/80",
+                          draggedDealName === name
+                            ? "opacity-40 border-dashed"
+                            : "border-border/80",
                           isMoving && "pointer-events-none ring-2 ring-primary/40",
                         )}
                       >
@@ -378,7 +373,9 @@ export function DealKanban({
                           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-md bg-background/85 backdrop-blur-xs p-2 text-center animate-in fade-in duration-200">
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-[11px] font-semibold text-primary shadow-xs">
                               <Loader2 className="size-3.5 animate-spin text-primary" />
-                              <span className="truncate max-w-[170px]">Moving to {movingTo}...</span>
+                              <span className="truncate max-w-[170px]">
+                                Moving to {movingTo}...
+                              </span>
                             </div>
                           </div>
                         )}
@@ -396,16 +393,14 @@ export function DealKanban({
                             </div>
                           </div>
 
-                          <div
-                            className="shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                                  aria-label="More actions"
                                 >
                                   <MoreVertical className="size-3.5" />
                                 </Button>
@@ -484,7 +479,7 @@ export function DealKanban({
 
                         {/* Bottom row: Close date & Owner */}
                         <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
-                          {Boolean(closeDate) ? (
+                          {closeDate ? (
                             <div className="flex items-center gap-1">
                               <Calendar className="size-3 opacity-70" />
                               <span>{String(closeDate)}</span>

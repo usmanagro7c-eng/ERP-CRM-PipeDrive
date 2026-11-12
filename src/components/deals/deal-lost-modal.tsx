@@ -89,9 +89,7 @@ export function DealLostModal({
         });
       }
       toast.success(
-        dealNames.length > 1
-          ? `Marked ${dealNames.length} deals as Lost`
-          : "Deal marked as Lost",
+        dealNames.length > 1 ? `Marked ${dealNames.length} deals as Lost` : "Deal marked as Lost",
       );
       onOpenChange(false);
       onSuccess?.();
@@ -111,7 +109,8 @@ export function DealLostModal({
             Mark Deal as Lost
           </DialogTitle>
           <DialogDescription>
-            Frappe CRM requires a reason when marking deals as Lost. Please specify why this deal was lost.
+            Frappe CRM requires a reason when marking deals as Lost. Please specify why this deal
+            was lost.
           </DialogDescription>
         </DialogHeader>
 

@@ -37,3 +37,12 @@ dist-ssr
 
 # Playwright MCP artifacts
 .playwright-mcp/
+node_modules_old/
+.agents/skills/
+test-results/
+playwright-report/
+
+# Lighthouse / UI audit output
+ui-audit/lighthouse/
+.ui-audit-cache/
+

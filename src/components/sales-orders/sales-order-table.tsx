@@ -30,10 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useSubmitSalesOrder,
-  type SalesOrder,
-} from "@/hooks/use-sales-orders";
+import { useSubmitSalesOrder, type SalesOrder } from "@/hooks/use-sales-orders";
 
 interface SalesOrderTableProps {
   rows: SalesOrder[];
@@ -46,7 +43,10 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
   const s = (status || "Draft").toLowerCase();
   if (s.includes("completed")) {
     return (
-      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium gap-1">
+      <Badge
+        variant="outline"
+        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[11px] font-medium gap-1"
+      >
         <Check className="size-3" />
         <span>Completed</span>
       </Badge>
@@ -54,7 +54,10 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
   }
   if (s.includes("deliver") || s.includes("bill")) {
     return (
-      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium gap-1">
+      <Badge
+        variant="outline"
+        className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-[11px] font-medium gap-1"
+      >
         <Clock className="size-3" />
         <span>{status}</span>
       </Badge>
@@ -62,7 +65,10 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
   }
   if (s === "cancelled" || s === "closed") {
     return (
-      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium">
+      <Badge
+        variant="outline"
+        className="bg-destructive/10 text-destructive border-destructive/30 text-[11px] font-medium"
+      >
         {status}
       </Badge>
     );
@@ -148,12 +154,22 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead className="w-[200px] min-w-[190px] text-xs font-semibold">Order ID</TableHead>
+            <TableHead className="w-[200px] min-w-[190px] text-xs font-semibold">
+              Order ID
+            </TableHead>
             <TableHead className="text-xs font-semibold min-w-[160px]">Customer</TableHead>
-            <TableHead className="w-[110px] min-w-[100px] text-xs font-semibold whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-[140px] min-w-[130px] text-xs font-semibold whitespace-nowrap">Grand Total</TableHead>
-            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] text-xs font-semibold whitespace-nowrap">Delivery Date</TableHead>
-            <TableHead className="hidden sm:table-cell w-[120px] min-w-[110px] text-xs font-semibold whitespace-nowrap">Order Date</TableHead>
+            <TableHead className="w-[110px] min-w-[100px] text-xs font-semibold whitespace-nowrap">
+              Status
+            </TableHead>
+            <TableHead className="w-[140px] min-w-[130px] text-xs font-semibold whitespace-nowrap">
+              Grand Total
+            </TableHead>
+            <TableHead className="hidden md:table-cell w-[130px] min-w-[120px] text-xs font-semibold whitespace-nowrap">
+              Delivery Date
+            </TableHead>
+            <TableHead className="hidden sm:table-cell w-[120px] min-w-[110px] text-xs font-semibold whitespace-nowrap">
+              Order Date
+            </TableHead>
             <TableHead className="w-[70px] text-right text-xs font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -235,9 +251,9 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                       {isDraft && (
                         <DropdownMenuItem
                           onClick={() => handleSubmit(row)}
-                          className="gap-2 cursor-pointer text-emerald-600 font-medium"
+                          className="gap-2 cursor-pointer text-emerald-700 dark:text-emerald-400 font-medium"
                         >
-                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                          <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
                           <span>Submit Order</span>
                         </DropdownMenuItem>
                       )}

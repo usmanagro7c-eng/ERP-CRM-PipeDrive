@@ -128,7 +128,7 @@ function ActivitiesPage() {
     enabled: Boolean(meta),
   });
 
-  const total = countQuery.data ?? (listQuery.data?.length ?? 0);
+  const total = countQuery.data ?? listQuery.data?.length ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
   const error = metaQuery.error ?? listQuery.error;
@@ -202,7 +202,10 @@ function ActivitiesPage() {
         {/* Left Filters */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Title Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative min-w-[90px] w-28 sm:w-48 shrink-0">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative min-w-[90px] w-28 sm:w-48 shrink-0"
+          >
             <Input
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
@@ -216,7 +219,10 @@ function ActivitiesPage() {
             value={search.priority ?? "all"}
             onValueChange={(val) => handleFilterChange("priority", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by priority"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -236,7 +242,10 @@ function ActivitiesPage() {
             value={search.assigned_to ?? "all"}
             onValueChange={(val) => handleFilterChange("assigned_to", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-24 sm:w-32 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by assigned to"
+              className="h-7 text-xs w-24 sm:w-32 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Assigned To" />
             </SelectTrigger>
             <SelectContent className="max-h-56">
@@ -259,7 +268,10 @@ function ActivitiesPage() {
             value={search.status ?? "all"}
             onValueChange={(val) => handleFilterChange("status", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>

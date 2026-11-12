@@ -62,13 +62,13 @@ function QuotationStatusBadge({ status }: { status?: string }) {
   let badgeClass = "bg-muted text-muted-foreground border-border/60";
 
   if (s === "open") {
-    badgeClass = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30";
+    badgeClass = "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30";
   } else if (s === "ordered") {
-    badgeClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+    badgeClass = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
   } else if (s === "replied") {
-    badgeClass = "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
+    badgeClass = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30";
   } else if (s === "lost" || s === "cancelled") {
-    badgeClass = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    badgeClass = "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30";
   }
 
   return (
@@ -111,7 +111,7 @@ function QuotationDetailPage() {
   if (isError || !quotation) {
     return (
       <div className="flex h-[calc(100vh-60px)] flex-col items-center justify-center bg-background gap-3">
-        <div className="size-12 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center">
+        <div className="size-12 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center justify-center">
           <FileText className="size-6" />
         </div>
         <h2 className="text-base font-semibold text-foreground">Quotation not found</h2>
@@ -204,7 +204,12 @@ function QuotationDetailPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                aria-label="More actions"
+              >
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -213,8 +218,13 @@ function QuotationDetailPage() {
                 <RefreshCw className="size-3.5 mr-2" /> Refresh
               </DropdownMenuItem>
               {isDraft && (
-                <DropdownMenuItem onClick={handleSubmit} disabled={submitMutation.isPending} className="cursor-pointer">
-                  <CheckCircle2 className="size-3.5 mr-2 text-emerald-600" /> Submit
+                <DropdownMenuItem
+                  onClick={handleSubmit}
+                  disabled={submitMutation.isPending}
+                  className="cursor-pointer"
+                >
+                  <CheckCircle2 className="size-3.5 mr-2 text-emerald-700 dark:text-emerald-400" />{" "}
+                  Submit
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setEditModalOpen(true)} className="cursor-pointer">
@@ -248,7 +258,7 @@ function QuotationDetailPage() {
               {submitMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
               ) : (
-                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
               )}
               <span>Submit</span>
             </Button>
@@ -283,6 +293,7 @@ function QuotationDetailPage() {
                 variant="ghost"
                 size="icon"
                 className="size-7 text-muted-foreground cursor-pointer shrink-0"
+                aria-label="More actions"
               >
                 <MoreVertical className="size-3.5" />
               </Button>
@@ -297,7 +308,7 @@ function QuotationDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setSalesOrderModalOpen(true)}
-                className="cursor-pointer gap-2 font-medium text-emerald-600 dark:text-emerald-400"
+                className="cursor-pointer gap-2 font-medium text-emerald-700 dark:text-emerald-400"
               >
                 <ShoppingCart className="size-3.5" />
                 <span>Convert to Sales Order</span>
@@ -305,7 +316,7 @@ function QuotationDetailPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleDelete}
-                className="cursor-pointer gap-2 text-rose-600 focus:text-rose-600"
+                className="cursor-pointer gap-2 text-rose-700 dark:text-rose-400 focus:text-rose-700 dark:text-rose-400"
               >
                 <Trash2 className="size-3.5" />
                 <span>Delete Quotation</span>
@@ -333,7 +344,10 @@ function QuotationDetailPage() {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <Building2 className="size-3.5 text-muted-foreground/70" />
-                    <span>Customer: <strong className="text-foreground">{quotation.party_name || "-"}</strong></span>
+                    <span>
+                      Customer:{" "}
+                      <strong className="text-foreground">{quotation.party_name || "-"}</strong>
+                    </span>
                   </div>
 
                   {quotation.crm_deal && (
@@ -353,13 +367,18 @@ function QuotationDetailPage() {
 
                   <div className="flex items-center gap-1.5">
                     <Calendar className="size-3.5 text-muted-foreground/70" />
-                    <span>Date: <span className="text-foreground">{quotation.transaction_date || "-"}</span></span>
+                    <span>
+                      Date:{" "}
+                      <span className="text-foreground">{quotation.transaction_date || "-"}</span>
+                    </span>
                   </div>
 
                   {quotation.valid_till && (
                     <div className="flex items-center gap-1.5">
                       <Clock className="size-3.5 text-muted-foreground/70" />
-                      <span>Valid Till: <span className="text-foreground">{quotation.valid_till}</span></span>
+                      <span>
+                        Valid Till: <span className="text-foreground">{quotation.valid_till}</span>
+                      </span>
                     </div>
                   )}
                 </div>
@@ -409,13 +428,18 @@ function QuotationDetailPage() {
                         <TableHead className="min-w-[180px]">Item Code / Name</TableHead>
                         <TableHead className="text-right w-[90px]">Qty</TableHead>
                         <TableHead className="text-right min-w-[110px]">Rate (PKR)</TableHead>
-                        <TableHead className="text-right min-w-[120px] pr-4">Amount (PKR)</TableHead>
+                        <TableHead className="text-right min-w-[120px] pr-4">
+                          Amount (PKR)
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-xs text-muted-foreground">
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-8 text-xs text-muted-foreground"
+                          >
                             No items in this quotation. Click "Edit" to add line items.
                           </TableCell>
                         </TableRow>
@@ -428,24 +452,33 @@ function QuotationDetailPage() {
                             <TableCell className="py-3">
                               <div className="font-semibold text-foreground">{it.item_code}</div>
                               {it.item_name && it.item_name !== it.item_code && (
-                                <div className="text-[11px] text-muted-foreground">{it.item_name}</div>
-                              )}
-                              {it.description && typeof it.description === "string" && it.description !== it.item_name && (
-                                <div className="text-[10px] text-muted-foreground/80 line-clamp-1 mt-0.5">
-                                  {it.description}
+                                <div className="text-[11px] text-muted-foreground">
+                                  {it.item_name}
                                 </div>
                               )}
+                              {it.description &&
+                                typeof it.description === "string" &&
+                                it.description !== it.item_name && (
+                                  <div className="text-[10px] text-muted-foreground/80 line-clamp-1 mt-0.5">
+                                    {it.description}
+                                  </div>
+                                )}
                             </TableCell>
                             <TableCell className="py-3 text-right font-medium text-foreground">
                               {Number(it.qty || 0).toLocaleString()}
                             </TableCell>
                             <TableCell className="py-3 text-right font-mono text-muted-foreground">
-                              {Number(it.rate || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="py-3 text-right font-mono font-semibold text-foreground pr-4">
-                              {Number(it.amount || (it.qty * it.rate) || 0).toLocaleString(undefined, {
+                              {Number(it.rate || 0).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                               })}
+                            </TableCell>
+                            <TableCell className="py-3 text-right font-mono font-semibold text-foreground pr-4">
+                              {Number(it.amount || it.qty * it.rate || 0).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                },
+                              )}
                             </TableCell>
                           </TableRow>
                         ))
@@ -464,7 +497,10 @@ function QuotationDetailPage() {
                     <div className="flex justify-between w-full sm:w-64 text-muted-foreground">
                       <span>Net Total:</span>
                       <strong className="text-foreground">
-                        PKR {Number(quotation.net_total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        PKR{" "}
+                        {Number(quotation.net_total).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </strong>
                     </div>
                   ) : null}
@@ -482,12 +518,13 @@ function QuotationDetailPage() {
             <div className="space-y-6">
               {/* Conversion Highlight Card */}
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 p-5 shadow-xs space-y-3">
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold text-sm">
                   <ShoppingCart className="size-4" />
                   <span>Convert to Sales Order</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Ready to book this order? Transfer all line items and customer details directly into an ERPNext Sales Order with 1 click.
+                  Ready to book this order? Transfer all line items and customer details directly
+                  into an ERPNext Sales Order with 1 click.
                 </p>
                 <Button
                   size="sm"
@@ -512,13 +549,19 @@ function QuotationDetailPage() {
                   </div>
 
                   <div>
-                    <span className="text-muted-foreground block text-[11px]">Customer / Party</span>
-                    <span className="font-semibold text-foreground">{quotation.party_name || "-"}</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Customer / Party
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {quotation.party_name || "-"}
+                    </span>
                   </div>
 
                   {quotation.crm_deal && (
                     <div>
-                      <span className="text-muted-foreground block text-[11px]">Linked CRM Deal</span>
+                      <span className="text-muted-foreground block text-[11px]">
+                        Linked CRM Deal
+                      </span>
                       <Link
                         to="/deals/$dealId"
                         params={{ dealId: quotation.crm_deal }}
@@ -538,7 +581,9 @@ function QuotationDetailPage() {
                   </div>
 
                   <div>
-                    <span className="text-muted-foreground block text-[11px]">Transaction Date</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Transaction Date
+                    </span>
                     <span className="text-foreground">{quotation.transaction_date || "-"}</span>
                   </div>
 

@@ -50,6 +50,14 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
+  --color-won: var(--won);
+  --color-won-foreground: var(--won-foreground);
+  --color-lost: var(--lost);
+  --color-lost-foreground: var(--lost-foreground);
+  --color-open: var(--open);
+  --color-open-foreground: var(--open-foreground);
+  --color-overdue: var(--overdue);
+  --color-overdue-foreground: var(--overdue-foreground);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -71,12 +79,15 @@
   --card-foreground: oklch(0.24 0.02 160);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.24 0.02 160);
-  --primary: oklch(0.56 0.115 158);
+  /* L 0.51 keeps white text on the brand green at 5.2:1 and the green on its
+     own 10% tint at 4.75:1 (WCAG AA). */
+  --primary: oklch(0.51 0.115 158);
   --primary-foreground: oklch(0.985 0.01 150);
   --secondary: oklch(0.962 0.008 150);
   --secondary-foreground: oklch(0.32 0.03 158);
   --muted: oklch(0.962 0.008 150);
-  --muted-foreground: oklch(0.52 0.02 155);
+  /* L 0.50 keeps the muted text readable on the muted surfaces too (4.7:1). */
+  --muted-foreground: oklch(0.5 0.02 155);
   --accent: oklch(0.945 0.035 152);
   --accent-foreground: oklch(0.36 0.07 155);
   --destructive: oklch(0.577 0.245 27.325);
@@ -84,6 +95,14 @@
   --border: oklch(0.916 0.012 150);
   --input: oklch(0.916 0.012 150);
   --ring: oklch(0.62 0.1 158);
+  --won: oklch(0.62 0.17 150);
+  --won-foreground: oklch(0.985 0.01 150);
+  --lost: oklch(0.6 0.22 25);
+  --lost-foreground: oklch(0.985 0.01 25);
+  --open: oklch(0.6 0.16 250);
+  --open-foreground: oklch(0.985 0.01 250);
+  --overdue: oklch(0.78 0.15 75);
+  --overdue-foreground: oklch(0.2 0.05 75);
   --chart-1: oklch(0.56 0.115 158);
   --chart-2: oklch(0.65 0.1 130);
   --chart-3: oklch(0.45 0.08 165);
@@ -91,7 +110,7 @@
   --chart-5: oklch(0.52 0.12 95);
   --sidebar: oklch(0.99 0.004 150);
   --sidebar-foreground: oklch(0.24 0.02 160);
-  --sidebar-primary: oklch(0.56 0.115 158);
+  --sidebar-primary: oklch(0.51 0.115 158);
   --sidebar-primary-foreground: oklch(0.985 0.01 150);
   --sidebar-accent: oklch(0.945 0.035 152);
   --sidebar-accent-foreground: oklch(0.36 0.07 155);
@@ -119,6 +138,14 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.62 0.1 158);
+  --won: oklch(0.7 0.15 150);
+  --won-foreground: oklch(0.17 0.015 160);
+  --lost: oklch(0.72 0.19 25);
+  --lost-foreground: oklch(0.985 0.01 25);
+  --open: oklch(0.7 0.15 250);
+  --open-foreground: oklch(0.17 0.015 160);
+  --overdue: oklch(0.8 0.14 75);
+  --overdue-foreground: oklch(0.17 0.015 75);
   --chart-1: oklch(0.68 0.13 158);
   --chart-2: oklch(0.72 0.11 130);
   --chart-3: oklch(0.6 0.09 165);
@@ -190,7 +217,8 @@
 }
 
 @keyframes subtle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -201,7 +229,8 @@
 }
 
 @keyframes float-subtle {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -222,16 +251,23 @@
 }
 
 .card-interactive {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .card-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.03);
 }
 
 .dark .card-interactive:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(0, 0, 0, 0.25);
 }
 
 /* Custom smooth loading animations */
@@ -254,7 +290,8 @@
 }
 
 @keyframes pulse-ring {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(0.92);
     opacity: 0.7;
   }
@@ -289,3 +326,16 @@
   animation: shimmer 2s infinite;
 }
 
+/* Safe area helpers for mobile */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+.safe-right {
+  padding-right: env(safe-area-inset-right);
+}

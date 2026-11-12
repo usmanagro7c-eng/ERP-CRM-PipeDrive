@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --strictPort",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
@@ -13,7 +13,12 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:secrets": "node scripts/check-secrets.mjs"
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "mock": "node scripts/mock-frappe.mjs",
+    "dev:test": "node scripts/dev-test.mjs",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
+    "audit:lighthouse": "node scripts/run-lighthouse.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -74,8 +79,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@cloudflare/vite-plugin": "^1.68.0",
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.65.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",
@@ -96,5 +103,10 @@
     "vite": "8.1.5",
     "vitest": "^4.1.10",
     "wrangler": "^4.160.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261103.1": true,
+    "workerd@1.20261110.1": true,
+    "esbuild@0.28.2": true
   }
 }

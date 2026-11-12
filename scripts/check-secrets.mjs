@@ -27,14 +27,21 @@ export const IGNORED_DIRECTORIES = new Set([
   ".tanstack",
   ".playwright-mcp",
   "dist",
+  "playwright-report",
+  "test-results",
   "node_modules",
+  "node_modules_old",
   "coverage",
   ".next",
+  ".agents",
+  ".ui-audit-cache",
+  "ui-audit",
 ]);
 
 /** Files that are allowed to contain hashes / lock file integrity values. */
 export const IGNORED_FILES = new Set([
   "package-lock.json",
+  "skills-lock.json",
   "pnpm-lock.yaml",
   "yarn.lock",
   // Local, never committed: real values live here.

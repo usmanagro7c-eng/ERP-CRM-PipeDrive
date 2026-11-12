@@ -30,9 +30,7 @@ export function MoveToSubmenu({
 
   return (
     <DropdownMenuSub onOpenChange={(open) => !open && setSearch("")}>
-      <DropdownMenuSubTrigger className="cursor-pointer">
-        {label}
-      </DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger className="cursor-pointer">{label}</DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-56 p-0 text-xs shadow-lg">
         {/* Search Bar (Sticky at top) */}
         <div className="sticky top-0 z-10 border-b bg-popover p-1.5">
@@ -64,9 +62,7 @@ export function MoveToSubmenu({
           )}
 
           {filtered.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted-foreground">
-              No matches found
-            </div>
+            <div className="p-3 text-center text-xs text-muted-foreground">No matches found</div>
           ) : (
             filtered.map((item) => {
               const isCurrent = currentValue === item.value || currentValue === item.key;

@@ -52,4 +52,15 @@ describe("applySecurityHeaders", () => {
       expect(headers.get(name)).toBe(value);
     }
   });
+
+  it("denies powerful features without deprecated policy tokens", () => {
+    const headers = new Headers();
+    applySecurityHeaders(headers);
+    const policy = headers.get("Permissions-Policy") ?? "";
+    expect(policy).toContain("camera=()");
+    expect(policy).toContain("microphone=()");
+    expect(policy).toContain("geolocation=()");
+    // Chrome removed FLoC; the token only produces an "Unrecognized feature" warning.
+    expect(policy).not.toContain("interest-cohort");
+  });
 });

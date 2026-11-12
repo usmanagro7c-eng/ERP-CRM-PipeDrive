@@ -52,12 +52,7 @@ export function ContactStatusBadge({
   const value = status || "Passive";
   const style = getContactStatusStyle(value);
 
-  const Icon =
-    value === "Open"
-      ? CheckCircle2
-      : value === "Replied"
-        ? MessageSquareQuote
-        : Clock;
+  const Icon = value === "Open" ? CheckCircle2 : value === "Replied" ? MessageSquareQuote : Clock;
 
   return (
     <Badge

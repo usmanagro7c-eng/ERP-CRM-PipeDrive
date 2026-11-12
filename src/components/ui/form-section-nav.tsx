@@ -23,12 +23,7 @@ export function FormSectionNav({
   if (pages.length <= 1) return null;
 
   return (
-    <div
-      className={cn(
-        "border-b bg-muted/30 p-2 sm:px-6 sm:py-2.5",
-        className,
-      )}
-    >
+    <div className={cn("border-b bg-muted/30 p-2 sm:px-6 sm:py-2.5", className)}>
       <div
         className={cn(
           "grid w-full gap-1.5 sm:gap-2",
@@ -81,7 +76,7 @@ export function FormSectionNav({
                   isActive
                     ? "bg-primary-foreground/20 text-primary-foreground"
                     : isCompleted
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
                       : "bg-muted text-muted-foreground",
                 )}
               >

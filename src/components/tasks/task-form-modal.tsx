@@ -32,12 +32,7 @@ interface TaskFormModalProps {
   } | null;
 }
 
-export function TaskFormModal({
-  open,
-  onOpenChange,
-  task,
-  initialValues,
-}: TaskFormModalProps) {
+export function TaskFormModal({ open, onOpenChange, task, initialValues }: TaskFormModalProps) {
   const saveMutation = useSaveTask();
 
   const [title, setTitle] = useState("");

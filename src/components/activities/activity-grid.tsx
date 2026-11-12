@@ -20,10 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ActivityStatusBadge,
-  ActivityPriorityBadge,
-} from "@/components/activities/activity-badge";
+import { ActivityStatusBadge, ActivityPriorityBadge } from "@/components/activities/activity-badge";
 import { useSaveActivity, useDeleteActivity, type FrappeDocTypeMeta } from "@/hooks/use-activities";
 import { cn } from "@/lib/utils";
 
@@ -129,7 +126,7 @@ export function ActivityGrid({
                     title={isDone ? "Mark as Todo" : "Mark as Done"}
                   >
                     {isDone ? (
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" />
                     ) : (
                       <Circle className="size-4 opacity-50 group-hover:opacity-100" />
                     )}
@@ -144,22 +141,18 @@ export function ActivityGrid({
                     >
                       {title}
                     </h4>
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      #{name}
-                    </span>
+                    <span className="font-mono text-[11px] text-muted-foreground">#{name}</span>
                   </div>
                 </div>
 
-                <div
-                  className="shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                       </Button>
@@ -197,9 +190,7 @@ export function ActivityGrid({
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
                           if (
-                            window.confirm(
-                              `Are you sure you want to delete activity #${name}?`,
-                            )
+                            window.confirm(`Are you sure you want to delete activity #${name}?`)
                           ) {
                             void deleteMutation.mutate(name);
                           }

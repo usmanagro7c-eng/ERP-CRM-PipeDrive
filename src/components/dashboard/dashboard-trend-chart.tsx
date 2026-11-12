@@ -46,7 +46,10 @@ function CustomGlassTooltip({ active, payload, label }: CustomTooltipProps) {
       {payload.map((item, i) => (
         <div key={i} className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+            <span
+              className="size-2 rounded-full shrink-0"
+              style={{ backgroundColor: item.color }}
+            />
             <span className="text-muted-foreground truncate max-w-[100px]">{item.name}</span>
           </div>
           <span className="font-mono font-bold text-foreground">
@@ -59,10 +62,7 @@ function CustomGlassTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
-  const seriesNames = useMemo(
-    () => (data.series || []).map((s) => s.name),
-    [data.series],
-  );
+  const seriesNames = useMemo(() => (data.series || []).map((s) => s.name), [data.series]);
 
   // Active series toggle state
   const [activeSeries, setActiveSeries] = useState<Record<string, boolean>>(() => {
@@ -81,21 +81,21 @@ export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
   };
 
   const xKey = data.xAxis?.key || "date";
-  const hasData = (data.data || []).length > 0 && data.data.some((row) =>
-    seriesNames.some((s) => {
-      const v = row[s];
-      return v !== null && v !== undefined && v !== "" && Number(v) > 0;
-    }),
-  );
+  const hasData =
+    (data.data || []).length > 0 &&
+    data.data.some((row) =>
+      seriesNames.some((s) => {
+        const v = row[s];
+        return v !== null && v !== undefined && v !== "" && Number(v) > 0;
+      }),
+    );
 
   return (
     <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
       {/* Title & Subtitle */}
       <div>
         <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
-        {data.subtitle && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>
-        )}
+        {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
       {/* Chart Canvas */}

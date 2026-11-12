@@ -57,6 +57,9 @@ for (let i = 1; i <= 10; i++) items.push({ name: `ITEM-${String(i).padStart(3, "
 
 for (let i = 1; i <= 12; i++) quotations.push({ name: `QUO-${String(i).padStart(3, "0")}`, party_name: orgs[i % orgs.length].organization_name, customer_name: orgs[i % orgs.length].organization_name, quotation_to: "Customer", transaction_date: daysAgo(i), valid_till: daysAgo(-14), order_type: "Sales", company: "AGROVISIONS", currency: "PKR", selling_price_list: "Standard Selling", status: i % 3 === 0 ? "Open" : "Draft", docstatus: 0, grand_total: i * 5000 + 99.99, net_total: i * 4500, total_qty: i, crm_deal: deals[i % deals.length].name, items: [{ item_code: items[0].item_code, item_name: items[0].item_name, qty: i, rate: items[0].standard_rate, amount: i * items[0].standard_rate }], creation: now(), modified: now() });
 
+files.push({ name: "FILE-001", file_name: "sample.png", file_url: "/files/sample.png", file_size: 1234, attached_to_doctype: "CRM Lead", attached_to_name: leads[0].name, creation: now() });
+files.push({ name: "FILE-002", file_name: "sample2.png", file_url: "/files/sample2.png", file_size: 5678, attached_to_doctype: "CRM Deal", attached_to_name: deals[0].name, creation: now() });
+
 for (let i = 1; i <= 8; i++) salesOrders.push({ name: `SO-${String(i).padStart(3, "0")}`, customer: orgs[i % orgs.length].organization_name, customer_name: orgs[i % orgs.length].organization_name, company: "AGROVISIONS", transaction_date: daysAgo(i), delivery_date: daysAgo(-7), order_type: "Sales", currency: "PKR", selling_price_list: "Standard Selling", status: "Draft", docstatus: 0, grand_total: i * 7000 + 50, net_total: i * 6500, total_qty: i, items: [{ item_code: items[0].item_code, item_name: items[0].item_name, qty: i, rate: items[0].standard_rate, amount: i * items[0].standard_rate, delivery_date: daysAgo(-7) }], creation: now(), modified: now() });
 
 function send(res, status, body, headers = {}) {
@@ -211,6 +214,10 @@ const server = http.createServer((req, res) => {
   if (url.pathname.startsWith("/api/resource/")) { handleResource(req, res, url).catch((e) => { console.error(e); send(res, 500, { message: String(e) }); }); return; }
   if (url.pathname.startsWith("/api/method/")) { handleMethod(req, res, url).catch((e) => { console.error(e); send(res, 500, { message: String(e) }); }); return; }
   if (url.pathname === "/") return send(res, 200, { status: "mock-frappe ok" });
+  if (url.pathname.startsWith("/files/") || url.pathname.startsWith("/private/files/")) {
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "public, max-age=3600" });
+    return res.end(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64"));
+  }
   notFound(res);
 });
 

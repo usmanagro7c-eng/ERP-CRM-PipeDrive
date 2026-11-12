@@ -1156,6 +1156,20 @@ export async function listAttachments(
   }
 }
 
+/** Normalize a Frappe file URL into an app-origin proxied path. */
+export function proxiedFileUrl(fileUrl: string | null | undefined): string {
+  if (!fileUrl) return "";
+  try {
+    if (/^https?:\/\//i.test(fileUrl)) {
+      const u = new URL(fileUrl);
+      return u.pathname + u.search;
+    }
+  } catch {
+    // fall through
+  }
+  return fileUrl;
+}
+
 export async function deleteAttachment(name: string): Promise<void> {
   await proxyRequest(`api/resource/${FILE_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "DELETE",

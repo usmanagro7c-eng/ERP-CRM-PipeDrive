@@ -32,6 +32,7 @@ import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
 import { Route as ApiFrappeSplatRouteImport } from './routes/api/frappe/$'
+import { Route as PrivateFilesSplatRouteImport } from './routes/private.files.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +149,11 @@ const ApiFrappeSplatRoute = ApiFrappeSplatRouteImport.update({
   path: '/api/frappe/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivateFilesSplatRoute = PrivateFilesSplatRouteImport.update({
+  id: '/private/files/$',
+  path: '/private/files/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/api/frappe/$': typeof ApiFrappeSplatRoute
+  '/private/files/$': typeof PrivateFilesSplatRoute
   '/organizations/': typeof AppOrganizationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/api/frappe/$': typeof ApiFrappeSplatRoute
+  '/private/files/$': typeof PrivateFilesSplatRoute
   '/organizations': typeof AppOrganizationsIndexRoute
 }
 export interface FileRoutesById {
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/api/frappe/$': typeof ApiFrappeSplatRoute
+  '/private/files/$': typeof PrivateFilesSplatRoute
   '/_app/organizations/': typeof AppOrganizationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/me'
     | '/api/frappe/$'
+    | '/private/files/$'
     | '/organizations/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/me'
     | '/api/frappe/$'
+    | '/private/files/$'
     | '/organizations'
   id:
     | '__root__'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/me'
     | '/api/frappe/$'
+    | '/private/files/$'
     | '/_app/organizations/'
   fileRoutesById: FileRoutesById
 }
@@ -308,6 +320,7 @@ export interface RootRouteChildren {
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
   ApiFrappeSplatRoute: typeof ApiFrappeSplatRoute
+  PrivateFilesSplatRoute: typeof PrivateFilesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFrappeSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/private/files/$': {
+      id: '/private/files/$'
+      path: '/private/files/$'
+      fullPath: '/private/files/$'
+      preLoaderRoute: typeof PrivateFilesSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,
   ApiFrappeSplatRoute: ApiFrappeSplatRoute,
+  PrivateFilesSplatRoute: PrivateFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

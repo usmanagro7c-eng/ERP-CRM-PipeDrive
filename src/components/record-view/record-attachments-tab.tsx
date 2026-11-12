@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Download, File, Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { CrmAttachment } from "@/lib/api";
+import * as api from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ export function RecordAttachmentsTab({
 }: RecordAttachmentsTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: primary = [] } = useQuery(attachmentsListOptions(referenceDoctype, referenceName));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { data: secondary = [] } = useQuery(
     (secondaryReference
       ? attachmentsListOptions(secondaryReference.doctype, secondaryReference.name)
@@ -132,17 +133,39 @@ export function RecordAttachmentsTab({
               key={att.name}
               className="group flex items-center justify-between rounded-lg border bg-card p-3 text-xs shadow-2xs hover:border-primary/40 transition-colors"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-foreground">
-                  <File className="size-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-semibold text-foreground truncate">{att.file_name}</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {formatFileSize(att.file_size)}
+              {att.file_url ? (
+                <a
+                  href={api.proxiedFileUrl(att.file_url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Open ${att.file_name}`}
+                  className="flex items-center gap-3 min-w-0 flex-1 pr-2 cursor-pointer"
+                >
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-foreground">
+                    <File className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate group-hover:text-primary group-hover:underline">
+                      {att.file_name}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {formatFileSize(att.file_size)}
+                    </div>
+                  </div>
+                </a>
+              ) : (
+                <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-foreground">
+                    <File className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate">{att.file_name}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {formatFileSize(att.file_size)}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               <div className="flex items-center gap-1">
                 {att.file_url && (
                   <Button
@@ -150,9 +173,13 @@ export function RecordAttachmentsTab({
                     variant="ghost"
                     size="icon"
                     className="size-7 text-muted-foreground hover:text-foreground"
-                    title="Download file"
+                    title="Open file"
                   >
-                    <a href={att.file_url} target="_blank" rel="noopener noreferrer" download>
+                    <a
+                      href={api.proxiedFileUrl(att.file_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <Download className="size-3.5" />
                     </a>
                   </Button>

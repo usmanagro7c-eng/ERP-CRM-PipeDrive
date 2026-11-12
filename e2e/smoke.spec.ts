@@ -21,7 +21,9 @@ test.describe("smoke", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await login(page);
     await page.goto("/organizations");
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 2,
+    );
     expect(overflow).toBeFalsy();
   });
 });

@@ -34,6 +34,8 @@ export const IGNORED_DIRECTORIES = new Set([
   "coverage",
   ".next",
   ".agents",
+  ".ui-audit-cache",
+  "ui-audit",
 ]);
 
 /** Files that are allowed to contain hashes / lock file integrity values. */

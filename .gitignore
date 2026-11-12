@@ -41,7 +41,6 @@ node_modules_old/
 .agents/skills/
 test-results/
 playwright-report/
-e2e
 
 # Lighthouse / UI audit output
 ui-audit/lighthouse/

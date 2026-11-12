@@ -24,7 +24,9 @@ import {
 import path from "node:path";
 
 const BASE = (process.env.BASE_URL || "http://localhost:5173").replace(/\/$/, "");
-const ROUTES = (process.env.LIGHTHOUSE_ROUTES || "/dashboard,/leads,/deals,/organizations,/contacts")
+const ROUTES = (
+  process.env.LIGHTHOUSE_ROUTES || "/dashboard,/leads,/deals,/organizations,/contacts"
+)
   .split(",")
   .map((route) => route.trim())
   .filter(Boolean);
@@ -69,7 +71,8 @@ async function main() {
   const results = [];
   for (const route of ROUTES) {
     const url = `${BASE}${route}`;
-    const slug = (route === "/" ? "root" : route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")) || "root";
+    const slug =
+      (route === "/" ? "root" : route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")) || "root";
     const reportName = `report-${slug}`;
     const args = [
       "--yes",
@@ -156,7 +159,12 @@ function resolveChrome() {
   if (pwBrowsers && existsSync(pwBrowsers)) {
     for (const entry of readdirSyncSafe(pwBrowsers)) {
       if (!entry.startsWith("chromium-")) continue;
-      for (const exe of ["chrome-win64/chrome.exe", "chrome-win/chrome.exe", "chrome-mac/Chromium.app/Contents/MacOS/Chromium", "chrome-linux/chrome"]) {
+      for (const exe of [
+        "chrome-win64/chrome.exe",
+        "chrome-win/chrome.exe",
+        "chrome-mac/Chromium.app/Contents/MacOS/Chromium",
+        "chrome-linux/chrome",
+      ]) {
         const candidate = path.join(pwBrowsers, entry, exe);
         if (existsSync(candidate)) return candidate;
       }

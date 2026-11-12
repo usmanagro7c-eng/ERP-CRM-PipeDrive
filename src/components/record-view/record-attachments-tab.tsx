@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Download, File, Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import type { CrmAttachment } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,16 +13,28 @@ import {
 interface RecordAttachmentsTabProps {
   referenceDoctype: string;
   referenceName: string;
+  secondaryReference?: { doctype: string; name: string } | null;
 }
 
 export function RecordAttachmentsTab({
   referenceDoctype,
   referenceName,
+  secondaryReference,
 }: RecordAttachmentsTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: attachments = [], isLoading } = useQuery(
-    attachmentsListOptions(referenceDoctype, referenceName),
+  const { data: primary = [] } = useQuery(attachmentsListOptions(referenceDoctype, referenceName));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: secondary = [] } = useQuery(
+    (secondaryReference
+      ? attachmentsListOptions(secondaryReference.doctype, secondaryReference.name)
+      : queryOptions({
+          queryKey: ["attachments", "none"],
+          queryFn: async () => [],
+          enabled: false,
+        })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   );
+  const sec = (secondary ?? []) as CrmAttachment[];
+  const attachments = [...primary, ...sec.filter((s) => !primary.some((p) => p.name === s.name))];
   const uploadMutation = useUploadAttachment(referenceDoctype, referenceName);
   const deleteMutation = useDeleteAttachment(referenceDoctype, referenceName);
 

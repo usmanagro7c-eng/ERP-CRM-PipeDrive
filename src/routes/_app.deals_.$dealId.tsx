@@ -671,7 +671,15 @@ function DealDetailPage() {
               )}
 
               {activeTab === "attachments" && (
-                <RecordAttachmentsTab referenceDoctype={api.DEAL_DOCTYPE} referenceName={dealId} />
+                <RecordAttachmentsTab
+                  referenceDoctype={api.DEAL_DOCTYPE}
+                  referenceName={dealId}
+                  secondaryReference={
+                    deal && typeof deal["lead"] === "string" && deal["lead"]
+                      ? { doctype: api.LEAD_DOCTYPE, name: String(deal["lead"]) }
+                      : null
+                  }
+                />
               )}
 
               {activeTab === "quotations" && (

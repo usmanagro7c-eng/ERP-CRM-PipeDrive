@@ -392,7 +392,10 @@ export async function ensureOrganization(orgName: string): Promise<string> {
       start: 0,
     });
     const existing = matches.find(
-      (o) => String(o["organization_name"] ?? "").trim().toLowerCase() === trimmed.toLowerCase(),
+      (o) =>
+        String(o["organization_name"] ?? "")
+          .trim()
+          .toLowerCase() === trimmed.toLowerCase(),
     );
     if (existing) {
       return String(existing["name"] ?? trimmed);

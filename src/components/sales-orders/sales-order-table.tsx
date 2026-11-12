@@ -45,7 +45,7 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium gap-1"
+        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[11px] font-medium gap-1"
       >
         <Check className="size-3" />
         <span>Completed</span>
@@ -56,7 +56,7 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium gap-1"
+        className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-[11px] font-medium gap-1"
       >
         <Clock className="size-3" />
         <span>{status}</span>
@@ -251,9 +251,9 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                       {isDraft && (
                         <DropdownMenuItem
                           onClick={() => handleSubmit(row)}
-                          className="gap-2 cursor-pointer text-emerald-600 font-medium"
+                          className="gap-2 cursor-pointer text-emerald-700 dark:text-emerald-400 font-medium"
                         >
-                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                          <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
                           <span>Submit Order</span>
                         </DropdownMenuItem>
                       )}

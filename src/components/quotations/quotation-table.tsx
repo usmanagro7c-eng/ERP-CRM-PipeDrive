@@ -318,7 +318,7 @@ export function QuotationTable({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => handleCreateSalesOrder(row)}>
-                          <ShoppingCart className="size-3.5 mr-1.5 text-emerald-600" />
+                          <ShoppingCart className="size-3.5 mr-1.5 text-emerald-700 dark:text-emerald-400" />
                           Convert to Sales Order
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />

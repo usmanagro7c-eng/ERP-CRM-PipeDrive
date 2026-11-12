@@ -222,7 +222,10 @@ export function OrgKanban({
             Group by:
           </span>
           <Select value={currentField?.fieldname ?? groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-48 text-xs font-medium">
+            <SelectTrigger
+              aria-label="Group organizations by"
+              className="h-8 w-48 text-xs font-medium"
+            >
               <SelectValue placeholder="Select group field" />
             </SelectTrigger>
             <SelectContent>
@@ -407,6 +410,7 @@ export function OrgKanban({
                                       variant="ghost"
                                       size="icon"
                                       className="size-6 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                      aria-label="More actions"
                                     >
                                       <MoreVertical className="size-3.5" />
                                     </Button>
@@ -469,7 +473,7 @@ export function OrgKanban({
                                 </Badge>
                               )}
                               {revenueVal != null && revenueVal > 0 && (
-                                <span className="ml-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                <span className="ml-auto text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                                   PKR{" "}
                                   {revenueVal >= 1_000_000
                                     ? `${(revenueVal / 1_000_000).toFixed(1)}M`

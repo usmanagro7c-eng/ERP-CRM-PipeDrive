@@ -29,10 +29,16 @@ export interface LeadListVariables {
   orderBy?: string | undefined;
 }
 
+/**
+ * `lead_name` holds "First Last" and matches both parts, so searching for a
+ * surname works too (the plain `first_name` field does not).
+ */
+const LEAD_SEARCH_FIELD = "lead_name";
+
 export function leadListOptions(variables: LeadListVariables) {
   return queryOptions({
     queryKey: [LEAD_QUERY_ROOT, "list", variables],
-    queryFn: () => api.listLeads(variables),
+    queryFn: () => api.listLeads({ ...variables, searchField: LEAD_SEARCH_FIELD }),
     placeholderData: keepPreviousData,
   });
 }
@@ -40,7 +46,10 @@ export function leadListOptions(variables: LeadListVariables) {
 export function leadCountOptions(search: string, filters: Array<[string, string, string]> = []) {
   return queryOptions({
     queryKey: [LEAD_QUERY_ROOT, "count", search, filters],
-    queryFn: () => api.countLeads(search, filters),
+    queryFn: () => {
+      const searchFilter: [string, string, string] = [LEAD_SEARCH_FIELD, "like", `%${search}%`];
+      return api.countLeads("", search ? [...filters, searchFilter] : filters);
+    },
   });
 }
 

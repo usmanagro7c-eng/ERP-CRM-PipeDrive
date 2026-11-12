@@ -118,6 +118,7 @@ export function ContactGrid({
                     variant="ghost"
                     size="icon"
                     className="size-7 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer shrink-0"
+                    aria-label="More actions"
                   >
                     <MoreVertical className="size-4" />
                   </Button>

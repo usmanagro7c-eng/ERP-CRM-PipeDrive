@@ -12,6 +12,7 @@ import { type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import { TopLoadingBar } from "@/components/ui/loading";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -98,9 +99,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // `suppressHydrationWarning`: the theme script adds the `dark` class to
+    // <html> before React hydrates, so the class attribute differs between the
+    // server-rendered and the client-rendered markup.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Apply the saved theme before the first paint (no light flash). */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         {children}

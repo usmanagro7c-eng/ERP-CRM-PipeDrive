@@ -189,7 +189,7 @@ export function LeadKanban({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectTrigger aria-label="Group leads by" className="h-8 w-44 text-xs">
               <SelectValue placeholder="Group by field..." />
             </SelectTrigger>
             <SelectContent>
@@ -278,7 +278,7 @@ export function LeadKanban({
                 ) : leads.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                     <p className="italic">No leads here</p>
-                    <p className="text-[10px] opacity-75">Drag leads to move</p>
+                    <p className="text-[10px] text-muted-foreground">Drag leads to move</p>
                   </div>
                 ) : (
                   leads.map((lead) => {
@@ -336,6 +336,7 @@ export function LeadKanban({
                                   variant="ghost"
                                   size="icon"
                                   className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                                  aria-label="More actions"
                                 >
                                   <MoreVertical className="size-3.5" />
                                 </Button>

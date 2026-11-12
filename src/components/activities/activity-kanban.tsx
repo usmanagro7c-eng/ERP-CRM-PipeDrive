@@ -169,7 +169,7 @@ export function ActivityKanban({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectTrigger aria-label="Group tasks by" className="h-8 w-44 text-xs">
               <SelectValue placeholder="Group by field..." />
             </SelectTrigger>
             <SelectContent>
@@ -258,7 +258,7 @@ export function ActivityKanban({
                 ) : activities.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
                     <p className="italic">No tasks here</p>
-                    <p className="text-[10px] opacity-75">Drag tasks to move</p>
+                    <p className="text-[10px] text-muted-foreground">Drag tasks to move</p>
                   </div>
                 ) : (
                   activities.map((act) => {
@@ -310,7 +310,7 @@ export function ActivityKanban({
                               title={isDone ? "Mark as Todo" : "Mark as Done"}
                             >
                               {isDone ? (
-                                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                                <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" />
                               ) : (
                                 <Circle className="size-4 opacity-50 group-hover:opacity-100" />
                               )}
@@ -338,6 +338,7 @@ export function ActivityKanban({
                                   variant="ghost"
                                   size="icon"
                                   className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                                  aria-label="More actions"
                                 >
                                   <MoreVertical className="size-3.5" />
                                 </Button>

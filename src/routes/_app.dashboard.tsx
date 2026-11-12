@@ -118,7 +118,7 @@ function DashboardPage() {
           <span className="font-semibold text-foreground">Dashboard</span>
           <span className="text-muted-foreground/60">/</span>
           <span className="text-muted-foreground font-medium">Overview</span>
-          <span className="inline-flex items-center gap-1.5 ml-1 sm:ml-2 rounded-full bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+          <span className="inline-flex items-center gap-1.5 ml-1 sm:ml-2 rounded-full bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
@@ -132,6 +132,7 @@ function DashboardPage() {
           <Button
             variant="outline"
             size="sm"
+            aria-label="Refresh dashboard data"
             onClick={() => void refetch()}
             disabled={isFetching}
             className="h-7 px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer"

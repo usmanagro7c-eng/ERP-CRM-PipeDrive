@@ -39,6 +39,7 @@ import {
   contactStatusesOptions,
   errorMessage,
 } from "@/hooks/use-contacts";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { defaultListColumns, isDisplayField } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
@@ -246,6 +247,16 @@ function ContactsPage() {
       search: (prev) => ({ ...prev, q: searchText.trim() || undefined, page: undefined }),
     });
   }
+
+  // Search while typing; pressing Enter still works (submitSearch above).
+  const debouncedSearchText = useDebouncedValue(searchText, 350);
+  useEffect(() => {
+    const next = debouncedSearchText.trim();
+    if (next === (search.q ?? "")) return;
+    void navigate({
+      search: (prev) => ({ ...prev, q: next || undefined, page: undefined }),
+    });
+  }, [debouncedSearchText, search.q, navigate]);
 
   const handleEditContact = (contact: Record<string, unknown>) => {
     setEditingContact(contact);
@@ -501,6 +512,7 @@ function ContactsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Previous page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page <= 1}
                         onClick={() =>
@@ -514,6 +526,7 @@ function ContactsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Next page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page >= pageCount}
                         onClick={() =>

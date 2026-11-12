@@ -47,6 +47,7 @@ import {
   leadStatusesOptions,
   errorMessage,
 } from "@/hooks/use-leads";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { defaultListColumns, isDisplayField } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
@@ -270,6 +271,16 @@ function LeadsPage() {
     });
   }
 
+  // Search while typing; pressing Enter still works (submitSearch above).
+  const debouncedSearchText = useDebouncedValue(searchText, 350);
+  useEffect(() => {
+    const next = debouncedSearchText.trim();
+    if (next === (search.q ?? "")) return;
+    void navigate({
+      search: (prev) => ({ ...prev, q: next || undefined, page: undefined }),
+    });
+  }, [debouncedSearchText, search.q, navigate]);
+
   const handleEditLead = (lead: Record<string, unknown>) => {
     setEditingLead(lead);
     setModalInitialDoc(null);
@@ -373,7 +384,10 @@ function LeadsPage() {
 
           {/* Status Quick Filter */}
           <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val)}>
-            <SelectTrigger className="h-7 text-xs px-2 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[120px] shrink-0">
+            <SelectTrigger
+              aria-label="Filter leads by status"
+              className="h-7 text-xs px-2 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[120px] shrink-0"
+            >
               <span className="hidden sm:inline text-muted-foreground">View:</span>
               <SelectValue />
             </SelectTrigger>
@@ -550,6 +564,7 @@ function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Previous page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page <= 1}
                         onClick={() =>
@@ -563,6 +578,7 @@ function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Next page"
                         className="size-6 text-muted-foreground hover:text-foreground"
                         disabled={page >= pageCount}
                         onClick={() =>

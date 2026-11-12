@@ -297,7 +297,7 @@ export function QuotationFormModal({
                 onOpenChange(false);
                 onConvertToSalesOrder(quotation);
               }}
-              className="mr-auto h-8 text-xs font-semibold border-emerald-500/30 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-400 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 shadow-xs"
+              className="mr-auto h-8 text-xs font-semibold border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-400 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 shadow-xs"
             >
               <ShoppingCart className="size-3.5" />
               <span>Convert to Sales Order</span>

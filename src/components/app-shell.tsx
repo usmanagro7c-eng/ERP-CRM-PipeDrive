@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Bell,
   Building2,
   CalendarClock,
@@ -38,6 +39,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
+import { toggleTheme as toggleThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -52,6 +54,29 @@ const NAV_ITEMS = [
   { label: "Tasks", to: "/activities", icon: CalendarClock },
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
 ] as const;
+
+/**
+ * The mock backend serves fake records. When the dev server runs against it the
+ * whole UI is flagged, so nobody mistakes seeded data for live CRM data.
+ */
+const IS_TEST_DATA = import.meta.env["VITE_TEST_DATA"] === "1";
+
+function TestDataBadge({ collapsed }: { collapsed?: boolean }) {
+  if (!IS_TEST_DATA) return null;
+  return (
+    <div
+      role="status"
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300",
+        collapsed && "justify-center px-1",
+      )}
+      title="This dev server is connected to the mock Frappe backend. The records below are generated test data, not live CRM data."
+    >
+      <AlertTriangle className="size-3 shrink-0" />
+      {!collapsed && <span className="truncate">TEST DATA · mock backend</span>}
+    </div>
+  );
+}
 
 function NavLinks({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -105,10 +130,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   });
 
   function toggleTheme() {
-    if (typeof document !== "undefined") {
-      const isCurrentlyDark = document.documentElement.classList.toggle("dark");
-      setIsDark(isCurrentlyDark);
-    }
+    setIsDark(toggleThemeMode() === "dark");
   }
 
   async function signOut() {
@@ -187,6 +209,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Workspace Switcher Header */}
         <div className="px-2 pt-2.5 pb-1">
           <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+
+        <div className="px-2 pb-1">
+          <TestDataBadge collapsed={collapsed} />
         </div>
 
         {/* Quick Actions (Search & Notifications) */}
@@ -273,6 +299,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               C
             </div>
             <span className="text-sm font-semibold">AgroCRM</span>
+            <TestDataBadge />
           </div>
 
           <div className="flex items-center gap-1">

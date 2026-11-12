@@ -378,6 +378,7 @@ function SalesOrdersPage() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Previous page"
               className="size-6 text-muted-foreground hover:text-foreground"
               disabled={page <= 1}
               onClick={() => handlePageChange(page - 1)}
@@ -387,6 +388,7 @@ function SalesOrdersPage() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Next page"
               className="size-6 text-muted-foreground hover:text-foreground"
               disabled={page >= totalPages}
               onClick={() => handlePageChange(page + 1)}

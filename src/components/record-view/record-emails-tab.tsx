@@ -255,7 +255,7 @@ export function RecordEmailsTab({
                     {isSent ? (
                       <Badge
                         variant="outline"
-                        className="h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 gap-1 font-normal"
+                        className="h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 gap-1 font-normal"
                       >
                         <CheckCircle2 className="size-2.5" />
                         <span>Sent</span>
@@ -263,7 +263,7 @@ export function RecordEmailsTab({
                     ) : (
                       <Badge
                         variant="outline"
-                        className="h-5 px-1.5 text-[10px] bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 gap-1 font-normal"
+                        className="h-5 px-1.5 text-[10px] bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20 gap-1 font-normal"
                       >
                         <Clock className="size-2.5" />
                         <span>{email.delivery_status || "Delivered"}</span>

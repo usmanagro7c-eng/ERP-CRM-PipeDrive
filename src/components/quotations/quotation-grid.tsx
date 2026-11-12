@@ -38,7 +38,7 @@ function QuotationStatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] font-medium"
+        className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-[11px] font-medium"
       >
         Open
       </Badge>
@@ -48,7 +48,7 @@ function QuotationStatusBadge({ status }: { status: string }) {
     return (
       <Badge
         variant="outline"
-        className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium"
+        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[11px] font-medium"
       >
         Ordered
       </Badge>
@@ -215,7 +215,7 @@ export function QuotationGrid({
                       {isDraft && (
                         <DropdownMenuItem
                           onClick={() => handleSubmit(row)}
-                          className="gap-2 cursor-pointer text-blue-600"
+                          className="gap-2 cursor-pointer text-blue-700 dark:text-blue-400"
                         >
                           <CheckCircle2 className="size-3.5" />
                           <span>Submit Quotation</span>

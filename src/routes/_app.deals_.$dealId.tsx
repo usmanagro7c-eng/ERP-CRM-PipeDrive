@@ -395,7 +395,12 @@ function DealDetailPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                aria-label="More actions"
+              >
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>

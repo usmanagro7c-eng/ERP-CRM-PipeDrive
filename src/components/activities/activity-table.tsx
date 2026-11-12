@@ -135,9 +135,9 @@ function StatusBadge({ status }: { status: string }) {
 function PriorityBadge({ priority }: { priority: string }) {
   const p = priority.trim().toLowerCase();
   let color = "text-muted-foreground";
-  if (p === "urgent") color = "text-rose-600 dark:text-rose-400 font-medium";
-  else if (p === "high") color = "text-amber-600 dark:text-amber-400 font-medium";
-  else if (p === "medium") color = "text-sky-600 dark:text-sky-400 font-medium";
+  if (p === "urgent") color = "text-rose-700 dark:text-rose-400 font-medium";
+  else if (p === "high") color = "text-amber-700 dark:text-amber-400 font-medium";
+  else if (p === "medium") color = "text-sky-700 dark:text-sky-400 font-medium";
   else if (p === "low") color = "text-muted-foreground";
 
   return <span className={cn("text-xs", color)}>{priority || "Low"}</span>;
@@ -431,6 +431,7 @@ export function ActivityTable({
                         variant="ghost"
                         size="icon"
                         className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-3.5" />
                       </Button>

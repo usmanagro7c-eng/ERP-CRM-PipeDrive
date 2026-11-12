@@ -125,6 +125,7 @@ export function LeadGrid({
                         variant="ghost"
                         size="icon"
                         className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                       </Button>

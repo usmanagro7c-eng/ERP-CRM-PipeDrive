@@ -62,13 +62,13 @@ function QuotationStatusBadge({ status }: { status?: string }) {
   let badgeClass = "bg-muted text-muted-foreground border-border/60";
 
   if (s === "open") {
-    badgeClass = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30";
+    badgeClass = "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30";
   } else if (s === "ordered") {
-    badgeClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+    badgeClass = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
   } else if (s === "replied") {
-    badgeClass = "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
+    badgeClass = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30";
   } else if (s === "lost" || s === "cancelled") {
-    badgeClass = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    badgeClass = "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30";
   }
 
   return (
@@ -111,7 +111,7 @@ function QuotationDetailPage() {
   if (isError || !quotation) {
     return (
       <div className="flex h-[calc(100vh-60px)] flex-col items-center justify-center bg-background gap-3">
-        <div className="size-12 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center">
+        <div className="size-12 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center justify-center">
           <FileText className="size-6" />
         </div>
         <h2 className="text-base font-semibold text-foreground">Quotation not found</h2>
@@ -204,7 +204,12 @@ function QuotationDetailPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                aria-label="More actions"
+              >
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -218,7 +223,8 @@ function QuotationDetailPage() {
                   disabled={submitMutation.isPending}
                   className="cursor-pointer"
                 >
-                  <CheckCircle2 className="size-3.5 mr-2 text-emerald-600" /> Submit
+                  <CheckCircle2 className="size-3.5 mr-2 text-emerald-700 dark:text-emerald-400" />{" "}
+                  Submit
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setEditModalOpen(true)} className="cursor-pointer">
@@ -252,7 +258,7 @@ function QuotationDetailPage() {
               {submitMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
               ) : (
-                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
               )}
               <span>Submit</span>
             </Button>
@@ -287,6 +293,7 @@ function QuotationDetailPage() {
                 variant="ghost"
                 size="icon"
                 className="size-7 text-muted-foreground cursor-pointer shrink-0"
+                aria-label="More actions"
               >
                 <MoreVertical className="size-3.5" />
               </Button>
@@ -301,7 +308,7 @@ function QuotationDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setSalesOrderModalOpen(true)}
-                className="cursor-pointer gap-2 font-medium text-emerald-600 dark:text-emerald-400"
+                className="cursor-pointer gap-2 font-medium text-emerald-700 dark:text-emerald-400"
               >
                 <ShoppingCart className="size-3.5" />
                 <span>Convert to Sales Order</span>
@@ -309,7 +316,7 @@ function QuotationDetailPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleDelete}
-                className="cursor-pointer gap-2 text-rose-600 focus:text-rose-600"
+                className="cursor-pointer gap-2 text-rose-700 dark:text-rose-400 focus:text-rose-700 dark:text-rose-400"
               >
                 <Trash2 className="size-3.5" />
                 <span>Delete Quotation</span>
@@ -511,7 +518,7 @@ function QuotationDetailPage() {
             <div className="space-y-6">
               {/* Conversion Highlight Card */}
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 p-5 shadow-xs space-y-3">
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold text-sm">
                   <ShoppingCart className="size-4" />
                   <span>Convert to Sales Order</span>
                 </div>

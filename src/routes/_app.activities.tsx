@@ -219,7 +219,10 @@ function ActivitiesPage() {
             value={search.priority ?? "all"}
             onValueChange={(val) => handleFilterChange("priority", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by priority"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -239,7 +242,10 @@ function ActivitiesPage() {
             value={search.assigned_to ?? "all"}
             onValueChange={(val) => handleFilterChange("assigned_to", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-24 sm:w-32 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by assigned to"
+              className="h-7 text-xs w-24 sm:w-32 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Assigned To" />
             </SelectTrigger>
             <SelectContent className="max-h-56">
@@ -262,7 +268,10 @@ function ActivitiesPage() {
             value={search.status ?? "all"}
             onValueChange={(val) => handleFilterChange("status", val)}
           >
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>

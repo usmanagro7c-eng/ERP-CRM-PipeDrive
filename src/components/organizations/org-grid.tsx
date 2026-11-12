@@ -199,6 +199,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
                       variant="ghost"
                       size="icon"
                       className="size-8 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                      aria-label="More actions"
                     >
                       <MoreVertical className="size-4" />
                     </Button>
@@ -305,7 +306,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
               {revenueVal != null && revenueVal > 0 && (
                 <div className="flex items-center justify-between text-xs pt-1">
                   <span className="text-muted-foreground">Annual Revenue</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                     PKR{" "}
                     {revenueVal >= 1_000_000
                       ? `${(revenueVal / 1_000_000).toFixed(1)}M`

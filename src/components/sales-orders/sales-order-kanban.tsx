@@ -166,9 +166,9 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleSubmit(order)}
-                                  className="gap-2 cursor-pointer text-emerald-600 font-medium"
+                                  className="gap-2 cursor-pointer text-emerald-700 dark:text-emerald-400 font-medium"
                                 >
-                                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                  <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
                                   <span>Submit Order</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>

@@ -265,6 +265,7 @@ export function OrgTable({
                         variant="ghost"
                         size="icon"
                         className="size-7 opacity-90 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-accent"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-3.5" />
                       </Button>

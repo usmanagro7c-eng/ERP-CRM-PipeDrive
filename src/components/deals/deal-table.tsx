@@ -317,6 +317,7 @@ export function DealTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                         <span className="sr-only">Open menu</span>

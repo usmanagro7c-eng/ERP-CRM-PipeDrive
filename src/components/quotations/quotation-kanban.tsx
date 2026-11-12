@@ -373,7 +373,7 @@ export function QuotationKanban({
 
                               <DropdownMenuItem
                                 onClick={(e) => handleCreateSalesOrder(q, e)}
-                                className="gap-2 cursor-pointer font-medium text-emerald-600 dark:text-emerald-400"
+                                className="gap-2 cursor-pointer font-medium text-emerald-700 dark:text-emerald-400"
                               >
                                 <ShoppingCart className="size-3.5" />
                                 <span>Convert to Sales Order</span>
@@ -382,7 +382,7 @@ export function QuotationKanban({
                               {isDraft && (
                                 <DropdownMenuItem
                                   onClick={(e) => handleSubmit(q, e)}
-                                  className="gap-2 cursor-pointer text-blue-600 dark:text-blue-400"
+                                  className="gap-2 cursor-pointer text-blue-700 dark:text-blue-400"
                                 >
                                   <CheckCircle2 className="size-3.5" />
                                   <span>Submit Quotation</span>
@@ -427,7 +427,7 @@ export function QuotationKanban({
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={(e) => handleDelete(q, e)}
-                                    className="gap-2 cursor-pointer text-rose-600 focus:text-rose-600"
+                                    className="gap-2 cursor-pointer text-rose-700 dark:text-rose-400 focus:text-rose-700 dark:text-rose-400"
                                   >
                                     <Trash2 className="size-3.5" />
                                     <span>Delete Quotation</span>

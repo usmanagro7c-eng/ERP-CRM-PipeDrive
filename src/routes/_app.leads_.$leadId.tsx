@@ -353,7 +353,7 @@ function LeadDetailPage() {
         {/* Mobile Action Bar (< sm) */}
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           {isConverted ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
               <CheckCircle2 className="size-3" />
               <span>Converted</span>
             </span>
@@ -370,7 +370,12 @@ function LeadDetailPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                aria-label="More actions"
+              >
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -469,7 +474,7 @@ function LeadDetailPage() {
           {/* Convert to Deal Button or Converted Badge */}
           {isConverted ? (
             <div className="flex items-center gap-2 shrink-0">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                 <CheckCircle2 className="size-3.5" />
                 <span>Converted to Deal</span>
               </span>
@@ -701,7 +706,7 @@ function LeadDetailPage() {
           {/* Converted Deal Banner */}
           {isConverted && linkedDealName ? (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs flex flex-col gap-1.5">
-              <div className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <div className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5" />
                 <span>Converted to Deal</span>
               </div>
@@ -712,7 +717,7 @@ function LeadDetailPage() {
               <Link
                 to="/deals/$dealId"
                 params={{ dealId: linkedDealName }}
-                className="mt-1 inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                className="mt-1 inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
               >
                 <span>Open Deal</span>
                 <ExternalLink className="size-3" />

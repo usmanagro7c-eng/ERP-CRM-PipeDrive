@@ -76,7 +76,7 @@ export function FormSectionNav({
                   isActive
                     ? "bg-primary-foreground/20 text-primary-foreground"
                     : isCompleted
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
                       : "bg-muted text-muted-foreground",
                 )}
               >

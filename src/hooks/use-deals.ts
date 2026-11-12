@@ -37,10 +37,17 @@ export interface DealListVariables {
   orderBy?: string | undefined;
 }
 
+/**
+ * CRM Deal stores the organisation as a link field called `organization`.
+ * There is no `organization_name` field on the doctype, so filtering on it
+ * returns nothing at all — the search must use the link field.
+ */
+const DEAL_SEARCH_FIELD = "organization";
+
 export function dealListOptions(variables: DealListVariables) {
   return queryOptions({
     queryKey: [DEAL_QUERY_ROOT, "list", variables],
-    queryFn: () => api.listDeals(variables),
+    queryFn: () => api.listDeals({ ...variables, searchField: DEAL_SEARCH_FIELD }),
     placeholderData: keepPreviousData,
   });
 }
@@ -48,7 +55,10 @@ export function dealListOptions(variables: DealListVariables) {
 export function dealCountOptions(search: string, filters: Array<[string, string, string]> = []) {
   return queryOptions({
     queryKey: [DEAL_QUERY_ROOT, "count", search, filters],
-    queryFn: () => api.countDeals(search, filters),
+    queryFn: () => {
+      const searchFilter: [string, string, string] = [DEAL_SEARCH_FIELD, "like", `%${search}%`];
+      return api.countDeals("", search ? [...filters, searchFilter] : filters);
+    },
   });
 }
 

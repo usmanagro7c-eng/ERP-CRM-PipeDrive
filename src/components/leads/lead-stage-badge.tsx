@@ -98,9 +98,9 @@ export function LeadStatusBadge({
       )}
     >
       {isWon ? (
-        <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />
+        <CheckCircle2 className="size-3 text-emerald-700 dark:text-emerald-400" />
       ) : isLost ? (
-        <XCircle className="size-3 text-rose-600 dark:text-rose-400" />
+        <XCircle className="size-3 text-rose-700 dark:text-rose-400" />
       ) : (
         <CircleDot className="size-2.5 opacity-80" />
       )}

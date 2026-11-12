@@ -157,7 +157,7 @@ export function ContactKanban({
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground font-medium">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectTrigger aria-label="Group contacts by" className="h-8 w-40 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -278,6 +278,7 @@ export function ContactKanban({
                                 size="icon"
                                 className="size-6 text-muted-foreground hover:text-foreground opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition cursor-pointer"
                                 title="More actions"
+                                aria-label="More actions"
                               >
                                 <MoreVertical className="size-3.5" />
                               </Button>

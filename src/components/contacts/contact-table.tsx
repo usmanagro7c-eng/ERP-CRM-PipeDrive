@@ -500,6 +500,7 @@ export function ContactTable({
                             variant="ghost"
                             size="icon"
                             className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            aria-label="More actions"
                           >
                             <MoreVertical className="size-4" />
                             <span className="sr-only">Actions</span>

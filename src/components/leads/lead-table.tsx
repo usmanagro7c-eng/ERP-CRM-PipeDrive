@@ -172,7 +172,7 @@ function LeadCellValue({ field, row }: { field: FrappeDocField; row: Record<stri
 
   if (field.fieldname === "converted") {
     return value ? (
-      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+      <span className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
         <CheckCircle className="size-3.5" />
         Converted
       </span>
@@ -294,6 +294,7 @@ export function LeadTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                         <span className="sr-only">Open menu</span>

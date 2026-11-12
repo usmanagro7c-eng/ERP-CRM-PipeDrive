@@ -21,11 +21,11 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
   function getPriorityColor(priority: string) {
     switch (priority?.toLowerCase()) {
       case "urgent":
-        return "bg-rose-500/10 text-rose-600 border-rose-200";
+        return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200";
       case "high":
-        return "bg-amber-500/10 text-amber-600 border-amber-200";
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200";
       case "medium":
-        return "bg-blue-500/10 text-blue-600 border-blue-200";
+        return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200";
       default:
         return "bg-muted text-muted-foreground border-border";
     }
@@ -91,7 +91,7 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
                             className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
                           >
                             {isCompleted ? (
-                              <CheckCircle2 className="size-3.5 text-emerald-600" />
+                              <CheckCircle2 className="size-3.5 text-emerald-700 dark:text-emerald-400" />
                             ) : (
                               <Circle className="size-3.5" />
                             )}

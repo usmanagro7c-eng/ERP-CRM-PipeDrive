@@ -126,7 +126,7 @@ export function ActivityGrid({
                     title={isDone ? "Mark as Todo" : "Mark as Done"}
                   >
                     {isDone ? (
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" />
                     ) : (
                       <Circle className="size-4 opacity-50 group-hover:opacity-100" />
                     )}
@@ -152,6 +152,7 @@ export function ActivityGrid({
                         variant="ghost"
                         size="icon"
                         className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                        aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
                       </Button>

@@ -215,7 +215,10 @@ function CallLogsPage() {
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Type Dropdown */}
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by type"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -232,7 +235,10 @@ function CallLogsPage() {
 
           {/* Status Dropdown */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -444,6 +450,7 @@ function CallLogsPage() {
                               variant="ghost"
                               size="icon"
                               className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                              aria-label="More actions"
                             >
                               <MoreVertical className="size-3.5" />
                             </Button>

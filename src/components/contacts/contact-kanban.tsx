@@ -227,7 +227,7 @@ export function ContactKanban({
                 handleDrop(col.key);
               }}
               className={cn(
-                "flex flex-col w-[82vw] sm:w-72 shrink-0 rounded-lg border bg-muted/30 transition-colors h-full max-h-full overflow-hidden",
+                "flex flex-col w-[82vw] sm:w-64 shrink-0 rounded-lg border bg-muted/30 transition-colors h-full max-h-full overflow-hidden",
                 isOver && "border-primary bg-primary/5",
               )}
             >

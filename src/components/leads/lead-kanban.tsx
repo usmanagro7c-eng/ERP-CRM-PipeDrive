@@ -64,6 +64,13 @@ interface LeadKanbanProps {
 
 const UNASSIGNED_KEY = "__unassigned__";
 
+type DeletedLeadStatus = {
+  name: string;
+  type?: string | undefined;
+  color?: string | undefined;
+  position?: number | undefined;
+};
+
 function initialsOf(first: unknown, last: unknown): string {
   const f = String(first ?? "").trim();
   const l = String(last ?? "").trim();
@@ -96,7 +103,12 @@ export function LeadKanban({
       await api.deleteLeadStatus(statusName);
       toast.success(`Status "${statusName}" deleted`);
       if (meta && !deletedStatuses.some((d) => d.name === statusName)) {
-        setDeletedStatuses((prev) => [...prev, { name: statusName, type: meta.type, color: meta.color, position: meta.position }]);
+        setDeletedStatuses((prev) => [...prev, {
+          name: statusName,
+          ...(meta.type !== undefined && { type: meta.type }),
+          ...(meta.color !== undefined && { color: meta.color }),
+          ...(meta.position !== undefined && { position: meta.position }),
+        }]);
       }
       await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
     } catch (err) {
@@ -107,7 +119,12 @@ export function LeadKanban({
   async function handleRestoreStatus(statusName: string) {
     const meta = deletedStatuses.find((d) => d.name === statusName);
     try {
-      await api.createLeadStatus({ lead_status: statusName, type: meta?.type, color: meta?.color, position: meta?.position });
+      await api.createLeadStatus({
+        lead_status: statusName,
+        ...(meta?.type !== undefined && { type: meta.type }),
+        ...(meta?.color !== undefined && { color: meta.color }),
+        ...(meta?.position !== undefined && { position: meta.position }),
+      });
       toast.success(`Status "${statusName}" restored`);
       setDeletedStatuses((prev) => prev.filter((d) => d.name !== statusName));
       await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
@@ -141,7 +158,6 @@ export function LeadKanban({
   }>({
     open: false,
     leadNames: [],
-    leadTitle: undefined,
     targetStatus: "Unqualified",
   });
 
@@ -347,7 +363,7 @@ export function LeadKanban({
                 setDraggedLeadName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
+                "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
               )}
             >

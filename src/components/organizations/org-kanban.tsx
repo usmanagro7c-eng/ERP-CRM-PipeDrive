@@ -290,7 +290,7 @@ export function OrgKanban({
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={`skel-col-${i}`}
-                className="flex w-80 shrink-0 flex-col gap-3 rounded-xl border bg-secondary/20 p-3"
+                className="flex w-64 shrink-0 flex-col gap-3 rounded-xl border bg-secondary/20 p-3"
               >
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-5 w-24" />
@@ -320,7 +320,7 @@ export function OrgKanban({
                     void handleCardDrop(col.key);
                   }}
                   className={cn(
-                    "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
+                    "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
                     colorClass,
                     isOver && "border-primary/60 bg-accent/40 ring-2 ring-primary/20",
                   )}

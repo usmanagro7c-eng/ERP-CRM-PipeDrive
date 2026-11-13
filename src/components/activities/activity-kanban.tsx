@@ -255,7 +255,7 @@ export function ActivityKanban({
                 setDraggedActivityName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
+                "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
               )}
             >

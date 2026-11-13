@@ -147,7 +147,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
         return (
           <div
             key={col.key}
-            className="flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 border-border h-full max-h-full overflow-hidden"
+            className="flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/30 border-border h-full max-h-full overflow-hidden"
           >
             {/* Stage Column Header */}
             <div className="flex items-center justify-between border-b bg-card/50 p-3 rounded-t-lg shrink-0">

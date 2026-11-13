@@ -89,7 +89,7 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
         return (
           <div
             key={col.key}
-            className="flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/20"
+            className="flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/20"
           >
             {/* Header */}
             <div

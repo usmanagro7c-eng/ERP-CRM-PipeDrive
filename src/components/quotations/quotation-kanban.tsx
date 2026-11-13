@@ -299,7 +299,7 @@ export function QuotationKanban({
               setDraggedQuotationName(null);
             }}
             className={cn(
-              "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
+              "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
               isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
             )}
           >

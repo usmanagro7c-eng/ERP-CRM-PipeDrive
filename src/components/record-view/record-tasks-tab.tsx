@@ -48,7 +48,7 @@ export function RecordTasksTab({ referenceDoctype, referenceName }: RecordTasksT
         priority: taskPriority,
         reference_doctype: referenceDoctype,
         reference_docname: referenceName,
-        status: "Open",
+        status: "Todo",
       };
       if (taskDueDate) payload["due_date"] = taskDueDate;
       await saveMutation.mutateAsync(payload);
@@ -155,7 +155,7 @@ export function RecordTasksTab({ referenceDoctype, referenceName }: RecordTasksT
       ) : (
         <div className="space-y-2 pb-8">
           {tasks.map((t) => {
-            const isCompleted = t.status === "Closed" || t.status === "Completed";
+            const isCompleted = t.status === "Done" || t.status === "Completed" || t.status === "Closed";
             return (
               <div
                 key={t.name}

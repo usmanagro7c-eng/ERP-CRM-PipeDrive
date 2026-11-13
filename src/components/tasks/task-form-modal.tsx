@@ -37,7 +37,7 @@ export function TaskFormModal({ open, onOpenChange, task, initialValues }: TaskF
 
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<string>("Medium");
-  const [status, setStatus] = useState<string>("Open");
+  const [status, setStatus] = useState<string>("Todo");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [description, setDescription] = useState("");
@@ -46,14 +46,14 @@ export function TaskFormModal({ open, onOpenChange, task, initialValues }: TaskF
     if (task) {
       setTitle(task.title || "");
       setPriority(task.priority || "Medium");
-      setStatus(task.status || "Open");
+      setStatus(task.status || "Todo");
       setDueDate(task.due_date || "");
       setAssignedTo(task.assigned_to || "");
       setDescription(task.description || "");
     } else {
       setTitle("");
       setPriority("Medium");
-      setStatus("Open");
+      setStatus("Todo");
       setDueDate("");
       setAssignedTo("");
       setDescription("");
@@ -131,10 +131,10 @@ export function TaskFormModal({ open, onOpenChange, task, initialValues }: TaskF
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Open">Open</SelectItem>
+                    <SelectItem value="Todo">Todo</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="Done">Done</SelectItem>
+                    <SelectItem value="Canceled">Canceled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -225,7 +225,7 @@ export function hasUnsafeSegments(path: string): boolean {
 }
 
 const MAIN_RESOURCE =
-  /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)(?:\/([^/]+))?$/;
+  /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
 const RESOURCE_DOCTYPE = /^api\/resource\/([^/]+)(?:\/[^/]*)?$/;
 
@@ -285,7 +285,7 @@ export function classifyRequest(
       return { kind: "org-write" };
     }
     if (
-      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products)$/.test(
+      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status)$/.test(
         path,
       )
     )
@@ -639,8 +639,8 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
         return { ok: false, reason: "add_comment: invalid content" };
       }
       // comment_by / comment_email are dropped on purpose: the author of a
-      // comment is taken from the signed-in Frappe session, never from the
-      // request body.
+      // comment must never be taken from the request body (spoofing). They are
+      // re-injected server-side from the signed-in session in the proxy route.
       return {
         ok: true,
         body: {

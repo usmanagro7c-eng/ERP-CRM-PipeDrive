@@ -1,7 +1,16 @@
+import { useState, useEffect } from "react";
 import { CheckCircle2, Circle, Clock, Plus, Trash2, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 import { type CrmTask } from "@/hooks/use-tasks";
 
 interface TaskKanbanProps {
@@ -12,12 +21,27 @@ interface TaskKanbanProps {
 }
 
 const COLUMNS = [
-  { key: "Open", label: "To Do / Open", color: "border-amber-500/40" },
+  { key: "Todo", label: "To Do", color: "border-amber-500/40" },
   { key: "In Progress", label: "In Progress", color: "border-blue-500/40" },
-  { key: "Completed", label: "Completed", color: "border-emerald-500/40" },
+  { key: "Done", label: "Done", color: "border-emerald-500/40" },
 ];
 
 export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: TaskKanbanProps) {
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenTaskColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenTaskColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
   function getPriorityColor(priority: string) {
     switch (priority?.toLowerCase()) {
       case "urgent":
@@ -32,10 +56,34 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start scrollbar-none">
-      {COLUMNS.map((col) => {
+    <div className="flex flex-col gap-2">
+      {hiddenColumns.length > 0 && (
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-xs text-muted-foreground">Hidden columns:</span>
+          <Select
+            value=""
+            onValueChange={(val) => {
+              if (!val) return;
+              setHiddenColumns((prev) => prev.filter((c) => c !== val));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-40">
+              <SelectValue placeholder="Restore column..." />
+            </SelectTrigger>
+            <SelectContent>
+              {hiddenColumns.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start scrollbar-none">
+        {COLUMNS.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
         const colTasks = tasks.filter(
-          (t) => (t.status || "Open").toLowerCase() === col.key.toLowerCase(),
+          (t) => (t.status || "Todo").toLowerCase() === col.key.toLowerCase(),
         );
 
         return (
@@ -53,15 +101,26 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
                   {colTasks.length}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onAddInStatus(col.key)}
-                className="size-6 text-muted-foreground hover:text-foreground"
-                title={`Add task in ${col.key}`}
-              >
-                <Plus className="size-3.5" />
-              </Button>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                  className="size-6 text-muted-foreground hover:text-destructive"
+                  title={`Hide column ${col.label}`}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onAddInStatus(col.key)}
+                  className="size-6 text-muted-foreground hover:text-foreground"
+                  title={`Add task in ${col.key}`}
+                >
+                  <Plus className="size-3.5" />
+                </Button>
+              </div>
             </div>
 
             {/* Cards List */}
@@ -145,6 +204,7 @@ export function TaskKanban({ tasks, onToggleComplete, onEdit, onAddInStatus }: T
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

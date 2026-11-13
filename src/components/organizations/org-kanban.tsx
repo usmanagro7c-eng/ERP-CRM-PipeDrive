@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
@@ -9,6 +9,7 @@ import {
   Users,
   Briefcase,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,21 @@ export function OrgKanban({
   const saveMutation = useSaveOrganization();
   const [draggedOrgName, setDraggedOrgName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenOrgColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenOrgColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
 
   // Identify all fields suitable for Kanban grouping (Select and Link fields)
   const groupableFields = useMemo(() => {
@@ -239,6 +255,26 @@ export function OrgKanban({
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {hiddenColumns.length > 0 && (
+            <Select
+              value=""
+              onValueChange={(val) => {
+                if (!val) return;
+                setHiddenColumns((prev) => prev.filter((c) => c !== val));
+              }}
+            >
+              <SelectTrigger className="h-7 text-xs w-36">
+                <SelectValue placeholder="Restore column..." />
+              </SelectTrigger>
+              <SelectContent>
+                {hiddenColumns.map((c) => (
+                  <SelectItem key={c} value={c} className="text-xs">
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <span>{columns.length} columns</span>
           <span>•</span>
           <span>
@@ -264,7 +300,7 @@ export function OrgKanban({
                 <Skeleton className="h-28 w-full rounded-lg" />
               </div>
             ))
-          : columns.map((col, index) => {
+          : columns.filter((col) => !hiddenColumns.includes(col.key)).map((col, index) => {
               const orgs = groupedData.get(col.key) ?? [];
               const isOver = dragOverCol === col.key;
               const colorClass = COLUMN_COLORS[index % COLUMN_COLORS.length];
@@ -302,17 +338,28 @@ export function OrgKanban({
                         {orgs.length}
                       </Badge>
                     </div>
-                    {onAddInColumn && (
+                    <div className="flex items-center gap-0.5">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground hover:text-foreground"
-                        title={`Add organization to ${col.label}`}
-                        onClick={() => onAddInColumn(currentField?.fieldname ?? groupBy, col.value)}
+                        className="size-7 text-muted-foreground hover:text-destructive"
+                        title={`Hide column ${col.label}`}
+                        onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
                       >
-                        <Plus className="size-3.5" />
+                        <Trash2 className="size-3.5" />
                       </Button>
-                    )}
+                      {onAddInColumn && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-muted-foreground hover:text-foreground"
+                          title={`Add organization to ${col.label}`}
+                          onClick={() => onAddInColumn(currentField?.fieldname ?? groupBy, col.value)}
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Cards Container */}

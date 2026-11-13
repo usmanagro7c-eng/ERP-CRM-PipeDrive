@@ -241,6 +241,24 @@ export async function getDealStatuses(): Promise<DealStatus[]> {
   return Array.isArray(data) ? (data as DealStatus[]) : [];
 }
 
+export async function deleteDealStatus(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${DEAL_STATUS_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function createDealStatus(values: { deal_status: string; type?: string; color?: string; position?: number }): Promise<void> {
+  await proxyRequest(`api/resource/${DEAL_STATUS_DOCTYPE}`, {
+    method: "POST",
+    body: {
+      deal_status: values.deal_status,
+      type: values.type || "Open",
+      color: values.color || "gray",
+      position: values.position ?? 99,
+    },
+  });
+}
+
 export async function listDeals(params: ListParams): Promise<Record<string, unknown>[]> {
   const query = buildListQuery(params, "organization_name");
   const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}?${query}`);
@@ -316,6 +334,24 @@ export async function getLeadStatuses(): Promise<LeadStatus[]> {
   const payload = await proxyRequest(`api/resource/${LEAD_STATUS_DOCTYPE}?${query}`);
   const data = unwrapResourceData<unknown>(payload);
   return Array.isArray(data) ? (data as LeadStatus[]) : [];
+}
+
+export async function deleteLeadStatus(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${LEAD_STATUS_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function createLeadStatus(values: { lead_status: string; type?: string; color?: string; position?: number }): Promise<void> {
+  await proxyRequest(`api/resource/${LEAD_STATUS_DOCTYPE}`, {
+    method: "POST",
+    body: {
+      lead_status: values.lead_status,
+      type: values.type || "Open",
+      color: values.color || "gray",
+      position: values.position ?? 99,
+    },
+  });
 }
 
 export async function listLeads(params: ListParams): Promise<Record<string, unknown>[]> {
@@ -1289,11 +1325,13 @@ export async function deleteNote(name: string): Promise<void> {
 // ---------------------------------------------------------------------------
 export interface CrmCallLog {
   name: string;
-  type?: "Inbound" | "Outbound" | string | undefined;
-  status?: "Connected" | "No Answer" | "Busy" | "Failed" | string | undefined;
+  type?: "Incoming" | "Outgoing" | string | undefined;
+  status?: "Initiated" | "Ringing" | "In Progress" | "Completed" | "Failed" | "Busy" | "No Answer" | "Queued" | "Canceled" | string | undefined;
   duration?: number | undefined;
   from?: string | undefined;
   to?: string | undefined;
+  caller?: string | undefined;
+  receiver?: string | undefined;
   note?: string | undefined;
   summary?: string | undefined;
   reference_doctype?: string | undefined;
@@ -1348,15 +1386,33 @@ export async function listCallLogs(
 }
 
 export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCallLog> {
+  // `from` is a Phone (mandatory). Fall back to the lead's phone (`to`) when
+  // the caller did not supply one, so creation does not fail validation.
+  let from = values.from || "";
+  if (!from && values.to) from = values.to;
+  // `caller`/`receiver` are the User links for identity.
+  let caller = values.caller || "";
+  if (!caller) {
+    try {
+      const { fetchSession } = await import("./auth-client");
+      const session = await fetchSession();
+      caller = session?.user ?? session?.name ?? "";
+    } catch {
+      caller = "";
+    }
+  }
   const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}`, {
     method: "POST",
     body: {
-      type: values.type || "Outbound",
-      status: values.status || "Connected",
+      type: values.type || "Outgoing",
+      status: values.status || "Completed",
       duration: values.duration ?? 0,
       to: values.to || "",
-      from: values.from || "",
-      note: values.summary || values.note || "",
+      from,
+      caller: caller || undefined,
+      receiver: values.receiver || undefined,
+      // `note` is a Link to "FCRM Note" on the backend, not free text, so the
+      // summary is no longer sent as `note` (it would fail link validation).
       reference_doctype: values.reference_doctype || null,
       reference_docname: values.reference_docname || null,
     },
@@ -1379,7 +1435,7 @@ export async function updateCallLog(
         ...(values.duration !== undefined ? { duration: values.duration } : {}),
         ...(values.to !== undefined ? { to: values.to } : {}),
         ...(values.from !== undefined ? { from: values.from } : {}),
-        ...(values.summary || values.note ? { note: values.summary || values.note } : {}),
+        // `note` is a Link to "FCRM Note", not free text; summary is not persisted.
         ...(values.reference_doctype !== undefined
           ? { reference_doctype: values.reference_doctype }
           : {}),

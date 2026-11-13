@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Building2,
   Calendar,
   GripVertical,
   MoreVertical,
   Plus,
+  Trash2,
   User,
   CheckCircle2,
   XCircle,
@@ -36,6 +37,9 @@ import { StageBadge, formatCurrency, getStageStyle } from "@/components/deals/de
 import { AvatarGradient } from "@/components/ui/avatar-gradient";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import * as api from "@/lib/api";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
 import { triggerConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
@@ -76,9 +80,52 @@ export function DealKanban({
 }: DealKanbanProps) {
   const saveMutation = useSaveDeal();
   const deleteMutation = useDeleteDeal();
+  const queryClient = useQueryClient();
+
+  async function handleDeleteStage(stageName: string) {
+    if (!window.confirm(`Delete stage "${stageName}"? This cannot be undone.`)) return;
+    const meta = stages.find((s) => s.name === stageName);
+    try {
+      await api.deleteDealStatus(stageName);
+      toast.success(`Stage "${stageName}" deleted`);
+      if (meta && !deletedStages.some((d) => d.name === stageName)) {
+        setDeletedStages((prev) => [...prev, { name: stageName, type: meta.type, color: meta.color, position: meta.position, probability: meta.probability }]);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete stage");
+    }
+  }
+
+  async function handleRestoreStage(stageName: string) {
+    const meta = deletedStages.find((d) => d.name === stageName);
+    try {
+      await api.createDealStatus({ deal_status: stageName, type: meta?.type, color: meta?.color, position: meta?.position, probability: meta?.probability });
+      toast.success(`Stage "${stageName}" restored`);
+      setDeletedStages((prev) => prev.filter((d) => d.name !== stageName));
+      await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to restore stage");
+    }
+  }
 
   const [draggedDealName, setDraggedDealName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [deletedStages, setDeletedStages] = useState<Array<{ name: string; type?: string; color?: string; position?: number; probability?: number }>>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.deletedDealStages");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.deletedDealStages", JSON.stringify(deletedStages));
+    } catch {
+      // ignore
+    }
+  }, [deletedStages]);
 
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
@@ -218,6 +265,44 @@ export function DealKanban({
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Pipeline View:</span>
           <span>Showing {rows.length} total deals</span>
+          {groupBy === "status" && (
+            <Select
+              value=""
+              onValueChange={async (val) => {
+                if (!val) return;
+                if (val === "__custom__") {
+                  const name = window.prompt("New stage name:");
+                  if (!name || !name.trim()) return;
+                  try {
+                    await api.createDealStatus({ deal_status: name.trim() });
+                    toast.success(`Stage "${name.trim()}" created`);
+                    await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Failed to create stage");
+                  }
+                  return;
+                }
+                await handleRestoreStage(val);
+              }}
+            >
+              <SelectTrigger className="h-7 text-xs ml-2 w-40" aria-label="Restore deleted stage">
+                <SelectValue placeholder="Add stage..." />
+              </SelectTrigger>
+              <SelectContent>
+                {deletedStages.length === 0 && (
+                  <SelectItem value="__none__" disabled>
+                    No deleted stages
+                  </SelectItem>
+                )}
+                {deletedStages.map((d) => (
+                  <SelectItem key={d.name} value={d.name}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__custom__">Custom...</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -294,16 +379,31 @@ export function DealKanban({
                     </Badge>
                   </div>
 
-                  {!isUnassigned && onAddInStage && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAddInStage(col.key)}
-                      className="size-6 text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
-                      title={`Add deal in ${col.label}`}
-                    >
-                      <Plus className="size-3.5" />
-                    </Button>
+                  {!isUnassigned && (
+                    <div className="flex items-center gap-0.5">
+                      {groupBy === "status" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void handleDeleteStage(col.key)}
+                          className="size-6 text-muted-foreground hover:text-destructive active:scale-95 transition-transform"
+                          title={`Delete stage ${col.label}`}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                      {onAddInStage && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onAddInStage(col.key)}
+                          className="size-6 text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
+                          title={`Add deal in ${col.label}`}
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
 

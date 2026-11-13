@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Building2,
   Calendar,
@@ -8,9 +8,18 @@ import {
   Loader2,
   Clock,
   Check,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +60,21 @@ const SALES_ORDER_STAGES = [
 export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrderKanbanProps) {
   const submitMutation = useSubmitSalesOrder();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenSalesOrderColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenSalesOrderColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
 
   async function handleSubmit(order: SalesOrder) {
     setActiveActionId(order.name);
@@ -91,8 +115,32 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
   }
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
-      {SALES_ORDER_STAGES.map((col) => {
+    <div className="flex flex-col gap-2 h-full">
+      {hiddenColumns.length > 0 && (
+        <div className="flex items-center gap-2 px-1 text-xs">
+          <span className="text-muted-foreground">Hidden columns:</span>
+          <Select
+            value=""
+            onValueChange={(val) => {
+              if (!val) return;
+              setHiddenColumns((prev) => prev.filter((c) => c !== val));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-40">
+              <SelectValue placeholder="Restore column..." />
+            </SelectTrigger>
+            <SelectContent>
+              {hiddenColumns.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
+        {SALES_ORDER_STAGES.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
         const list = grouped.get(col.key) ?? [];
         const totalAmount = list.reduce((sum, o) => sum + (Number(o.grand_total) || 0), 0);
 
@@ -109,9 +157,20 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                   {list.length}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                PKR {totalAmount.toLocaleString()}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                  className="size-6 text-muted-foreground hover:text-destructive"
+                  title={`Hide column ${col.label}`}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  PKR {totalAmount.toLocaleString()}
+                </span>
+              </div>
             </div>
 
             {/* Stage Cards Container */}
@@ -201,6 +260,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

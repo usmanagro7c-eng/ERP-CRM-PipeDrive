@@ -36,8 +36,8 @@ export function RecordCallsTab({
   const deleteMutation = useDeleteCallLog();
 
   const [showLogModal, setShowLogModal] = useState(false);
-  const [callType, setCallType] = useState<string>("Outbound");
-  const [callStatus, setCallStatus] = useState<string>("Connected");
+  const [callType, setCallType] = useState<string>("Outgoing");
+  const [callStatus, setCallStatus] = useState<string>("Completed");
   const [durationSec, setDurationSec] = useState<string>("0");
   const [summary, setSummary] = useState<string>("");
 
@@ -92,8 +92,8 @@ export function RecordCallsTab({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Outbound">Outbound</SelectItem>
-                  <SelectItem value="Inbound">Inbound</SelectItem>
+                  <SelectItem value="Outgoing">Outgoing</SelectItem>
+                  <SelectItem value="Incoming">Incoming</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -104,10 +104,10 @@ export function RecordCallsTab({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Connected">Connected</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
                   <SelectItem value="No Answer">No Answer</SelectItem>
                   <SelectItem value="Busy">Busy</SelectItem>
-                  <SelectItem value="Wrong Number">Wrong Number</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -169,7 +169,7 @@ export function RecordCallsTab({
             >
               <div className="flex items-start gap-3">
                 <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground mt-0.5">
-                  {c.type === "Inbound" ? (
+                  {c.type === "Incoming" ? (
                     <ArrowDownLeft className="size-3.5 text-blue-500" />
                   ) : (
                     <ArrowUpRight className="size-3.5 text-emerald-500" />

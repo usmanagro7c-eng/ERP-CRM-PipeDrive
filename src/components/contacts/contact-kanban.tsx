@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Building2, Mail, MoreVertical, Phone, Plus, Briefcase, User } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Building2, Mail, MoreVertical, Phone, Plus, Briefcase, User, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +65,21 @@ export function ContactKanban({
   const deleteMutation = useDeleteContact();
   const [draggedName, setDraggedName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenContactColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenContactColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
 
   const groupByOptions = useMemo(() => {
     const list: Array<{ fieldname: string; label: string }> = [
@@ -155,6 +170,26 @@ export function ContactKanban({
       {/* Kanban Header / Controls */}
       <div className="flex items-center justify-between gap-3 text-xs shrink-0">
         <div className="flex items-center gap-2">
+          {hiddenColumns.length > 0 && (
+            <Select
+              value=""
+              onValueChange={(val) => {
+                if (!val) return;
+                setHiddenColumns((prev) => prev.filter((c) => c !== val));
+              }}
+            >
+              <SelectTrigger aria-label="Restore hidden column" className="h-8 w-36 text-xs">
+                <SelectValue placeholder="Restore column..." />
+              </SelectTrigger>
+              <SelectContent>
+                {hiddenColumns.map((c) => (
+                  <SelectItem key={c} value={c} className="text-xs">
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <span className="text-muted-foreground font-medium">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
             <SelectTrigger aria-label="Group contacts by" className="h-8 w-40 text-xs">
@@ -173,7 +208,7 @@ export function ContactKanban({
 
       {/* Kanban Columns */}
       <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
-        {columns.map((col) => {
+        {columns.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
           const items = grouped.get(col.key) ?? [];
           if (col.key === UNASSIGNED_KEY && items.length === 0) return null;
           const isOver = dragOverCol === col.key;
@@ -211,17 +246,31 @@ export function ContactKanban({
                   </Badge>
                 </div>
 
-                {groupBy === "status" && col.key !== UNASSIGNED_KEY && onAddInStatus && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
-                    onClick={() => onAddInStatus(col.key)}
-                    title={`Add contact in ${col.label}`}
-                    aria-label={`Add contact in ${col.label}`}
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
+                {col.key !== UNASSIGNED_KEY && (
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 text-muted-foreground hover:text-destructive cursor-pointer"
+                      onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                      title={`Hide column ${col.label}`}
+                      aria-label={`Hide column ${col.label}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                    {groupBy === "status" && onAddInStatus && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
+                        onClick={() => onAddInStatus(col.key)}
+                        title={`Add contact in ${col.label}`}
+                        aria-label={`Add contact in ${col.label}`}
+                      >
+                        <Plus className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
 

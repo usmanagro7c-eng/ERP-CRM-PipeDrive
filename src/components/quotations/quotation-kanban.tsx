@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
@@ -18,6 +18,13 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,6 +100,21 @@ export function QuotationKanban({
   const createOrderMutation = useCreateSalesOrderFromQuotation();
 
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenQuotationColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenQuotationColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
   const [draggedQuotationName, setDraggedQuotationName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -226,8 +248,32 @@ export function QuotationKanban({
   }
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
-      {QUOTATION_STAGES.map((col) => {
+    <div className="flex flex-col gap-2 h-full">
+      {hiddenColumns.length > 0 && (
+        <div className="flex items-center gap-2 px-1 text-xs">
+          <span className="text-muted-foreground">Hidden columns:</span>
+          <Select
+            value=""
+            onValueChange={(val) => {
+              if (!val) return;
+              setHiddenColumns((prev) => prev.filter((c) => c !== val));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-40">
+              <SelectValue placeholder="Restore column..." />
+            </SelectTrigger>
+            <SelectContent>
+              {hiddenColumns.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
+        {QUOTATION_STAGES.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
         const list = grouped.get(col.key) ?? [];
         const isOver = dragOverCol === col.key;
         const totalAmount = list.reduce((sum, q) => sum + (Number(q.grand_total) || 0), 0);
@@ -266,6 +312,15 @@ export function QuotationKanban({
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                  className="size-6 text-muted-foreground hover:text-destructive"
+                  title={`Hide column ${col.label}`}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
                 <span className="text-[11px] font-semibold text-muted-foreground">
                   PKR {totalAmount.toLocaleString()}
                 </span>
@@ -483,6 +538,7 @@ export function QuotationKanban({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

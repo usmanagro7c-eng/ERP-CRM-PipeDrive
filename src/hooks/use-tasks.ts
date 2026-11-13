@@ -64,13 +64,13 @@ export function useToggleTaskComplete() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ name, currentStatus }: { name: string; currentStatus: string }) => {
-      const nextStatus = currentStatus === "Completed" ? "Open" : "Completed";
+      const nextStatus = currentStatus === "Done" ? "Todo" : "Done";
       return api.updateTask(name, { status: nextStatus });
     },
     onSuccess: (doc) => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
       const status = String(doc["status"] ?? "");
-      toast.success(status === "Completed" ? "Task marked as completed" : "Task reopened");
+      toast.success(status === "Done" ? "Task marked as completed" : "Task reopened");
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to update task");

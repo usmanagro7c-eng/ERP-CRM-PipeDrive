@@ -81,6 +81,7 @@ function useInvalidateDeals() {
 export interface SaveDealInput {
   name?: string | undefined; // present => update, absent => create
   values: Record<string, unknown>;
+  silent?: boolean;
 }
 
 export function useSaveDeal() {
@@ -94,7 +95,9 @@ export function useSaveDeal() {
     },
     onSuccess: async (_doc, variables) => {
       await invalidate();
-      toast.success(variables.name ? "Deal updated" : "Deal created");
+      if (!variables.silent) {
+        toast.success(variables.name ? "Deal updated" : "Deal created");
+      }
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not save the deal");

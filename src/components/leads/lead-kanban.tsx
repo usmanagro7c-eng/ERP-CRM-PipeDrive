@@ -14,6 +14,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -135,6 +145,8 @@ export function LeadKanban({
 
   const [draggedLeadName, setDraggedLeadName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [addStatusDialogOpen, setAddStatusDialogOpen] = useState(false);
+  const [newStatusName, setNewStatusName] = useState("");
   const [deletedStatuses, setDeletedStatuses] = useState<Array<{ name: string; type?: string; color?: string; position?: number }>>(() => {
     try {
       const raw = window.localStorage.getItem("agrocrm.deletedLeadStatuses");
@@ -276,15 +288,8 @@ export function LeadKanban({
               onValueChange={async (val) => {
                 if (!val) return;
                 if (val === "__custom__") {
-                  const name = window.prompt("New status name:");
-                  if (!name || !name.trim()) return;
-                  try {
-                    await api.createLeadStatus({ lead_status: name.trim() });
-                    toast.success(`Status "${name.trim()}" created`);
-                    await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Failed to create status");
-                  }
+                  setNewStatusName("");
+                  setAddStatusDialogOpen(true);
                   return;
                 }
                 await handleRestoreStatus(val);
@@ -293,6 +298,48 @@ export function LeadKanban({
               <SelectTrigger className="h-7 text-xs ml-2 w-40" aria-label="Restore deleted status">
                 <SelectValue placeholder="Add status..." />
               </SelectTrigger>
+              {addStatusDialogOpen && (
+                <Dialog open={addStatusDialogOpen} onOpenChange={(open) => setAddStatusDialogOpen(open)}>
+                  <DialogContent className="p-4">
+                    <DialogHeader>
+                      <DialogTitle>Add New Status</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>Enter a name for the new status</DialogDescription>
+                    <Label className="block text-sm font-medium mb-2">Status Name</Label>
+                    <Input
+                      value={newStatusName}
+                      onChange={(e) => setNewStatusName(e.target.value)}
+                      placeholder="e.g. Nurture"
+                      className="w-full mb-3"
+                    />
+                    <DialogFooter className="justify-end space-x-2">
+                      <Button variant="ghost" onClick={() => setAddStatusDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          const trimmed = newStatusName.trim();
+                          if (!trimmed) {
+                            setAddStatusDialogOpen(false);
+                            return;
+                          }
+                          try {
+                            await api.createLeadStatus({ lead_status: trimmed });
+                            toast.success(`Status "${trimmed}" created`);
+                            await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Failed to create status");
+                          }
+                          setAddStatusDialogOpen(false);
+                        }}
+                        disabled={!newStatusName.trim()}
+                      >
+                        Create
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               <SelectContent>
                 {deletedStatuses.length === 0 && (
                   <SelectItem value="__none__" disabled>

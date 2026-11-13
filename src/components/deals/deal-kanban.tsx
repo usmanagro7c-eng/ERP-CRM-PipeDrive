@@ -17,6 +17,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -89,7 +99,13 @@ export function DealKanban({
       await api.deleteDealStatus(stageName);
       toast.success(`Stage "${stageName}" deleted`);
       if (meta && !deletedStages.some((d) => d.name === stageName)) {
-        setDeletedStages((prev) => [...prev, { name: stageName, type: meta.type, color: meta.color, position: meta.position, probability: meta.probability }]);
+        setDeletedStages((prev) => [...prev, {
+          name: stageName,
+          ...(meta.type !== undefined && { type: meta.type }),
+          ...(meta.color !== undefined && { color: meta.color }),
+          ...(meta.position !== undefined && { position: meta.position }),
+          ...(meta.probability !== undefined && { probability: meta.probability }),
+        }]);
       }
       await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
     } catch (err) {
@@ -100,7 +116,12 @@ export function DealKanban({
   async function handleRestoreStage(stageName: string) {
     const meta = deletedStages.find((d) => d.name === stageName);
     try {
-      await api.createDealStatus({ deal_status: stageName, type: meta?.type, color: meta?.color, position: meta?.position, probability: meta?.probability });
+      await api.createDealStatus({
+        deal_status: stageName,
+        ...(meta?.type !== undefined && { type: meta.type }),
+        ...(meta?.color !== undefined && { color: meta.color }),
+        ...(meta?.position !== undefined && { position: meta.position }),
+      });
       toast.success(`Stage "${stageName}" restored`);
       setDeletedStages((prev) => prev.filter((d) => d.name !== stageName));
       await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
@@ -111,6 +132,8 @@ export function DealKanban({
 
   const [draggedDealName, setDraggedDealName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [addStageDialogOpen, setAddStageDialogOpen] = useState(false);
+  const [newStageName, setNewStageName] = useState("");
   const [deletedStages, setDeletedStages] = useState<Array<{ name: string; type?: string; color?: string; position?: number; probability?: number }>>(() => {
     try {
       const raw = window.localStorage.getItem("agrocrm.deletedDealStages");
@@ -271,15 +294,8 @@ export function DealKanban({
               onValueChange={async (val) => {
                 if (!val) return;
                 if (val === "__custom__") {
-                  const name = window.prompt("New stage name:");
-                  if (!name || !name.trim()) return;
-                  try {
-                    await api.createDealStatus({ deal_status: name.trim() });
-                    toast.success(`Stage "${name.trim()}" created`);
-                    await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Failed to create stage");
-                  }
+                  setNewStageName("");
+                  setAddStageDialogOpen(true);
                   return;
                 }
                 await handleRestoreStage(val);
@@ -288,6 +304,48 @@ export function DealKanban({
               <SelectTrigger className="h-7 text-xs ml-2 w-40" aria-label="Restore deleted stage">
                 <SelectValue placeholder="Add stage..." />
               </SelectTrigger>
+              {addStageDialogOpen && (
+                <Dialog open={addStageDialogOpen} onOpenChange={(open) => setAddStageDialogOpen(open)}>
+                  <DialogContent className="p-4">
+                    <DialogHeader>
+                      <DialogTitle>Add New Stage</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>Enter a name for the new stage</DialogDescription>
+                    <Label className="block text-sm font-medium mb-2">Stage Name</Label>
+                    <Input
+                      value={newStageName}
+                      onChange={(event) => setNewStageName(event.target.value)}
+                      placeholder="e.g. Won"
+                      className="w-full mb-3"
+                    />
+                    <DialogFooter className="justify-end space-x-2">
+                      <Button variant="ghost" onClick={() => setAddStageDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          const trimmed = newStageName.trim();
+                          if (!trimmed) {
+                            setAddStageDialogOpen(false);
+                            return;
+                          }
+                          try {
+                            await api.createDealStatus({ deal_status: trimmed });
+                            toast.success(`Stage "${trimmed}" created`);
+                            await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Failed to create stage");
+                          }
+                          setAddStageDialogOpen(false);
+                        }}
+                        disabled={!newStageName.trim()}
+                      >
+                        Create
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               <SelectContent>
                 {deletedStages.length === 0 && (
                   <SelectItem value="__none__" disabled>

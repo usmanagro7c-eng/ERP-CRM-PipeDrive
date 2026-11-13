@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSaveLead, leadStatusesOptions, leadLostReasonsOptions } from "@/hooks/use-leads";
+import { TerritorySelect } from "@/components/territory-select";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { type FrappeDocTypeMeta } from "@/lib/frappe-meta";
@@ -377,11 +378,12 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
 
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-foreground">Territory</Label>
-              <Input
+              <TerritorySelect
                 value={formData.territory}
-                onChange={(e) => handleChange("territory", e.target.value)}
+                onValueChange={(val) => handleChange("territory", val)}
                 placeholder="Territory"
-                className="h-8 text-xs bg-background"
+                triggerClassName="h-8 text-xs bg-background"
+                itemClassName="text-xs cursor-pointer"
               />
             </div>
 

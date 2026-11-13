@@ -99,7 +99,7 @@ export function CallFormModal({
     const payload: Partial<CrmCallLog> = {
       type: callType,
       status: callStatus,
-      from: fromNumber.trim() || "Agent",
+      from: fromNumber.trim() || undefined, // falls back to `to` server-side when empty
       to: toNumber.trim(),
       duration: Number(duration) || 0,
       summary: summary.trim(),

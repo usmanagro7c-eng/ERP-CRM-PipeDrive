@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSaveOrganization } from "@/hooks/use-organizations";
+import { TerritorySelect } from "@/components/territory-select";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,6 @@ interface OrgFormModalProps {
 }
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 const INDUSTRIES = [
   "Accounting",
   "Advertising",
@@ -294,21 +294,13 @@ export function OrgFormModal({
             {/* Territory */}
             <div className="space-y-1.5">
               <Label className="text-xs font-normal text-muted-foreground">Territory</Label>
-              <Select
-                value={form.territory || undefined}
+              <TerritorySelect
+                value={form.territory}
                 onValueChange={(val) => handleChange("territory", val)}
-              >
-                <SelectTrigger className="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                  <SelectValue placeholder="Territory" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TERRITORIES.map((t) => (
-                    <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Territory"
+                triggerClassName="h-8 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                itemClassName="text-xs cursor-pointer"
+              />
             </div>
 
             {/* 2-Column Section: No. of Employees & Industry */}

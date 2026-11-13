@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   Select,
   SelectContent,
@@ -67,7 +68,6 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormState {
   salutation: string;
@@ -301,21 +301,13 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
                 {/* Territory */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground block">Territory</label>
-                  <Select
-                    value={formState.territory || undefined}
+                  <TerritorySelect
+                    value={formState.territory}
                     onValueChange={(val) => handleChange("territory", val)}
-                  >
-                    <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                      <SelectValue placeholder="Territory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TERRITORIES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Territory"
+                    triggerClassName="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                    itemClassName="text-xs cursor-pointer"
+                  />
                 </div>
 
                 {/* Source */}

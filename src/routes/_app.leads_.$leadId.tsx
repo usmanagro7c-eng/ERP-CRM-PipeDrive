@@ -44,6 +44,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import { LeadFormModal } from "@/components/leads/lead-form-modal";
 import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   leadDetailOptions,
   leadStatusesOptions,
@@ -853,25 +854,16 @@ function LeadDetailPage() {
               {/* Territory */}
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Territory</span>
-                <Select
-                  value={sidebarValues.territory || ""}
+                <TerritorySelect
+                  value={sidebarValues.territory}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, territory: val }));
                     void handleFieldSave("territory", val);
                   }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Territory... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Territories">All Territories</SelectItem>
-                    <SelectItem value="Pakistan">Pakistan</SelectItem>
-                    <SelectItem value="Punjab">Punjab</SelectItem>
-                    <SelectItem value="Sindh">Sindh</SelectItem>
-                    <SelectItem value="KPK">KPK</SelectItem>
-                    <SelectItem value="Balochistan">Balochistan</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder="Add Territory... ▾"
+                  triggerClassName="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Industry */}

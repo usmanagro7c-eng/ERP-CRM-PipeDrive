@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   Select,
   SelectContent,
@@ -66,7 +67,6 @@ const INDUSTRIES = [
   "Transportation",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormDetails {
   organization: string;
@@ -367,21 +367,13 @@ export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }:
               {/* Territory */}
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground block">Territory</label>
-                <Select
-                  value={details.territory || undefined}
+                <TerritorySelect
+                  value={details.territory}
                   onValueChange={(val) => handleDetailChange("territory", val)}
-                >
-                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                    <SelectValue placeholder="Territory" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Territory"
+                  triggerClassName="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Row 2 */}

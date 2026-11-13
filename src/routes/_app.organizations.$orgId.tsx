@@ -38,6 +38,7 @@ import { contactListOptions } from "@/hooks/use-contacts";
 import { OrgFormModal } from "@/components/organizations/org-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { ContactFormModal } from "@/components/contacts/contact-form-modal";
+import { TerritorySelect } from "@/components/territory-select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/organizations/$orgId")({
@@ -46,7 +47,6 @@ export const Route = createFileRoute("/_app/organizations/$orgId")({
 });
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 const INDUSTRIES = [
   "Accounting",
   "Advertising",
@@ -363,8 +363,8 @@ function OrganizationDetailPage() {
               {/* Territory */}
               <div className="space-y-1">
                 <label className="text-[11px] font-normal text-muted-foreground">Territory</label>
-                <Select
-                  value={sidebarValues.territory || ""}
+                <TerritorySelect
+                  value={sidebarValues.territory}
                   onValueChange={(val) => {
                     handleFieldChange("territory", val);
                     void saveMutation
@@ -374,18 +374,10 @@ function OrganizationDetailPage() {
                       })
                       .then(() => refetch());
                   }}
-                >
-                  <SelectTrigger className="h-7 text-xs bg-transparent border-border/40 cursor-pointer">
-                    <SelectValue placeholder="Territory" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Territory"
+                  triggerClassName="h-7 text-xs bg-transparent border-border/40 cursor-pointer"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Industry */}

@@ -50,6 +50,7 @@ import {
 } from "@/components/sales-orders/sales-order-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   dealDetailOptions,
   dealStatusesOptions,
@@ -108,7 +109,7 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
+
 
 interface SidebarState {
   organization: string;
@@ -1008,24 +1009,16 @@ function DealDetailPage() {
               {/* Territory */}
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Territory</span>
-                <Select
-                  value={sidebarValues.territory || ""}
+                <TerritorySelect
+                  value={sidebarValues.territory}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, territory: val }));
                     void handleFieldSave("territory", val);
                   }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Territory... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Add Territory... ▾"
+                  triggerClassName="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Annual Revenue */}

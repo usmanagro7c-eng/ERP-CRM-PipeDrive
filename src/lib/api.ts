@@ -259,6 +259,21 @@ export async function createDealStatus(values: { deal_status: string; type?: str
   });
 }
 
+/**
+ * Create a CRM Territory in the Frappe backend. The doctype is
+ * `autoname: field:territory_name` so the record is named after the value.
+ * Only the System Manager / Sales Manager / Sales User roles are permitted
+ * to create territories by the backend's own permissions.
+ */
+export async function createTerritory(territoryName: string): Promise<void> {
+  const name = territoryName.trim();
+  if (!name) throw new Error("Territory name is required.");
+  await proxyRequest(`api/resource/CRM%20Territory`, {
+    method: "POST",
+    body: { territory_name: name },
+  });
+}
+
 export async function listDeals(params: ListParams): Promise<Record<string, unknown>[]> {
   const query = buildListQuery(params, "organization_name");
   const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}?${query}`);
@@ -1386,10 +1401,14 @@ export async function listCallLogs(
 }
 
 export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCallLog> {
-  // `from` is a Phone (mandatory). Fall back to the lead's phone (`to`) when
-  // the caller did not supply one, so creation does not fail validation.
-  let from = values.from || "";
-  if (!from && values.to) from = values.to;
+  const to = (values.to || "").trim();
+  // `from` is a Phone field (mandatory). Fall back to the called number when the
+  // caller did not supply one, so creation does not fail validation.
+  let from = (values.from || "").trim();
+  if (!from && to) from = to;
+  if (!to) {
+    throw new Error("A To Number is required to log a call.");
+  }
   // `caller`/`receiver` are the User links for identity.
   let caller = values.caller || "";
   if (!caller) {
@@ -1407,7 +1426,7 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
       type: values.type || "Outgoing",
       status: values.status || "Completed",
       duration: values.duration ?? 0,
-      to: values.to || "",
+      to,
       from,
       caller: caller || undefined,
       receiver: values.receiver || undefined,

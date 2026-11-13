@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, PhoneCall, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,19 +41,44 @@ export function RecordCallsTab({
   const [callStatus, setCallStatus] = useState<string>("Completed");
   const [durationSec, setDurationSec] = useState<string>("0");
   const [summary, setSummary] = useState<string>("");
+  const [fromNumber, setFromNumber] = useState<string>("");
+  const [toNumber, setToNumber] = useState<string>("");
+  const [formError, setFormError] = useState<string | null>(null);
+
+  function openLogModal() {
+    setShowLogModal(true);
+    setFromNumber("");
+    setToNumber(phoneNumber || "");
+    setFormError(null);
+  }
+
+  function closeLogModal() {
+    setShowLogModal(false);
+    setFormError(null);
+  }
 
   async function handleSaveCall() {
+    const to = toNumber.trim();
+    if (!to) {
+      setFormError("To Number is required — this can't be empty.");
+      toast.error("Please enter the To Number");
+      return;
+    }
+    setFormError(null);
     try {
       await saveMutation.mutateAsync({
         type: callType,
         status: callStatus,
         duration: Number(durationSec) || 0,
-        to: phoneNumber || "",
+        from: fromNumber.trim() || undefined,
+        to,
         summary: summary.trim(),
         reference_doctype: referenceDoctype,
         reference_docname: referenceName,
       });
       setSummary("");
+      setFromNumber("");
+      setToNumber("");
       setShowLogModal(false);
     } catch {
       // handled
@@ -74,7 +100,7 @@ export function RecordCallsTab({
         <h2 className="text-2xl font-semibold text-foreground">Calls</h2>
         <Button
           size="sm"
-          onClick={() => setShowLogModal(true)}
+          onClick={openLogModal}
           className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
         >
           <Plus className="size-3.5" />
@@ -122,6 +148,39 @@ export function RecordCallsTab({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="text-[11px] text-muted-foreground">From Number</label>
+              <Input
+                value={fromNumber}
+                onChange={(e) => setFromNumber(e.target.value)}
+                placeholder="Your line / extension (optional)"
+                className="h-7 text-xs mt-1 bg-secondary/30"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground">
+                To Number <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={toNumber}
+                onChange={(e) => {
+                  setToNumber(e.target.value);
+                  setFormError(null);
+                }}
+                placeholder="e.g. +92 300 1234567"
+                className="h-7 text-xs mt-1 bg-secondary/30"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          {formError && (
+            <p role="alert" className="text-[11px] text-destructive font-medium">
+              {formError}
+            </p>
+          )}
+
           <Textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -133,7 +192,7 @@ export function RecordCallsTab({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowLogModal(false)}
+              onClick={closeLogModal}
               className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel

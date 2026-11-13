@@ -21,6 +21,14 @@ export function leadStatusesOptions() {
   });
 }
 
+export function leadLostReasonsOptions() {
+  return queryOptions({
+    queryKey: [LEAD_QUERY_ROOT, "lost-reasons"],
+    queryFn: () => api.getLinkOptions("CRM Lost Reason"),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
 export interface LeadListVariables {
   search: string;
   filters: Array<[string, string, string]>;
@@ -72,6 +80,7 @@ function useInvalidateLeads() {
 export interface SaveLeadInput {
   name?: string | undefined; // present => update, absent => create
   values: Record<string, unknown>;
+  silent?: boolean;
 }
 
 export function useSaveLead() {
@@ -85,7 +94,9 @@ export function useSaveLead() {
     },
     onSuccess: async (_doc, variables) => {
       await invalidate();
-      toast.success(variables.name ? "Lead updated" : "Lead created");
+      if (!variables.silent) {
+        toast.success(variables.name ? "Lead updated" : "Lead created");
+      }
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not save the lead");

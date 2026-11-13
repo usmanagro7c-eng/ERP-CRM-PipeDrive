@@ -11,7 +11,8 @@ import {
   Phone,
   CheckCircle,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -210,6 +211,18 @@ export function LeadTable({
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
 
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    leadNames: string[];
+    leadTitle?: string;
+    targetStatus: string;
+  }>({
+    open: false,
+    leadNames: [],
+    leadTitle: undefined,
+    targetStatus: "Unqualified",
+  });
+
   const activeFields = useMemo(() => fieldsByNames(meta, columns), [meta, columns]);
 
   const statusOptions = useMemo(() => {
@@ -321,6 +334,15 @@ export function LeadTable({
                         currentValue={currentStatus}
                         options={statusOptions}
                         onSelect={(newStatus) => {
+                          if (isLeadLostStatus(newStatus, statuses)) {
+                            setLostModalState({
+                              open: true,
+                              leadNames: [name],
+                              leadTitle: (row["lead_name"] as string) || name,
+                              targetStatus: newStatus,
+                            });
+                            return;
+                          }
                           void saveMutation.mutateAsync({
                             name,
                             values: { status: newStatus },
@@ -346,6 +368,14 @@ export function LeadTable({
           })}
         </TableBody>
       </Table>
+
+      <LeadLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((p) => ({ ...p, open }))}
+        leadNames={lostModalState.leadNames}
+        leadTitle={lostModalState.leadTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

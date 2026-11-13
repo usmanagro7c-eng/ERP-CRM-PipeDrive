@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Briefcase,
   Building2,
@@ -8,6 +8,7 @@ import {
   MoreVertical,
   Phone,
   Plus,
+  Trash2,
   User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,11 @@ import {
   LeadTemperatureBadge,
   getLeadStatusStyle,
 } from "@/components/leads/lead-stage-badge";
+import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
 import { useSaveLead, useDeleteLead, type FrappeDocTypeMeta } from "@/hooks/use-leads";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import * as api from "@/lib/api";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
 
@@ -82,9 +87,63 @@ export function LeadKanban({
 }: LeadKanbanProps) {
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
+  const queryClient = useQueryClient();
+
+  async function handleDeleteStatus(statusName: string) {
+    if (!window.confirm(`Delete status "${statusName}"? This cannot be undone.`)) return;
+    const meta = statuses.find((s) => s.name === statusName);
+    try {
+      await api.deleteLeadStatus(statusName);
+      toast.success(`Status "${statusName}" deleted`);
+      if (meta && !deletedStatuses.some((d) => d.name === statusName)) {
+        setDeletedStatuses((prev) => [...prev, { name: statusName, type: meta.type, color: meta.color, position: meta.position }]);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete status");
+    }
+  }
+
+  async function handleRestoreStatus(statusName: string) {
+    const meta = deletedStatuses.find((d) => d.name === statusName);
+    try {
+      await api.createLeadStatus({ lead_status: statusName, type: meta?.type, color: meta?.color, position: meta?.position });
+      toast.success(`Status "${statusName}" restored`);
+      setDeletedStatuses((prev) => prev.filter((d) => d.name !== statusName));
+      await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to restore status");
+    }
+  }
 
   const [draggedLeadName, setDraggedLeadName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [deletedStatuses, setDeletedStatuses] = useState<Array<{ name: string; type?: string; color?: string; position?: number }>>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.deletedLeadStatuses");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.deletedLeadStatuses", JSON.stringify(deletedStatuses));
+    } catch {
+      // ignore
+    }
+  }, [deletedStatuses]);
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    leadNames: string[];
+    leadTitle?: string;
+    targetStatus: string;
+  }>({
+    open: false,
+    leadNames: [],
+    leadTitle: undefined,
+    targetStatus: "Unqualified",
+  });
 
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
@@ -173,6 +232,17 @@ export function LeadKanban({
         return;
       }
     }
+    if (groupBy === "status" && isLeadLostStatus(targetColKey, statuses)) {
+      const lead = rows.find((r) => r["name"] === leadName);
+      const leadTitle = lead ? String(lead["lead_name"] || lead["name"] || leadName) : leadName;
+      setLostModalState({
+        open: true,
+        leadNames: [leadName],
+        leadTitle,
+        targetStatus: targetColKey,
+      });
+      return;
+    }
     const patch: Record<string, unknown> = { [groupBy]: targetColKey };
     await saveMutation.mutateAsync({ name: leadName, values: patch });
   }
@@ -184,6 +254,44 @@ export function LeadKanban({
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Leads Board:</span>
           <span>Showing {rows.length} total leads</span>
+          {groupBy === "status" && (
+            <Select
+              value=""
+              onValueChange={async (val) => {
+                if (!val) return;
+                if (val === "__custom__") {
+                  const name = window.prompt("New status name:");
+                  if (!name || !name.trim()) return;
+                  try {
+                    await api.createLeadStatus({ lead_status: name.trim() });
+                    toast.success(`Status "${name.trim()}" created`);
+                    await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Failed to create status");
+                  }
+                  return;
+                }
+                await handleRestoreStatus(val);
+              }}
+            >
+              <SelectTrigger className="h-7 text-xs ml-2 w-40" aria-label="Restore deleted status">
+                <SelectValue placeholder="Add status..." />
+              </SelectTrigger>
+              <SelectContent>
+                {deletedStatuses.length === 0 && (
+                  <SelectItem value="__none__" disabled>
+                    No deleted statuses
+                  </SelectItem>
+                )}
+                {deletedStatuses.map((d) => (
+                  <SelectItem key={d.name} value={d.name}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__custom__">Custom...</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -254,16 +362,31 @@ export function LeadKanban({
                     </Badge>
                   </div>
 
-                  {!isUnassigned && onAddInStatus && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAddInStatus(col.key)}
-                      className="size-6 text-muted-foreground hover:text-foreground"
-                      title={`Add lead in ${col.label}`}
-                    >
-                      <Plus className="size-3.5" />
-                    </Button>
+                  {!isUnassigned && (
+                    <div className="flex items-center gap-0.5">
+                      {groupBy === "status" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void handleDeleteStatus(col.key)}
+                          className="size-6 text-muted-foreground hover:text-destructive"
+                          title={`Delete status ${col.label}`}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                      {onAddInStatus && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onAddInStatus(col.key)}
+                          className="size-6 text-muted-foreground hover:text-foreground"
+                          title={`Add lead in ${col.label}`}
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -366,6 +489,15 @@ export function LeadKanban({
                                   currentValue={currentStatus}
                                   options={statusOptions}
                                   onSelect={(newStatus) => {
+                                    if (isLeadLostStatus(newStatus, statuses)) {
+                                      setLostModalState({
+                                        open: true,
+                                        leadNames: [name],
+                                        leadTitle: fullName || name,
+                                        targetStatus: newStatus,
+                                      });
+                                      return;
+                                    }
                                     void saveMutation.mutateAsync({
                                       name,
                                       values: { status: newStatus },
@@ -443,6 +575,14 @@ export function LeadKanban({
           );
         })}
       </div>
+
+      <LeadLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((p) => ({ ...p, open }))}
+        leadNames={lostModalState.leadNames}
+        leadTitle={lostModalState.leadTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

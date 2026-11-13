@@ -14,10 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSaveLead, leadStatusesOptions } from "@/hooks/use-leads";
+import { useSaveLead, leadStatusesOptions, leadLostReasonsOptions } from "@/hooks/use-leads";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { type FrappeDocTypeMeta } from "@/lib/frappe-meta";
+import { isLeadLostStatus, FALLBACK_LEAD_LOST_REASONS } from "@/components/leads/lead-lost-modal";
 
 interface LeadFormModalProps {
   open: boolean;
@@ -79,6 +80,8 @@ interface FormDataState {
   industry: string;
   status: string;
   lead_owner: string;
+  lost_reason: string;
+  lost_notes: string;
 }
 
 const defaultFormData: FormDataState = {
@@ -97,6 +100,8 @@ const defaultFormData: FormDataState = {
   industry: "",
   status: "New",
   lead_owner: "",
+  lost_reason: "",
+  lost_notes: "",
 };
 
 export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadFormModalProps) {
@@ -106,6 +111,13 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
 
   const { data: statuses = [] } = useQuery(leadStatusesOptions());
   const { data: users = [] } = useCrmUsers();
+  const reasonsQuery = useQuery(leadLostReasonsOptions());
+
+  const lostReasons = (
+    reasonsQuery.data && reasonsQuery.data.length > 0
+      ? reasonsQuery.data.map((r) => r.name)
+      : FALLBACK_LEAD_LOST_REASONS
+  ).filter(Boolean);
 
   const [formData, setFormData] = useState<FormDataState>(defaultFormData);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -130,6 +142,8 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
           industry: String(lead["industry"] || ""),
           status: String(lead["status"] || "New"),
           lead_owner: String(lead["lead_owner"] || lead["owner"] || ""),
+          lost_reason: String(lead["lost_reason"] || ""),
+          lost_notes: String(lead["lost_notes"] || ""),
         });
       } else {
         const defaultOwner = users.find((u) => u.session_user)?.name || users[0]?.name || "";
@@ -179,6 +193,16 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
       return;
     }
 
+    const isLost = isLeadLostStatus(formData.status, statuses);
+    if (isLost && !formData.lost_reason.trim()) {
+      toast.error("Please specify a reason for losing the lead.");
+      return;
+    }
+    if (isLost && formData.lost_reason === "Other" && !formData.lost_notes.trim()) {
+      toast.error("Please provide lost notes when selecting 'Other'.");
+      return;
+    }
+
     const payload: Record<string, unknown> = {
       salutation: formData.salutation || null,
       first_name: formData.first_name.trim(),
@@ -195,6 +219,8 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
       industry: formData.industry || null,
       status: formData.status || "New",
       lead_owner: formData.lead_owner || null,
+      lost_reason: isLost ? formData.lost_reason || null : null,
+      lost_notes: isLost ? formData.lost_notes.trim() || null : null,
     };
 
     try {
@@ -455,6 +481,47 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
                 </SelectContent>
               </Select>
             </div>
+
+            {isLeadLostStatus(formData.status, statuses) && (
+              <div className="sm:col-span-2 space-y-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-destructive">
+                    Lost Reason <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.lost_reason || undefined}
+                    onValueChange={(val) => handleChange("lost_reason", val)}
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-background cursor-pointer">
+                      <SelectValue placeholder="Select lost reason..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lostReasons.map((r) => (
+                        <SelectItem key={r} value={r} className="text-xs cursor-pointer">
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-destructive">
+                    Lost Notes {formData.lost_reason === "Other" && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Textarea
+                    value={formData.lost_notes}
+                    onChange={(e) => handleChange("lost_notes", e.target.value)}
+                    placeholder={
+                      formData.lost_reason === "Other"
+                        ? "Describe why the lead was lost (required for 'Other')..."
+                        : "Optional notes, reason details, feedback..."
+                    }
+                    className="text-xs min-h-[70px] bg-background"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Row 8: Lead Owner */}
             <div className="space-y-1.5 sm:col-span-2">

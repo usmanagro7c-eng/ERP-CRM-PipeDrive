@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import {
   Building2,
   Calendar,
@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { stripHtml, isLinkedRecordConflict } from "@/lib/frappe-error";
 import {
   Dialog,
   DialogContent,
@@ -92,8 +94,55 @@ export function DealKanban({
   const deleteMutation = useDeleteDeal();
   const queryClient = useQueryClient();
 
-  async function handleDeleteStage(stageName: string) {
-    if (!window.confirm(`Delete stage "${stageName}"? This cannot be undone.`)) return;
+  const [confirmDelete, setConfirmDelete] = useState<null | {
+    title: string;
+    body: ReactNode;
+    confirmLabel: string;
+    confirmDisabled?: boolean;
+    action: () => Promise<void>;
+  }>(null);
+  const [confirmPending, setConfirmPending] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  /** Count of records currently sitting in a column. */
+  function countRecordsIn(stageName: string): number {
+    return rows.reduce((acc, r) => {
+      const v = r[groupBy];
+      const key = typeof v === "string" && v.trim() ? v.trim() : UNASSIGNED_KEY;
+      return key === stageName ? acc + 1 : acc;
+    }, 0);
+  }
+
+  function openStageDeleteDialog(stageName: string) {
+    const meta = stages.find((s) => s.name === stageName);
+    const label = meta?.deal_status ?? stageName;
+    const count = countRecordsIn(stageName);
+    setConfirmError(null);
+    setConfirmDelete({
+      title: `Delete stage "${label}"?`,
+      confirmLabel: "Delete",
+      body:
+        count > 0 ? (
+          <span>
+            This stage is used by <strong>{count} deal{count !== 1 ? "s" : ""}</strong> in your
+            pipeline. Deleting it will fail until those deals are moved to another stage
+            (drag the cards or use the card menu's <em>Move to Stage</em>). The stage
+            definition itself will be permanently removed.
+          </span>
+        ) : (
+          <span>
+            This will permanently remove the <strong>{label}</strong> stage from your pipeline.
+            Deals currently in this stage will become <strong>Unassigned</strong>. This cannot
+            be undone.
+          </span>
+        ),
+      action: async () => {
+        await performDeleteStage(stageName);
+      },
+    });
+  }
+
+  async function performDeleteStage(stageName: string) {
     const meta = stages.find((s) => s.name === stageName);
     try {
       await api.deleteDealStatus(stageName);
@@ -108,8 +157,27 @@ export function DealKanban({
         }]);
       }
       await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+      setConfirmDelete(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete stage");
+      const message = stripHtml(err instanceof Error ? err.message : String(err));
+      setConfirmError(
+        isLinkedRecordConflict(err)
+          ? stripHtml(err instanceof Error ? err.message : String(err))
+          : message || "Failed to delete stage",
+      );
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    setConfirmPending(true);
+    setConfirmError(null);
+    try {
+      await confirmDelete.action();
+    } catch (err) {
+      setConfirmError(stripHtml(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setConfirmPending(false);
     }
   }
 
@@ -443,7 +511,7 @@ export function DealKanban({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => void handleDeleteStage(col.key)}
+                          onClick={() => openStageDeleteDialog(col.key)}
                           className="size-6 text-muted-foreground hover:text-destructive active:scale-95 transition-transform"
                           title={`Delete stage ${col.label}`}
                         >
@@ -603,13 +671,21 @@ export function DealKanban({
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        `Are you sure you want to delete deal ${name}?`,
-                                      )
-                                    ) {
-                                      void deleteMutation.mutate(name);
-                                    }
+                                    setConfirmError(null);
+                                    setConfirmDelete({
+                                      title: `Delete deal "${name}"?`,
+                                      confirmLabel: "Delete",
+                                      body: (
+                                        <span>
+                                          This deal will be permanently deleted from your CRM. This
+                                          cannot be undone.
+                                        </span>
+                                      ),
+                                      action: async () => {
+                                        await deleteMutation.mutateAsync(name);
+                                        setConfirmDelete(null);
+                                      },
+                                    });
                                   }}
                                 >
                                   Delete Deal
@@ -666,6 +742,21 @@ export function DealKanban({
         })}
       </div>
 
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setConfirmDelete(null);
+          setConfirmError(null);
+        }}
+        title={confirmDelete?.title ?? "Confirm"}
+        description={confirmDelete?.body}
+        confirmLabel={confirmDelete?.confirmLabel ?? "Delete"}
+        confirmDisabled={confirmDelete?.confirmDisabled}
+        pending={confirmPending}
+        error={confirmError}
+        onConfirm={() => void handleConfirmDelete()}
+      />
       <DealLostModal
         open={lostModalState.open}
         onOpenChange={(open) => setLostModalState((prev) => ({ ...prev, open }))}

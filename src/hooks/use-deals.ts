@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { friendlyFrappeError } from "@/lib/frappe-error";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 
 export const DEAL_QUERY_ROOT = "deals";
@@ -114,7 +115,7 @@ export function useDeleteDeal() {
       toast.success("Deal deleted");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Could not delete the deal");
+      toast.error(friendlyFrappeError(error, "Could not delete the deal"));
     },
   });
 }

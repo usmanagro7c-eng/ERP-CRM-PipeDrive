@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import {
   Briefcase,
   Building2,
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { stripHtml, isLinkedRecordConflict } from "@/lib/frappe-error";
 import {
   Dialog,
   DialogContent,
@@ -106,8 +108,56 @@ export function LeadKanban({
   const deleteMutation = useDeleteLead();
   const queryClient = useQueryClient();
 
-  async function handleDeleteStatus(statusName: string) {
-    if (!window.confirm(`Delete status "${statusName}"? This cannot be undone.`)) return;
+  const [confirmDelete, setConfirmDelete] = useState<null | {
+    title: string;
+    body: ReactNode;
+    confirmLabel: string;
+    confirmDisabled?: boolean;
+    action: () => Promise<void>;
+  }>(null);
+  const [confirmPending, setConfirmPending] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  /** Count of records currently sitting in a column. */
+  function countRecordsIn(statusName: string): number {
+    return rows.reduce((acc, r) => {
+      const v = r[groupBy];
+      const key = typeof v === "string" && v.trim() ? v.trim() : UNASSIGNED_KEY;
+      return key === statusName ? acc + 1 : acc;
+    }, 0);
+  }
+
+  function openColumnDeleteDialog(statusName: string) {
+    const meta = statuses.find((s) => s.name === statusName);
+    const label = meta?.lead_status ?? statusName;
+    const count = countRecordsIn(statusName);
+    setConfirmError(null);
+    setConfirmDelete({
+      title: `Delete status "${label}"?`,
+      confirmLabel: "Delete",
+      body:
+        count > 0 ? (
+          <span>
+            This status is used by <strong>{count} lead{count !== 1 ? "s" : ""}</strong> in your
+            pipeline. Deleting it will fail until those leads are moved to another status
+            (drag the cards or use the card menu's{" "}
+            <em>Move to Status</em>). The status definition itself will be permanently
+            removed.
+          </span>
+        ) : (
+          <span>
+            This will permanently remove the <strong>{label}</strong> status from your pipeline.
+            Leads currently in this status will become <strong>Unassigned</strong>. This cannot
+            be undone.
+          </span>
+        ),
+      action: async () => {
+        await performDeleteStatus(statusName);
+      },
+    });
+  }
+
+  async function performDeleteStatus(statusName: string) {
     const meta = statuses.find((s) => s.name === statusName);
     try {
       await api.deleteLeadStatus(statusName);
@@ -121,8 +171,27 @@ export function LeadKanban({
         }]);
       }
       await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+      setConfirmDelete(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete status");
+      const message = stripHtml(err instanceof Error ? err.message : String(err));
+      setConfirmError(
+        isLinkedRecordConflict(err)
+          ? stripHtml(err instanceof Error ? err.message : String(err))
+          : message || "Failed to delete status",
+      );
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    setConfirmPending(true);
+    setConfirmError(null);
+    try {
+      await confirmDelete.action();
+    } catch (err) {
+      setConfirmError(stripHtml(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setConfirmPending(false);
     }
   }
 
@@ -431,7 +500,7 @@ export function LeadKanban({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => void handleDeleteStatus(col.key)}
+                          onClick={() => openColumnDeleteDialog(col.key)}
                           className="size-6 text-muted-foreground hover:text-destructive"
                           title={`Delete status ${col.label}`}
                         >
@@ -571,13 +640,21 @@ export function LeadKanban({
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        `Are you sure you want to delete lead ${name}?`,
-                                      )
-                                    ) {
-                                      void deleteMutation.mutate(name);
-                                    }
+                                    setConfirmError(null);
+                                    setConfirmDelete({
+                                      title: `Delete lead "${name}"?`,
+                                      confirmLabel: "Delete",
+                                      body: (
+                                        <span>
+                                          This lead will be permanently deleted from your CRM. This
+                                          cannot be undone.
+                                        </span>
+                                      ),
+                                      action: async () => {
+                                        await deleteMutation.mutateAsync(name);
+                                        setConfirmDelete(null);
+                                      },
+                                    });
                                   }}
                                 >
                                   Delete Lead
@@ -639,6 +716,21 @@ export function LeadKanban({
         })}
       </div>
 
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setConfirmDelete(null);
+          setConfirmError(null);
+        }}
+        title={confirmDelete?.title ?? "Confirm"}
+        description={confirmDelete?.body}
+        confirmLabel={confirmDelete?.confirmLabel ?? "Delete"}
+        confirmDisabled={confirmDelete?.confirmDisabled}
+        pending={confirmPending}
+        error={confirmError}
+        onConfirm={() => void handleConfirmDelete()}
+      />
       <LeadLostModal
         open={lostModalState.open}
         onOpenChange={(open) => setLostModalState((p) => ({ ...p, open }))}

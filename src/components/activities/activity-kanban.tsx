@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { stripHtml } from "@/lib/frappe-error";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,6 +102,27 @@ export function ActivityKanban({
       // ignore
     }
   }, [hiddenColumns]);
+  const [confirmDelete, setConfirmDelete] = useState<null | {
+    title: string;
+    body: ReactNode;
+    confirmLabel: string;
+    action: () => Promise<void>;
+  }>(null);
+  const [confirmPending, setConfirmPending] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    setConfirmPending(true);
+    setConfirmError(null);
+    try {
+      await confirmDelete.action();
+    } catch (err) {
+      setConfirmError(stripHtml(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setConfirmPending(false);
+    }
+  }
 
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
@@ -424,13 +447,21 @@ export function ActivityKanban({
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        `Are you sure you want to delete activity #${name}?`,
-                                      )
-                                    ) {
-                                      void deleteMutation.mutate(name);
-                                    }
+                                    setConfirmError(null);
+                                    setConfirmDelete({
+                                      title: `Delete activity "${name}"?`,
+                                      confirmLabel: "Delete",
+                                      body: (
+                                        <span>
+                                          This activity will be permanently deleted from your CRM.
+                                          This cannot be undone.
+                                        </span>
+                                      ),
+                                      action: async () => {
+                                        await deleteMutation.mutateAsync(name);
+                                        setConfirmDelete(null);
+                                      },
+                                    });
                                   }}
                                 >
                                   Delete Activity
@@ -495,6 +526,20 @@ export function ActivityKanban({
           );
         })}
       </div>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setConfirmDelete(null);
+          setConfirmError(null);
+        }}
+        title={confirmDelete?.title ?? "Confirm"}
+        description={confirmDelete?.body}
+        confirmLabel={confirmDelete?.confirmLabel ?? "Delete"}
+        pending={confirmPending}
+        error={confirmError}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </div>
   );
 }

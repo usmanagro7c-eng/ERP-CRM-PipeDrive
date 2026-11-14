@@ -8,6 +8,7 @@ import {
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
+import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const ORG_QUERY_ROOT = "organizations";
 
@@ -87,9 +88,24 @@ export function useSaveOrganization() {
       }
       return api.createOrganization(values);
     },
-    onSuccess: async (_doc, variables) => {
+    onSuccess: async (doc, variables) => {
       await invalidate();
       toast.success(variables.name ? "Organization updated" : "Organization created");
+      const orgName = String(variables.values["organization_name"] || doc?.["organization_name"] || variables.name || "Organization");
+      void notifyEntityChange({
+        doctype: api.ORG_DOCTYPE,
+        docname: doc?.["name"] || variables.name || "Organization",
+        title: orgName,
+        action: variables.name ? "Updated" : "Created",
+        eventCategory: "otherRecords",
+        summary: `Organization "${orgName}" was ${variables.name ? "updated" : "created"}.`,
+        details: {
+          "Name": orgName,
+          "Website": variables.values["website"] || doc?.["website"],
+          "Territory": variables.values["territory"] || doc?.["territory"],
+          "Industry": variables.values["industry"] || doc?.["industry"],
+        },
+      }).catch((err) => console.warn("Failed to notify org change:", err));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not save the organization");
@@ -101,9 +117,17 @@ export function useDeleteOrganization() {
   const invalidate = useInvalidateOrganizations();
   return useMutation({
     mutationFn: (name: string) => api.deleteOrganization(name),
-    onSuccess: async () => {
+    onSuccess: async (_data, name) => {
       await invalidate();
       toast.success("Organization deleted");
+      void notifyEntityChange({
+        doctype: api.ORG_DOCTYPE,
+        docname: name,
+        title: name,
+        action: "Deleted",
+        eventCategory: "otherRecords",
+        summary: `Organization ${name} was deleted.`,
+      }).catch((err) => console.warn("Failed to notify org delete:", err));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not delete the organization");

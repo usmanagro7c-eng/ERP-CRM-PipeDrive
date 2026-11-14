@@ -9,14 +9,14 @@
 
 export const THEME_STORAGE_KEY = "agrocrm.theme";
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
 
 /** The theme the user picked, or `null` when they never picked one. */
 export function readStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
   try {
     const value = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return value === "dark" || value === "light" ? value : null;
+    return value === "dark" || value === "light" || value === "system" ? value : null;
   } catch {
     return null;
   }
@@ -32,10 +32,24 @@ export function storeTheme(theme: Theme): void {
   }
 }
 
-/** Toggle the `dark` class on the document element. */
+/** Apply the theme to the document element. */
 export function applyTheme(theme: Theme): void {
   if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  if (theme === "system") {
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", prefersDark);
+  } else {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }
+}
+
+/** Set theme, apply to document and persist choice */
+export function setTheme(theme: Theme): void {
+  applyTheme(theme);
+  storeTheme(theme);
 }
 
 /** Flip between light and dark and remember the result. */
@@ -55,4 +69,4 @@ export function toggleTheme(): Theme {
  */
 export const THEME_INIT_SCRIPT = `try{var t=localStorage.getItem(${JSON.stringify(
   THEME_STORAGE_KEY,
-)});if(t==="dark"){document.documentElement.classList.add("dark");}else if(t==="light"){document.documentElement.classList.remove("dark");}}catch(e){}`;
+)});var p=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(t==="dark"||(t==="system"&&p)){document.documentElement.classList.add("dark");}else if(t==="light"||(t==="system"&&!p)){document.documentElement.classList.remove("dark");}}catch(e){}`;

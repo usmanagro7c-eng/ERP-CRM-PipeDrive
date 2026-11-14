@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { CrmTask } from "@/lib/api";
+import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const TASKS_QUERY_ROOT = "crm_tasks";
 
@@ -50,9 +51,24 @@ export function useSaveTask() {
       }
       return api.createTask(values);
     },
-    onSuccess: (_doc, variables) => {
+    onSuccess: (doc, variables) => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
       toast.success(variables.name ? "Task updated" : "Task created");
+      const taskTitle = String(variables["title"] || doc?.["title"] || variables.name || "Task");
+      void notifyEntityChange({
+        doctype: "CRM Task",
+        docname: doc?.["name"] || variables.name || "Task",
+        title: taskTitle,
+        action: variables.name ? "Updated" : "Created",
+        eventCategory: "otherRecords",
+        summary: `Task "${taskTitle}" was ${variables.name ? "updated" : "created"}. Status: ${variables["status"] || doc?.["status"] || "Todo"}`,
+        details: {
+          "Title": taskTitle,
+          "Status": variables["status"] || doc?.["status"],
+          "Priority": variables["priority"] || doc?.["priority"],
+          "Due Date": variables["due_date"] || doc?.["due_date"],
+        },
+      }).catch((err) => console.warn("Failed to notify task save:", err));
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to save task");
@@ -67,10 +83,21 @@ export function useToggleTaskComplete() {
       const nextStatus = currentStatus === "Done" ? "Todo" : "Done";
       return api.updateTask(name, { status: nextStatus });
     },
-    onSuccess: (doc) => {
+    onSuccess: (doc, variables) => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
       const status = String(doc["status"] ?? "");
       toast.success(status === "Done" ? "Task marked as completed" : "Task reopened");
+      void notifyEntityChange({
+        doctype: "CRM Task",
+        docname: variables.name,
+        title: String(doc["title"] || variables.name),
+        action: status === "Done" ? "Marked as Completed" : "Reopened",
+        eventCategory: "otherRecords",
+        summary: `Task "${doc["title"] || variables.name}" was ${status === "Done" ? "completed" : "reopened"}.`,
+        details: {
+          "Status": status,
+        },
+      }).catch((err) => console.warn("Failed to notify task toggle:", err));
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to update task");

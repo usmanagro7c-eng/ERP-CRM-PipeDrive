@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   PhoneCall,
   Search,
+  Settings,
   ShoppingCart,
   StickyNote,
   Sun,
@@ -60,6 +61,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Notes", to: "/notes", icon: StickyNote },
   { label: "Tasks", to: "/activities", icon: CalendarClock },
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
+  { label: "Settings", to: "/settings", icon: Settings },
 ];
 
 /**
@@ -208,6 +210,13 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer gap-2">
           {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
           <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/settings" className="cursor-pointer gap-2 flex items-center">
+            <Settings className="size-3.5" />
+            <span>Settings</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

@@ -395,10 +395,13 @@ function DealDetailPage() {
     if (newStage.toLowerCase().includes("won")) {
       triggerConfetti();
     }
+    const oldStage = currentStage;
     try {
       await saveMutation.mutateAsync({
         name: dealId,
         values: { status: newStage },
+        fromStage: oldStage,
+        silent: true,
       });
       toast.success(`Stage updated to ${newStage}`);
     } catch {

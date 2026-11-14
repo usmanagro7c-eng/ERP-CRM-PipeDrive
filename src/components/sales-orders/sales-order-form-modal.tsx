@@ -15,7 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ItemRowPicker } from "@/components/quotations/item-row-picker";
-import { customersListOptions, itemsListOptions } from "@/hooks/use-quotations";
+import {
+  customersListOptions,
+  itemsListOptions,
+  quotationDetailOptions,
+} from "@/hooks/use-quotations";
 import {
   useSaveSalesOrder,
   useSubmitSalesOrder,
@@ -56,6 +60,19 @@ export function SalesOrderFormModal({
   const saveMutation = useSaveSalesOrder();
   const submitMutation = useSubmitSalesOrder();
 
+  const quotationRef = initialValues?.quotation_ref;
+  const shouldFetchQuotation = Boolean(
+    open &&
+      !activeOrder &&
+      quotationRef &&
+      (!initialValues?.items || initialValues.items.length === 0),
+  );
+
+  const { data: quotationData, isLoading: isLoadingQuotation } = useQuery({
+    ...quotationDetailOptions(quotationRef || ""),
+    enabled: shouldFetchQuotation,
+  });
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customer, setCustomer] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
@@ -86,7 +103,8 @@ export function SalesOrderFormModal({
         })),
       );
     } else {
-      const defaultCustomer = initialValues?.customer || customerOptions[0]?.name || "";
+      const defaultCustomer =
+        initialValues?.customer || quotationData?.party_name || customerOptions[0]?.name || "";
       setCustomer(defaultCustomer);
       setTransactionDate(today);
       setDeliveryDate(nextWeek);
@@ -94,11 +112,22 @@ export function SalesOrderFormModal({
 
       if (initialValues?.items && initialValues.items.length > 0) {
         setItems(initialValues.items);
+      } else if (quotationData?.items && quotationData.items.length > 0) {
+        setItems(
+          quotationData.items.map((i) => ({
+            item_code: i.item_code,
+            item_name: i.item_name || i.item_code,
+            qty: Number(i.qty) || 1,
+            rate: Number(i.rate) || 0,
+            amount: Number(i.amount) || (Number(i.qty) || 1) * (Number(i.rate) || 0),
+            discount_percentage: Number(i.discount_percentage) || 0,
+          })),
+        );
       } else {
         setItems([]);
       }
     }
-  }, [open, activeOrder, initialValues, customerOptions, catalogItems]);
+  }, [open, activeOrder, initialValues, quotationData, customerOptions, catalogItems]);
 
   const grandTotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -156,7 +185,7 @@ export function SalesOrderFormModal({
     }
   }
 
-  const isSaving = saveMutation.isPending || isSubmittingDirect;
+  const isSaving = saveMutation.isPending || isSubmittingDirect || isLoadingQuotation;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -281,7 +310,14 @@ export function SalesOrderFormModal({
 
           {/* Items & Pricing Table */}
           <div className="pt-2">
-            <ItemRowPicker items={items} onChange={setItems} />
+            {isLoadingQuotation ? (
+              <div className="flex items-center justify-center p-8 border border-dashed rounded-lg bg-muted/20 gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <span>Loading items from Quotation {quotationRef}...</span>
+              </div>
+            ) : (
+              <ItemRowPicker items={items} onChange={setItems} />
+            )}
           </div>
 
           {/* Grand Total Summary Box */}

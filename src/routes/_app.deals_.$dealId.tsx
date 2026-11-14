@@ -51,6 +51,7 @@ import {
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { TerritorySelect } from "@/components/territory-select";
+import { quotationListOptions } from "@/hooks/use-quotations";
 import {
   dealDetailOptions,
   dealStatusesOptions,
@@ -150,6 +151,15 @@ function DealDetailPage() {
   const { data: deal, isLoading, refetch } = useQuery(dealDetailOptions(dealId));
   const { data: stages = [] } = useQuery(dealStatusesOptions());
   const { data: users = [] } = useCrmUsers();
+  const { data: rawQuotations = [] } = useQuery(
+    quotationListOptions({
+      search: "",
+      filters: [],
+      start: 0,
+      limit: 50,
+      orderBy: "creation desc",
+    }),
+  );
 
   const saveMutation = useSaveDeal();
   const deleteMutation = useDeleteDeal();
@@ -163,33 +173,88 @@ function DealDetailPage() {
   const [salesOrderInitialValues, setSalesOrderInitialValues] =
     useState<SalesOrderInitialValues | null>(null);
 
+  const linkedQuotations = useMemo(() => {
+    const list = (rawQuotations as api.Quotation[]) || [];
+    return list.filter((q) => {
+      const raw = q as Record<string, unknown>;
+      const crmDeal = String(raw["crm_deal"] || "");
+      const party = String(q.party_name || "");
+      const org = sidebarValues.organization || String(deal?.["organization_name"] || deal?.["organization"] || "");
+      if (crmDeal) return crmDeal === dealId;
+      if (org && party && party.toLowerCase() === org.toLowerCase()) return true;
+      return false;
+    });
+  }, [rawQuotations, dealId, sidebarValues.organization, deal]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function handleConvertToSalesOrder(quotation?: any) {
+  async function handleConvertToSalesOrder(quotation?: any) {
     if (quotation) {
-      setSalesOrderInitialValues({
-        customer: String(quotation.party_name || sidebarValues.organization || ""),
-        items: quotation.items,
-        quotation_ref: quotation.name,
-      });
-    } else {
-      const dealProducts = Array.isArray(deal?.["products"])
-        ? (deal["products"] as Array<Record<string, unknown>>).map((p) => ({
-            item_code: String(p["product_code"] || p["item_code"] || ""),
-            item_name: String(p["product_name"] || p["item_name"] || p["product_code"] || ""),
-            qty: Number(p["qty"]) || 1,
-            rate: Number(p["rate"]) || 0,
-            amount: Number(p["amount"]) || (Number(p["qty"]) || 1) * (Number(p["rate"]) || 0),
-          }))
-        : undefined;
+      let qItems = quotation.items;
+      let customerName = String(quotation.party_name || sidebarValues.organization || "");
+
+      if (!qItems || qItems.length === 0) {
+        try {
+          const fullQuotation = await api.getQuotation(quotation.name);
+          qItems = fullQuotation.items;
+          if (fullQuotation.party_name) {
+            customerName = fullQuotation.party_name;
+          }
+        } catch (err) {
+          console.warn("Could not fetch quotation items:", err);
+        }
+      }
 
       setSalesOrderInitialValues({
-        customer:
-          String(deal?.["organization_name"] || deal?.["organization"] || sidebarValues.organization || "") ||
-          undefined,
-        items: dealProducts && dealProducts.length > 0 ? dealProducts : undefined,
-        quotation_ref: undefined,
+        customer: customerName,
+        items: qItems && qItems.length > 0 ? qItems : undefined,
+        quotation_ref: quotation.name,
       });
+      setSalesOrderModalOpen(true);
+      return;
     }
+
+    // If called without quotation, check if there is an existing quotation for this deal
+    if (linkedQuotations.length > 0) {
+      const latestQ = linkedQuotations[0];
+      let qItems = latestQ.items;
+      let customerName = String(latestQ.party_name || sidebarValues.organization || "");
+
+      try {
+        const fullQuotation = await api.getQuotation(latestQ.name);
+        qItems = fullQuotation.items;
+        if (fullQuotation.party_name) {
+          customerName = fullQuotation.party_name;
+        }
+      } catch (err) {
+        console.warn("Could not fetch latest quotation items:", err);
+      }
+
+      setSalesOrderInitialValues({
+        customer: customerName,
+        items: qItems && qItems.length > 0 ? qItems : undefined,
+        quotation_ref: latestQ.name,
+      });
+      setSalesOrderModalOpen(true);
+      return;
+    }
+
+    const dealProducts = Array.isArray(deal?.["products"])
+      ? (deal["products"] as Array<Record<string, unknown>>).map((p) => ({
+          item_code: String(p["product_code"] || p["item_code"] || ""),
+          item_name: String(p["product_name"] || p["item_name"] || p["product_code"] || ""),
+          qty: Number(p["qty"]) || 1,
+          rate: Number(p["rate"]) || 0,
+          amount: Number(p["amount"]) || (Number(p["qty"]) || 1) * (Number(p["rate"]) || 0),
+        }))
+      : undefined;
+
+    setSalesOrderInitialValues({
+      customer:
+        String(deal?.["organization_name"] || deal?.["organization"] || sidebarValues.organization || "") ||
+        undefined,
+      items: dealProducts && dealProducts.length > 0 ? dealProducts : undefined,
+      quotation_ref: undefined,
+    });
     setSalesOrderModalOpen(true);
   }
 

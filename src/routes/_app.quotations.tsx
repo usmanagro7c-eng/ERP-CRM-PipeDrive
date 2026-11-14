@@ -45,6 +45,7 @@ import {
   quotationListOptions,
   type Quotation,
 } from "@/hooks/use-quotations";
+import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -188,15 +189,31 @@ function QuotationsPage() {
     setModalOpen(true);
   }
 
-  function handleConvertToSalesOrder(quotation: Quotation) {
+  async function handleConvertToSalesOrder(quotation: Quotation) {
+    let qItems = quotation.items;
+    let customerName = quotation.party_name;
+
+    if (!qItems || qItems.length === 0) {
+      try {
+        const fullQuotation = await api.getQuotation(quotation.name);
+        qItems = fullQuotation.items;
+        if (fullQuotation.party_name) {
+          customerName = fullQuotation.party_name;
+        }
+      } catch (err) {
+        console.warn("Could not fetch quotation items:", err);
+      }
+    }
+
     setSalesOrderInitialValues({
-      customer: quotation.party_name,
-      items: quotation.items?.map((item) => ({
+      customer: customerName,
+      items: qItems?.map((item) => ({
         item_code: item.item_code,
         item_name: item.item_name || item.item_code,
         qty: item.qty,
         rate: item.rate,
         amount: item.amount ?? item.qty * item.rate,
+        discount_percentage: item.discount_percentage,
       })),
       quotation_ref: quotation.name,
     });

@@ -315,15 +315,19 @@ function DashboardPage() {
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
-            <Link
-              to="/leads"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
+            <div
+              title="Leads (Temporarily Disabled)"
+              aria-disabled="true"
+              className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-card/40 p-3 text-xs font-semibold text-muted-foreground opacity-60 cursor-not-allowed select-none"
             >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform duration-200">
-                <Target className="h-4 w-4" />
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <Target className="h-4 w-4 opacity-50" />
               </div>
               <span className="truncate">Leads</span>
-            </Link>
+              <span className="ml-auto text-[9px] uppercase tracking-wider text-muted-foreground/60 bg-muted/80 px-1.5 py-0.5 rounded border border-border/40 font-mono">
+                Disabled
+              </span>
+            </div>
             <Link
               to="/deals"
               className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"

@@ -173,6 +173,14 @@ function DealDetailPage() {
   const [salesOrderInitialValues, setSalesOrderInitialValues] =
     useState<SalesOrderInitialValues | null>(null);
 
+  // Collapsible sections
+  const [contactsOpen, setContactsOpen] = useState(true);
+  const [lostReasonOpen, setLostReasonOpen] = useState(false);
+  const [orgDetailsOpen, setOrgDetailsOpen] = useState(true);
+
+  // Editable local form fields for sidebar
+  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
+
   const linkedQuotations = useMemo(() => {
     const list = (rawQuotations as api.Quotation[]) || [];
     return list.filter((q) => {
@@ -283,14 +291,6 @@ function DealDetailPage() {
     window.addEventListener("hashchange", handleHash);
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
-
-  // Collapsible sections
-  const [contactsOpen, setContactsOpen] = useState(true);
-  const [lostReasonOpen, setLostReasonOpen] = useState(false);
-  const [orgDetailsOpen, setOrgDetailsOpen] = useState(true);
-
-  // Editable local form fields for sidebar
-  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
 
   useEffect(() => {
     if (deal) {

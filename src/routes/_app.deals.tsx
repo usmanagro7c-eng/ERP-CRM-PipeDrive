@@ -49,6 +49,7 @@ import {
 } from "@/hooks/use-deals";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { defaultListColumns, isDisplayField } from "@/lib/frappe-meta";
+import type { QuotationItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -152,14 +153,38 @@ function DealsPage() {
   const [quotationInitialValues, setQuotationInitialValues] = useState<{
     party_name?: string;
     crm_deal?: string;
+    items?: QuotationItem[];
   } | null>(null);
 
   function handleCreateQuotation(deal: Record<string, unknown>) {
     const dealName = String(deal["name"] ?? "");
     const party = String(deal["organization_name"] ?? deal["organization"] ?? "");
+    const rawProducts = Array.isArray(deal["products"])
+      ? (deal["products"] as Array<Record<string, unknown>>)
+      : Array.isArray(deal["items"])
+        ? (deal["items"] as Array<Record<string, unknown>>)
+        : [];
+    const items: QuotationItem[] = rawProducts
+      .map((p) => {
+        const code = String(p["product_code"] || p["item_code"] || p["item"] || "");
+        const name = String(p["product_name"] || p["item_name"] || p["product_code"] || code);
+        const qty = Number(p["qty"]) || 1;
+        const rate = Number(p["rate"] || p["price_list_rate"]) || 0;
+        const amount = Number(p["amount"]) || qty * rate;
+        return {
+          item_code: code,
+          item_name: name,
+          qty,
+          rate,
+          amount,
+        };
+      })
+      .filter((it) => it.item_code.trim().length > 0);
+
     setQuotationInitialValues({
       crm_deal: dealName,
       party_name: party,
+      items: items.length > 0 ? items : undefined,
     });
     setQuotationModalOpen(true);
   }

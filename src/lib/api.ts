@@ -1089,6 +1089,7 @@ export async function createSalesOrderFromQuotation(
     amount: item.amount || item.qty * item.rate,
     delivery_date: delDate,
     prevdoc_docname: fullQuotation.name,
+    prevdoc_doctype: "Quotation",
   }));
 
   const payload = await createSalesOrder({

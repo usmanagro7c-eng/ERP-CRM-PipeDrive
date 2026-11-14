@@ -160,7 +160,12 @@ export function SalesOrderFormModal({
         discount_percentage: Number(item.discount_percentage) || 0,
         amount: Number(item.amount) || Number(item.qty || 1) * Number(item.rate || 0),
         delivery_date: deliveryDate,
-        ...(initialValues?.quotation_ref ? { prevdoc_docname: initialValues.quotation_ref } : {}),
+        ...(initialValues?.quotation_ref
+          ? {
+              prevdoc_docname: initialValues.quotation_ref,
+              prevdoc_doctype: "Quotation",
+            }
+          : {}),
       })),
     };
 

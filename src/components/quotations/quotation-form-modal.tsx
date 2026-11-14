@@ -22,7 +22,9 @@ import {
   type Quotation,
   itemsListOptions,
 } from "@/hooks/use-quotations";
+import { dealDetailOptions } from "@/hooks/use-deals";
 import type { QuotationItem } from "@/lib/api";
+import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface QuotationFormModalProps {
@@ -46,6 +48,19 @@ export function QuotationFormModal({
 }: QuotationFormModalProps) {
   const { data: customerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
+
+  const crmDealRef = initialValues?.crm_deal;
+  const shouldFetchDeal = Boolean(
+    open &&
+      !quotation &&
+      crmDealRef &&
+      (!initialValues?.items || initialValues.items.length === 0),
+  );
+
+  const { data: dealData, isLoading: isLoadingDeal } = useQuery({
+    ...dealDetailOptions(crmDealRef || ""),
+    enabled: shouldFetchDeal,
+  });
 
   const saveMutation = useSaveQuotation();
   const submitMutation = useSubmitQuotation();
@@ -71,7 +86,11 @@ export function QuotationFormModal({
       setValidTill(quotation.valid_till || in30Days);
       setItems(quotation.items || []);
     } else {
-      const defaultParty = initialValues?.party_name || customerOptions[0]?.name || "";
+      const defaultParty =
+        initialValues?.party_name ||
+        String(dealData?.["organization_name"] || dealData?.["organization"] || "") ||
+        customerOptions[0]?.name ||
+        "";
       setPartyName(defaultParty);
       setCrmDeal(initialValues?.crm_deal || "");
       setTransactionDate(today);
@@ -79,11 +98,35 @@ export function QuotationFormModal({
 
       if (initialValues?.items && initialValues.items.length > 0) {
         setItems(initialValues.items);
+      } else if (dealData) {
+        const rawProducts = Array.isArray(dealData["products"])
+          ? (dealData["products"] as Array<Record<string, unknown>>)
+          : Array.isArray(dealData["items"])
+            ? (dealData["items"] as Array<Record<string, unknown>>)
+            : [];
+        const mappedItems: QuotationItem[] = rawProducts
+          .map((p) => {
+            const code = String(p["product_code"] || p["item_code"] || p["item"] || "");
+            const name = String(p["product_name"] || p["item_name"] || code);
+            const qty = Number(p["qty"]) || 1;
+            const rate = Number(p["rate"] || p["price_list_rate"]) || 0;
+            const amount = Number(p["amount"]) || qty * rate;
+            return {
+              item_code: code,
+              item_name: name,
+              qty,
+              rate,
+              amount,
+            };
+          })
+          .filter((it) => it.item_code.trim().length > 0);
+
+        setItems(mappedItems);
       } else {
         setItems([]);
       }
     }
-  }, [open, quotation, initialValues, customerOptions, catalogItems]);
+  }, [open, quotation, initialValues, dealData, customerOptions, catalogItems]);
 
   const grandTotal = useMemo(() => {
     return items.reduce(
@@ -127,6 +170,17 @@ export function QuotationFormModal({
         values: payload,
       });
 
+      if (crmDeal.trim() && payload.items) {
+        try {
+          await api.syncDealProductsFromQuotation(
+            crmDeal.trim(),
+            payload.items as Array<Record<string, unknown>>,
+          );
+        } catch (err) {
+          console.warn("Could not sync deal products from quotation:", err);
+        }
+      }
+
       if (submitAfterSave && result?.name) {
         await submitMutation.mutateAsync(result.name);
       }
@@ -137,7 +191,7 @@ export function QuotationFormModal({
     }
   }
 
-  const isSaving = saveMutation.isPending || submitMutation.isPending;
+  const isSaving = saveMutation.isPending || submitMutation.isPending || isLoadingDeal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -265,7 +319,14 @@ export function QuotationFormModal({
           {/* Line Items Editor */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-foreground">Items & Pricing</Label>
-            <ItemRowPicker items={items} onChange={setItems} />
+            {isLoadingDeal ? (
+              <div className="flex items-center justify-center p-8 border border-dashed rounded-lg bg-muted/20 gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <span>Loading products from Deal {crmDealRef}...</span>
+              </div>
+            ) : (
+              <ItemRowPicker items={items} onChange={setItems} />
+            )}
           </div>
 
           {/* Grand Total Summary */}

@@ -18,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { itemsListOptions } from "@/hooks/use-quotations";
 import { cn } from "@/lib/utils";
 
-interface ProductRow {
+export interface ProductRow {
   id: string;
   item: string;
   rate: number;
@@ -31,6 +31,7 @@ interface DealDataTabProps {
   onOpenModal?: () => void;
   onSave?: (updated: Record<string, unknown>) => Promise<void>;
   onReload?: () => void;
+  onProductsChange?: (products: ProductRow[]) => void;
 }
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
@@ -82,7 +83,14 @@ interface FormDetails {
   deal_owner: string;
 }
 
-export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }: DealDataTabProps) {
+export function DealDataTab({
+  deal,
+  users = [],
+  onOpenModal,
+  onSave,
+  onReload,
+  onProductsChange,
+}: DealDataTabProps) {
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [productsOpen, setProductsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -150,6 +158,10 @@ export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }:
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  useEffect(() => {
+    onProductsChange?.(products);
+  }, [products, onProductsChange]);
 
   // Check if dirty
   const isDirty = useMemo(() => {

@@ -66,7 +66,7 @@ import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
 import { RecordCallsTab } from "@/components/record-view/record-calls-tab";
 import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
 import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
-import { DealDataTab } from "@/components/deals/deal-data-tab";
+import { DealDataTab, type ProductRow } from "@/components/deals/deal-data-tab";
 import { RecordQuotationsTab } from "@/components/record-view/record-quotations-tab";
 import { triggerConfetti } from "@/lib/confetti";
 import * as api from "@/lib/api";
@@ -180,6 +180,44 @@ function DealDetailPage() {
 
   // Editable local form fields for sidebar
   const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
+  const [draftProducts, setDraftProducts] = useState<ProductRow[] | null>(null);
+
+  const dealQuotationItems = useMemo<api.QuotationItem[]>(() => {
+    if (draftProducts && draftProducts.length > 0) {
+      return draftProducts
+        .filter((p) => p.item && p.item.trim().length > 0)
+        .map((p) => ({
+          item_code: p.item,
+          item_name: p.item,
+          qty: Number(p.qty) || 1,
+          rate: Number(p.rate) || 0,
+          amount: (Number(p.qty) || 1) * (Number(p.rate) || 0),
+        }));
+    }
+
+    const raw = Array.isArray(deal?.["products"])
+      ? (deal["products"] as Array<Record<string, unknown>>)
+      : Array.isArray(deal?.["items"])
+        ? (deal["items"] as Array<Record<string, unknown>>)
+        : [];
+
+    return raw
+      .map((p) => {
+        const code = String(p["product_code"] || p["item_code"] || p["item"] || "");
+        const name = String(p["product_name"] || p["item_name"] || p["product_code"] || code);
+        const qty = Number(p["qty"]) || 1;
+        const rate = Number(p["rate"] || p["price_list_rate"]) || 0;
+        const amount = Number(p["amount"]) || qty * rate;
+        return {
+          item_code: code,
+          item_name: name,
+          qty,
+          rate,
+          amount,
+        };
+      })
+      .filter((it) => it.item_code.trim().length > 0);
+  }, [deal, draftProducts]);
 
   const linkedQuotations = useMemo(() => {
     const list = (rawQuotations as api.Quotation[]) || [];
@@ -246,15 +284,16 @@ function DealDetailPage() {
       return;
     }
 
-    const dealProducts = Array.isArray(deal?.["products"])
-      ? (deal["products"] as Array<Record<string, unknown>>).map((p) => ({
-          item_code: String(p["product_code"] || p["item_code"] || ""),
-          item_name: String(p["product_name"] || p["item_name"] || p["product_code"] || ""),
-          qty: Number(p["qty"]) || 1,
-          rate: Number(p["rate"]) || 0,
-          amount: Number(p["amount"]) || (Number(p["qty"]) || 1) * (Number(p["rate"]) || 0),
-        }))
-      : undefined;
+    const dealProducts =
+      dealQuotationItems.length > 0
+        ? dealQuotationItems.map((p) => ({
+            item_code: p.item_code,
+            item_name: p.item_name || p.item_code,
+            qty: p.qty,
+            rate: p.rate,
+            amount: p.amount ?? p.qty * p.rate,
+          }))
+        : undefined;
 
     setSalesOrderInitialValues({
       customer:
@@ -753,8 +792,10 @@ function DealDetailPage() {
                   users={users}
                   onOpenModal={() => setEditModalOpen(true)}
                   onReload={() => void refetch()}
+                  onProductsChange={setDraftProducts}
                   onSave={async (values) => {
                     await saveMutation.mutateAsync({ name: dealId, values });
+                    setDraftProducts(null);
                   }}
                 />
               )}
@@ -1214,8 +1255,11 @@ function DealDetailPage() {
         onOpenChange={setQuotationModalOpen}
         quotation={null}
         initialValues={{
-          party_name: sidebarValues.organization,
+          party_name:
+            sidebarValues.organization ||
+            String(deal?.["organization_name"] || deal?.["organization"] || ""),
           crm_deal: dealId,
+          items: dealQuotationItems.length > 0 ? dealQuotationItems : undefined,
         }}
       />
 

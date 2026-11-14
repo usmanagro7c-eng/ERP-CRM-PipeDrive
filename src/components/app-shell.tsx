@@ -51,7 +51,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "Leads", to: "/leads", icon: Target, disabled: true },
+  { label: "Leads", to: "/leads", icon: Target },
   { label: "Deals", to: "/deals", icon: Columns3 },
   { label: "Quotations", to: "/quotations", icon: FileText },
   { label: "Sales Orders", to: "/sales-orders", icon: ShoppingCart },

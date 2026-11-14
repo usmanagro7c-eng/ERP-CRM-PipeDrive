@@ -85,6 +85,20 @@ export interface SaveDealInput {
   silent?: boolean;
 }
 
+/** Add actionable guidance for the known Frappe CRM → ERPNext sync failure. */
+function dealSaveErrorMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? "");
+  if (/Error while creating customer in ERPNext/i.test(raw)) {
+    return (
+      "Customer creation in ERPNext failed. Open the ERPNext Error Log " +
+      '(search "Error while creating customer against Frappe CRM Deal") — most often the ' +
+      "CRM sync is not enabled in ERPNext CRM Settings, or Territory/Currency/Customer " +
+      "Group is missing there."
+    );
+  }
+  return friendlyFrappeError(error, "Could not save the deal");
+}
+
 export function useSaveDeal() {
   const invalidate = useInvalidateDeals();
   return useMutation({
@@ -101,7 +115,7 @@ export function useSaveDeal() {
       }
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Could not save the deal");
+      toast.error(dealSaveErrorMessage(error));
     },
   });
 }

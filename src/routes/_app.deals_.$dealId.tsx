@@ -172,8 +172,21 @@ function DealDetailPage() {
         quotation_ref: quotation.name,
       });
     } else {
+      const dealProducts = Array.isArray(deal?.["products"])
+        ? (deal["products"] as Array<Record<string, unknown>>).map((p) => ({
+            item_code: String(p["product_code"] || p["item_code"] || ""),
+            item_name: String(p["product_name"] || p["item_name"] || p["product_code"] || ""),
+            qty: Number(p["qty"]) || 1,
+            rate: Number(p["rate"]) || 0,
+            amount: Number(p["amount"]) || (Number(p["qty"]) || 1) * (Number(p["rate"]) || 0),
+          }))
+        : undefined;
+
       setSalesOrderInitialValues({
-        customer: sidebarValues.organization || undefined,
+        customer:
+          String(deal?.["organization_name"] || deal?.["organization"] || sidebarValues.organization || "") ||
+          undefined,
+        items: dealProducts && dealProducts.length > 0 ? dealProducts : undefined,
         quotation_ref: undefined,
       });
     }
@@ -268,6 +281,13 @@ function DealDetailPage() {
 
   async function handleStageChange(newStage: string) {
     if (!deal) return;
+    const isLost =
+      newStage.toLowerCase().includes("lost") ||
+      stages.find((s) => s.name === newStage)?.type?.toLowerCase() === "lost";
+    if (isLost) {
+      setLostModalOpen(true);
+      return;
+    }
     if (newStage.toLowerCase().includes("won")) {
       triggerConfetti();
     }
@@ -284,11 +304,18 @@ function DealDetailPage() {
 
   async function handleMarkWon() {
     if (!deal) return;
+    const wonStage =
+      stages.find(
+        (s) =>
+          s.type?.toLowerCase() === "won" ||
+          s.name.toLowerCase() === "won" ||
+          s.deal_status?.toLowerCase() === "won",
+      )?.name || "Won";
     triggerConfetti();
     try {
       await saveMutation.mutateAsync({
         name: dealId,
-        values: { status: "Closed Won" },
+        values: { status: wonStage },
       });
       toast.success("Deal marked as Won! 🎉");
     } catch {
@@ -379,19 +406,22 @@ function DealDetailPage() {
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           <Button
             size="sm"
-            onClick={handleMarkWon}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0"
+            onClick={() => setQuotationModalOpen(true)}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            title="Convert to Quotation"
           >
-            Won
+            <FileText className="size-3.5" />
+            <span>Quotation</span>
           </Button>
 
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => setLostModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20 shrink-0"
+            onClick={() => handleConvertToSalesOrder()}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs gap-1 shrink-0"
+            title="Convert to Sales Order"
           >
-            Lost
+            <ShoppingCart className="size-3.5" />
+            <span>Sales Order</span>
           </Button>
 
           <DropdownMenu>
@@ -411,6 +441,12 @@ function DealDetailPage() {
                 className="cursor-pointer"
               >
                 <FileText className="size-3.5 mr-2" /> Convert to Quotation
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleConvertToSalesOrder()}
+                className="cursor-pointer"
+              >
+                <ShoppingCart className="size-3.5 mr-2" /> Convert to Sales Order
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => toast.info("Enrich feature: Deal intelligence updated")}
@@ -536,6 +572,12 @@ function DealDetailPage() {
               >
                 Quotation
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleConvertToSalesOrder()}
+                className="cursor-pointer"
+              >
+                Sales Order
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -543,30 +585,22 @@ function DealDetailPage() {
           <Button
             size="sm"
             onClick={() => setQuotationModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 shrink-0"
           >
             <FileText className="size-3.5" />
             <span className="hidden md:inline">Convert to Quotation</span>
             <span className="md:hidden">Quotation</span>
           </Button>
 
-          {/* Won Button */}
+          {/* Convert to Sales Order Button */}
           <Button
             size="sm"
-            onClick={handleMarkWon}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0"
+            onClick={() => handleConvertToSalesOrder()}
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs gap-1.5 shrink-0"
           >
-            <span>Won</span>
-          </Button>
-
-          {/* Lost Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setLostModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20 shrink-0"
-          >
-            <span>Lost</span>
+            <ShoppingCart className="size-3.5" />
+            <span className="hidden md:inline">Convert to Sales Order</span>
+            <span className="md:hidden">Sales Order</span>
           </Button>
         </div>
       </div>

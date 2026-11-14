@@ -42,9 +42,16 @@ import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-clien
 import { toggleTheme as toggleThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string;
+  to: string;
+  icon: typeof LayoutDashboard;
+  disabled?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "Leads", to: "/leads", icon: Target },
+  { label: "Leads", to: "/leads", icon: Target, disabled: true },
   { label: "Deals", to: "/deals", icon: Columns3 },
   { label: "Quotations", to: "/quotations", icon: FileText },
   { label: "Sales Orders", to: "/sales-orders", icon: ShoppingCart },
@@ -53,7 +60,7 @@ const NAV_ITEMS = [
   { label: "Notes", to: "/notes", icon: StickyNote },
   { label: "Tasks", to: "/activities", icon: CalendarClock },
   { label: "Call Logs", to: "/calls", icon: PhoneCall },
-] as const;
+];
 
 /**
  * The mock backend serves fake records. When the dev server runs against it the
@@ -84,6 +91,30 @@ function NavLinks({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick
   return (
     <div className="flex flex-col gap-0.5 px-2">
       {NAV_ITEMS.map((item) => {
+        if (item.disabled) {
+          return (
+            <div
+              key={item.to}
+              title={collapsed ? `${item.label} (Temporarily Disabled)` : "Temporarily Disabled"}
+              aria-disabled="true"
+              className={cn(
+                "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground/45 opacity-60 cursor-not-allowed select-none",
+                collapsed ? "justify-center px-1.5" : "",
+              )}
+            >
+              <item.icon className="size-4 shrink-0 opacity-50" />
+              {!collapsed && (
+                <div className="flex flex-1 items-center justify-between min-w-0">
+                  <span className="truncate">{item.label}</span>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60 bg-muted/80 px-1.5 py-0.5 rounded border border-border/40 font-mono">
+                    Disabled
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        }
+
         const active =
           item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
 

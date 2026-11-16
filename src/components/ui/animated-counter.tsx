@@ -28,12 +28,12 @@ export function AnimatedCounter({
   // If target value is invalid or NaN, fallback to 0
   const targetVal = typeof value === "number" && !isNaN(value) ? value : 0;
 
-  // Determine decimals if not specified
+  // Determine decimals if not specified (cap at 2 maximum to prevent runaway floating points)
   const effectiveDecimals =
     decimals !== undefined
       ? decimals
       : targetVal % 1 !== 0
-        ? targetVal.toString().split(".")[1]?.length ?? 2
+        ? Math.min(2, targetVal.toString().split(".")[1]?.length ?? 2)
         : 0;
 
   const [displayValue, setDisplayValue] = useState<number>(0);

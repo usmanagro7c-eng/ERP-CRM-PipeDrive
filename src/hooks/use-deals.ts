@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { queueOfflineAction } from "@/lib/offline-sync";
 import { friendlyFrappeError } from "@/lib/frappe-error";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { notifyStageChange, notifyEntityChange } from "@/lib/change-notifications";
@@ -106,6 +107,19 @@ export function useSaveDeal() {
   const invalidate = useInvalidateDeals();
   return useMutation({
     mutationFn: async ({ name, values }: SaveDealInput) => {
+      // Offline Field Mode: Save to local outbox when disconnected
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        const desc = String(values["deal_name"] || values["organization"] || name || "Deal");
+        queueOfflineAction({
+          doctype: api.DEAL_DOCTYPE,
+          action: name ? "update" : "create",
+          ...(name !== undefined ? { name } : {}),
+          payload: values,
+          description: name ? `Update Deal: ${desc}` : `New Deal: ${desc}`,
+        });
+        return { name: name || `offline_deal_${Date.now()}`, ...values };
+      }
+
       if (name) {
         return api.updateDeal(name, values);
       }

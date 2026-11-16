@@ -41,6 +41,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
 import { MobileQuickActionFab } from "@/components/mobile-quick-action-fab";
+import { OfflineStatusBar } from "@/components/offline-status-bar";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
 import { toggleTheme as toggleThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -431,6 +432,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </header>
+
+        {/* Offline Status & Outbox Bar */}
+        <OfflineStatusBar />
 
         {/* Page Content */}
         <main className="min-w-0 flex-1 h-full overflow-hidden flex flex-col">{children}</main>

@@ -1,5 +1,6 @@
 // AgroCRM Progressive Web App Service Worker
-const CACHE_NAME = "agrocrm-v1";
+const CACHE_NAME = "agrocrm-shell-v2";
+const API_CACHE_NAME = "agrocrm-api-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.webmanifest",
@@ -28,7 +29,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== API_CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -38,7 +39,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch event: Network-first for API, Stale-while-revalidate for static assets
+// Fetch event: Network-first with offline field fallback
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -47,15 +48,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for all API and backend requests (never stale CRM data)
-  if (url.pathname.startsWith("/api/") || url.pathname.includes("/frappe")) {
+  // API requests: Network-first, with fallback to cached CRM records when offline in the field!
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(
-          JSON.stringify({ error: "You are currently offline. Check your internet connection." }),
-          { status: 503, headers: { "Content-Type": "application/json" } }
-        );
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(API_CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          // When offline in field: serve last known cached data from CRM!
+          const cached = await caches.match(event.request);
+          if (cached) {
+            return cached;
+          }
+          return new Response(
+            JSON.stringify({ error: "Offline Mode: Record not available in local cache." }),
+            { status: 503, headers: { "Content-Type": "application/json" } }
+          );
+        })
     );
     return;
   }

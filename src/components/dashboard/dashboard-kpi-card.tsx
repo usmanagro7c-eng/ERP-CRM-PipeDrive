@@ -1,22 +1,15 @@
-import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { type DashboardNumberChartData } from "@/lib/api";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 interface DashboardKpiCardProps {
   data: DashboardNumberChartData;
 }
 
 export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
-  const formattedValue = useMemo(() => {
-    const prefix = data.prefix ?? "";
-    const suffix = data.suffix ?? "";
-    const num = data.value;
-    if (typeof num !== "number") return `${prefix}${num ?? 0}${suffix}`;
-
-    // Format with commas if large number
-    const formattedNum = num.toLocaleString("en-PK");
-    return `${prefix}${formattedNum}${suffix}`;
-  }, [data.prefix, data.suffix, data.value]);
+  const prefix = data.prefix ?? "";
+  const suffix = data.suffix ?? "";
+  const num = typeof data.value === "number" ? data.value : 0;
 
   const delta = data.delta ?? 0;
   const deltaSuffix = data.deltaSuffix ?? "%";
@@ -49,10 +42,14 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
 
       <div className="relative z-10 mt-3 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
         <span
-          className="min-w-0 text-lg font-bold tracking-tight text-foreground transition-transform duration-200 group-hover:scale-[1.02] sm:text-2xl"
-          title={formattedValue}
+          className="min-w-0 text-lg font-bold tracking-tight text-foreground transition-transform duration-200 group-hover:scale-[1.02] sm:text-2xl font-mono"
         >
-          {formattedValue}
+          <AnimatedCounter
+            value={num}
+            prefix={prefix}
+            suffix={suffix}
+            duration={1000}
+          />
         </span>
 
         {delta !== undefined && (

@@ -58,6 +58,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency, getStageStyle } from "@/components/deals/deal-stage-badge";
 import { AvatarGradient } from "@/components/ui/avatar-gradient";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
 import { useQueryClient } from "@tanstack/react-query";
@@ -723,7 +724,9 @@ export function DealKanban({
       <div className="flex flex-wrap items-center justify-between gap-3 px-1 shrink-0">
         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
           <span className="font-medium text-foreground">Pipeline View:</span>
-          <span>Showing {rows.length} deals</span>
+          <span>
+            Showing <AnimatedCounter value={rows.length} className="font-semibold text-foreground font-mono" /> deals
+          </span>
 
           {collapsedCols.length > 0 && (
             <button

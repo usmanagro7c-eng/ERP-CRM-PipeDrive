@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { AppShell } from "@/components/app-shell";
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: session, isPending, isError } = useQuery(sessionQueryOptions());
 
   useEffect(() => {
@@ -34,7 +35,12 @@ function AppLayout() {
   }
   return (
     <AppShell>
-      <Outlet />
+      <div
+        key={location.pathname}
+        className="flex-1 min-h-0 flex flex-col animate-page-enter"
+      >
+        <Outlet />
+      </div>
     </AppShell>
   );
 }

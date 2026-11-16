@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Loader2,
   FileText,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -570,6 +572,8 @@ export function DealKanban({
                     const owner = deal["deal_owner"];
                     const probability = deal["probability"];
                     const currentStage = String(deal["status"] ?? "");
+                    const email = String(deal["email"] || "");
+                    const phone = String(deal["mobile_no"] || deal["phone"] || "");
                     const isMoving = Boolean(movingDeals[name]);
                     const movingTo = movingDeals[name];
 
@@ -710,6 +714,52 @@ export function DealKanban({
                             </Badge>
                           )}
                         </div>
+
+                        {/* Quick 1-click action shortcuts */}
+                        {(onCreateQuotation || phone || email) && (
+                          <div className="mt-2 flex items-center justify-between gap-1.5">
+                            {onCreateQuotation ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCreateQuotation(deal);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-1.5 py-0.5 rounded transition-colors"
+                                title="Create Quotation"
+                              >
+                                <FileText className="size-2.5" />
+                                <span>Quote</span>
+                              </button>
+                            ) : (
+                              <span />
+                            )}
+
+                            <div
+                              className="flex items-center gap-0.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {phone && (
+                                <a
+                                  href={`tel:${phone}`}
+                                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                  title={`Call ${phone}`}
+                                >
+                                  <Phone className="size-3" />
+                                </a>
+                              )}
+                              {email && (
+                                <a
+                                  href={`mailto:${email}`}
+                                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                                  title={`Email ${email}`}
+                                >
+                                  <Mail className="size-3" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Bottom row: Close date & Owner */}
                         <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">

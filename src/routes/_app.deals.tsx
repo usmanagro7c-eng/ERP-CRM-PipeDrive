@@ -21,6 +21,7 @@ import { DealTable, type SortState } from "@/components/deals/deal-table";
 import { DealKanban } from "@/components/deals/deal-kanban";
 import { DealGrid } from "@/components/deals/deal-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
+import { FilterChipsBar } from "@/components/ui/filter-chips-bar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading";
@@ -271,6 +272,30 @@ function DealsPage() {
     return list;
   }, [statusFilter]);
 
+  const activeChips = useMemo(() => {
+    const list: Array<{ id: string; label: string; value: string; onRemove: () => void }> = [];
+    if (searchText.trim()) {
+      list.push({
+        id: "search",
+        label: "Search",
+        value: searchText.trim(),
+        onRemove: () => {
+          setSearchText("");
+          void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
+        },
+      });
+    }
+    if (statusFilter) {
+      list.push({
+        id: "status",
+        label: "Status",
+        value: statusFilter,
+        onRemove: () => setStatusFilter(""),
+      });
+    }
+    return list;
+  }, [searchText, statusFilter, navigate]);
+
   const page = search.page ?? 1;
   const q = search.q ?? "";
 
@@ -465,6 +490,16 @@ function DealsPage() {
           )}
         </div>
       </div>
+
+      {/* Active Filter Chips Bar */}
+      <FilterChipsBar
+        chips={activeChips}
+        onClearAll={() => {
+          setSearchText("");
+          setStatusFilter("");
+          void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
+        }}
+      />
 
       {/* Main Content Area */}
       <div

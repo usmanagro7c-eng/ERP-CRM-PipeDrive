@@ -34,7 +34,7 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
 
       <div className="relative z-10 flex items-start justify-between gap-2">
         <span
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate"
+          className="text-[11px] font-medium text-muted-foreground truncate"
           title={data.tooltip || data.title}
         >
           {data.title}

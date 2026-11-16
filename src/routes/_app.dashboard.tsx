@@ -310,8 +310,8 @@ function DashboardPage() {
         {/* Quick Hub Navigation Strip */}
         <div className="border-t border-border pt-4 sm:pt-6">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Quick CRM Modules
+            <span className="text-xs font-semibold text-foreground">
+              CRM Modules
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">

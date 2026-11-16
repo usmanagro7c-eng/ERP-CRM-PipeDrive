@@ -39,6 +39,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Kbd } from "@/components/ui/kbd";
 import { CommandPalette } from "@/components/command-palette";
+import { MobileQuickActionFab } from "@/components/mobile-quick-action-fab";
 import { SESSION_QUERY_KEY, logout, sessionQueryOptions } from "@/lib/auth-client";
 import { toggleTheme as toggleThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -87,63 +88,125 @@ function TestDataBadge({ collapsed }: { collapsed?: boolean }) {
   );
 }
 
-function NavLinks({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
+function NavLinks({
+  collapsed,
+  onItemClick,
+  grouped,
+}: {
+  collapsed?: boolean;
+  onItemClick?: () => void;
+  grouped?: boolean;
+}) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  return (
-    <div className="flex flex-col gap-0.5 px-2">
-      {NAV_ITEMS.map((item) => {
-        if (item.disabled) {
-          return (
-            <div
-              key={item.to}
-              title={collapsed ? `${item.label} (Temporarily Disabled)` : "Temporarily Disabled"}
-              aria-disabled="true"
-              className={cn(
-                "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground/45 opacity-60 cursor-not-allowed select-none",
-                collapsed ? "justify-center px-1.5" : "",
-              )}
-            >
-              <item.icon className="size-4 shrink-0 opacity-50" />
-              {!collapsed && (
-                <div className="flex flex-1 items-center justify-between min-w-0">
-                  <span className="truncate">{item.label}</span>
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60 bg-muted/80 px-1.5 py-0.5 rounded border border-border/40 font-mono">
-                    Disabled
-                  </span>
-                </div>
-              )}
+  const groups = grouped
+    ? [
+        {
+          label: "Overview",
+          items: NAV_ITEMS.filter((i) => ["/dashboard"].includes(i.to)),
+        },
+        {
+          label: "Sales",
+          items: NAV_ITEMS.filter((i) =>
+            ["/leads", "/deals", "/quotations", "/sales-orders"].includes(i.to),
+          ),
+        },
+        {
+          label: "Contacts",
+          items: NAV_ITEMS.filter((i) => ["/organizations", "/contacts"].includes(i.to)),
+        },
+        {
+          label: "Activity",
+          items: NAV_ITEMS.filter((i) =>
+            ["/notes", "/activities", "/calls"].includes(i.to),
+          ),
+        },
+        {
+          label: "System",
+          items: NAV_ITEMS.filter((i) => ["/settings"].includes(i.to)),
+        },
+      ]
+    : [{ label: "", items: NAV_ITEMS }];
+
+  const renderItem = (item: NavItem) => {
+    if (item.disabled) {
+      return (
+        <div
+          key={item.to}
+          title={collapsed ? `${item.label} (Temporarily Disabled)` : "Temporarily Disabled"}
+          aria-disabled="true"
+          className={cn(
+            "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground/40 opacity-60 cursor-not-allowed select-none",
+            collapsed ? "justify-center px-2" : "",
+          )}
+        >
+          <item.icon className="size-[18px] shrink-0 opacity-40" />
+          {!collapsed && (
+            <div className="flex flex-1 items-center justify-between min-w-0">
+              <span className="truncate">{item.label}</span>
+              <span className="text-[9px] text-muted-foreground/50 bg-muted/60 px-1.5 py-0.5 rounded font-medium">
+                Soon
+              </span>
             </div>
-          );
-        }
+          )}
+        </div>
+      );
+    }
 
-        const active =
-          item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
+    const active =
+      item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
 
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            title={collapsed ? item.label : undefined}
-            onClick={onItemClick}
-            className={cn(
-              "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer active:scale-[0.98]",
-              collapsed ? "justify-center px-1.5" : "",
-              active
-                ? "bg-neutral-200/90 dark:bg-neutral-800 text-foreground font-semibold shadow-2xs"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        title={collapsed ? item.label : undefined}
+        onClick={onItemClick}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.98]",
+          collapsed ? "justify-center px-2" : "",
+          active
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+        )}
+      >
+        {/* Active left accent bar */}
+        {active && !collapsed && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
+        )}
+        <item.icon
+          className={cn(
+            "size-[18px] shrink-0 transition-transform duration-150",
+            active ? "text-primary" : "opacity-60 group-hover:opacity-90",
+          )}
+        />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    );
+  };
+
+  if (!grouped) {
+    return (
+      <div className="flex flex-col gap-0.5 px-2">
+        {NAV_ITEMS.map((item) => renderItem(item))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 px-2">
+      {groups
+        .filter((g) => g.items.length > 0)
+        .map((group) => (
+          <div key={group.label} className="flex flex-col gap-0.5">
+            {group.label && (
+              <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                {group.label}
+              </span>
             )}
-          >
-            <item.icon
-              className={cn(
-                "size-4 shrink-0 transition-transform duration-150 group-hover:scale-110",
-                active ? "opacity-100 text-foreground" : "opacity-75",
-              )}
-            />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        );
-      })}
+            {group.items.map((item) => renderItem(item))}
+          </div>
+        ))}
     </div>
   );
 }
@@ -179,37 +242,40 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         <button
           type="button"
           className={cn(
-            "flex items-center gap-2.5 w-full rounded-md p-2 text-left hover:bg-muted/60 transition-colors cursor-pointer",
+            "flex items-center gap-2.5 w-full rounded-lg p-2 text-left hover:bg-muted/60 transition-colors cursor-pointer",
             collapsed && "justify-center p-1.5",
           )}
         >
-          {/* Brand Icon */}
-          <div className="flex size-7 items-center justify-center rounded-lg bg-pink-600 text-white shrink-0 shadow-xs">
-            <svg className="size-4 fill-current" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+          {/* User initials avatar */}
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 text-xs font-bold shadow-sm">
+            {(name ?? "User").slice(0, 2).toUpperCase()}
           </div>
 
           {!collapsed && (
             <div className="flex flex-1 items-center justify-between min-w-0">
               <div className="min-w-0 leading-tight">
-                <div className="text-xs font-semibold text-foreground truncate">CRM</div>
-                <div className="text-[11px] text-muted-foreground truncate">{name}</div>
+                <div className="text-[13px] font-semibold text-foreground truncate">{name}</div>
+                <div className="text-[11px] text-muted-foreground truncate">{email}</div>
               </div>
-              <ChevronDown className="size-3 text-muted-foreground opacity-60 ml-1 shrink-0" />
+              <ChevronDown className="size-3.5 text-muted-foreground opacity-50 ml-1 shrink-0" />
             </div>
           )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 text-xs">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="font-semibold text-foreground truncate">{name}</span>
-          <span className="font-normal text-[11px] text-muted-foreground truncate">{email}</span>
+        <DropdownMenuLabel className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
+            {(name ?? "User").slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-foreground truncate">{name}</div>
+            <div className="font-normal text-[11px] text-muted-foreground truncate">{email}</div>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer gap-2">
           {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-          <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+          <span>{isDark ? "Light mode" : "Dark mode"}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -224,7 +290,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           className="cursor-pointer gap-2 text-destructive"
         >
           <LogOut className="size-3.5" />
-          <span>Sign Out</span>
+          <span>Sign out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -237,17 +303,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
+  // Mobile bottom nav — 4 pinned + More sheet
+  const MOBILE_NAV = [
+    { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+    { label: "Deals", to: "/deals", icon: Columns3 },
+    { label: "Contacts", to: "/contacts", icon: Users },
+    { label: "Quotations", to: "/quotations", icon: FileText },
+  ] as const;
+
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
-      {/* Desktop Sidebar Matching Frappe CRM */}
+      {/* ── Desktop Sidebar ──────────────────────────────────────── */}
       <aside
         className={cn(
           "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-[#fafafa] dark:bg-[#141416] transition-all duration-200 md:flex",
-          collapsed ? "w-14" : "w-56",
+          collapsed ? "w-14" : "w-60",
         )}
       >
         {/* Workspace Switcher Header */}
-        <div className="px-2 pt-2.5 pb-1">
+        <div className="px-2 pt-3 pb-1">
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
@@ -255,18 +329,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <TestDataBadge collapsed={collapsed} />
         </div>
 
-        {/* Quick Actions (Search & Notifications) */}
-        <div className="px-2 py-1 space-y-0.5">
+        {/* Quick Actions */}
+        <div className="px-2 py-1.5 space-y-0.5">
           <button
             type="button"
             onClick={() => setCommandOpen(true)}
             title={collapsed ? "Search (Ctrl+K)" : undefined}
             className={cn(
-              "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
-              collapsed && "justify-center px-1.5",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-2",
             )}
           >
-            <Search className="size-3.5 shrink-0 opacity-80" />
+            <Search className="size-[18px] shrink-0 opacity-70" />
             {!collapsed && (
               <div className="flex flex-1 items-center justify-between">
                 <span>Search</span>
@@ -279,33 +353,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             title={collapsed ? "Notifications" : undefined}
             className={cn(
-              "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
-              collapsed && "justify-center px-1.5",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-2",
             )}
           >
-            <Bell className="size-3.5 shrink-0 opacity-80" />
+            <Bell className="size-[18px] shrink-0 opacity-70" />
             {!collapsed && <span>Notifications</span>}
           </button>
         </div>
 
-        <div className="h-px bg-border/60 mx-3 my-1.5" />
+        <div className="h-px bg-border/50 mx-3 my-1" />
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto scrollbar-none py-1" aria-label="Main">
+        <nav className="flex-1 overflow-y-auto scrollbar-none py-2" aria-label="Main">
           <NavLinks collapsed={collapsed} />
         </nav>
 
-        {/* Sidebar Footer with Help and Collapse */}
-        <div className="border-t border-border/60 p-2 space-y-0.5 shrink-0">
+        {/* Sidebar Footer */}
+        <div className="border-t border-border/50 p-2 space-y-0.5 shrink-0">
           <button
             type="button"
             title={collapsed ? "Help" : undefined}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
-              collapsed && "justify-center px-1.5",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-2",
             )}
           >
-            <HelpCircle className="size-3.5 shrink-0 opacity-80" />
+            <HelpCircle className="size-[18px] shrink-0 opacity-70" />
             {!collapsed && <span>Help</span>}
           </button>
 
@@ -314,15 +388,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
-              collapsed && "justify-center px-1.5",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              collapsed && "justify-center px-2",
             )}
           >
             {collapsed ? (
-              <PanelLeftOpen className="size-3.5 shrink-0" />
+              <PanelLeftOpen className="size-[18px] shrink-0" />
             ) : (
               <>
-                <PanelLeftClose className="size-3.5 shrink-0" />
+                <PanelLeftClose className="size-[18px] shrink-0" />
                 <span>Collapse</span>
               </>
             )}
@@ -330,19 +404,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main App Content Area */}
+      {/* ── Main Content ─────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
-        {/* Mobile Header (Only visible on screens < md) */}
-        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 py-2 shrink-0 safe-top">
-          <div className="flex items-center gap-1.5">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
-              C
+        {/* Mobile Header */}
+        <header className="sticky top-0 z-20 flex md:hidden items-center justify-between border-b border-border bg-background/95 backdrop-blur px-3 py-2 shrink-0 safe-top">
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <svg className="size-4 fill-current" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
             </div>
-            <span className="text-sm font-semibold">AgroCRM</span>
+            <span className="text-sm font-bold tracking-tight">AgroCRM</span>
             <TestDataBadge />
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
@@ -350,60 +426,77 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="size-9 text-muted-foreground"
               aria-label="Search"
             >
-              <Search className="size-4" />
+              <Search className="size-[18px]" />
             </Button>
           </div>
         </header>
 
-        {/* Page Children (Starts directly at page top without redundant desktop header) */}
+        {/* Page Content */}
         <main className="min-w-0 flex-1 h-full overflow-hidden flex flex-col">{children}</main>
 
-        {/* Mobile bottom navigation */}
+        {/* Mobile Quick Action Floating Action Button */}
+        <MobileQuickActionFab />
+
+        {/* ── Mobile Bottom Nav ───────────────────────────────────── */}
         <nav
           className="md:hidden shrink-0 border-t border-border bg-background/95 backdrop-blur safe-bottom"
-          aria-label="Mobile"
+          aria-label="Mobile navigation"
         >
-          <div className="flex items-center justify-around px-1 py-1">
-            {[
-              { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-              { label: "Leads", to: "/leads", icon: Target },
-              { label: "Deals", to: "/deals", icon: Columns3 },
-              { label: "Contacts", to: "/contacts", icon: Users },
-            ].map((item) => {
+          <div className="flex items-stretch justify-around px-1 py-0.5">
+            {MOBILE_NAV.map((item) => {
               const active =
-                item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
+                item.to === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors min-h-[44px]",
-                    active ? "text-primary" : "text-muted-foreground",
+                    "flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors min-h-[52px]",
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <item.icon className="size-5" />
+                  <span
+                    className={cn(
+                      "flex items-center justify-center rounded-lg p-1 transition-colors",
+                      active ? "bg-primary/10" : "",
+                    )}
+                  >
+                    <item.icon className="size-[22px]" />
+                  </span>
                   <span>{item.label}</span>
                 </Link>
               );
             })}
+
+            {/* More Sheet */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-muted-foreground min-h-[44px]"
+                  className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10px] font-semibold text-muted-foreground hover:text-foreground min-h-[52px]"
                   aria-label="More"
                 >
-                  <Menu className="size-5" />
+                  <span className="flex items-center justify-center rounded-lg p-1">
+                    <Menu className="size-[22px]" />
+                  </span>
                   <span>More</span>
                 </button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="h-[80vh] p-0 flex flex-col">
-                <SheetHeader className="p-3 border-b border-border">
-                  <SheetTitle className="sr-only">More navigation</SheetTitle>
+              <SheetContent side="bottom" className="h-[85vh] p-0 flex flex-col rounded-t-2xl">
+                {/* Handle bar */}
+                <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                  <div className="h-1 w-10 rounded-full bg-muted-foreground/25" />
+                </div>
+                <SheetHeader className="px-4 pb-3 border-b border-border shrink-0">
+                  <SheetTitle className="sr-only">All navigation</SheetTitle>
                   <WorkspaceSwitcher />
                 </SheetHeader>
-                <nav className="flex-1 overflow-y-auto py-3">
-                  <NavLinks onItemClick={() => setMobileOpen(false)} />
+                <nav className="flex-1 overflow-y-auto py-4">
+                  <NavLinks onItemClick={() => setMobileOpen(false)} grouped />
                 </nav>
               </SheetContent>
             </Sheet>
@@ -411,7 +504,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
 
-      {/* Global Command Palette Dialog */}
+      {/* Global Command Palette */}
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );

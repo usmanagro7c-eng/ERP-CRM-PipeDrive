@@ -67,6 +67,7 @@ import { RecordCallsTab } from "@/components/record-view/record-calls-tab";
 import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
 import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
 import { DealDataTab, type ProductRow } from "@/components/deals/deal-data-tab";
+import { DealStageStepper } from "@/components/deals/deal-stage-stepper";
 import { RecordQuotationsTab } from "@/components/record-view/record-quotations-tab";
 import { triggerConfetti } from "@/lib/confetti";
 import * as api from "@/lib/api";
@@ -711,6 +712,14 @@ function DealDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Pipedrive-Style Visual Chevron Pipeline Stage Stepper */}
+      <DealStageStepper
+        stages={stages}
+        currentStage={currentStage}
+        onSelectStage={(stage) => void handleStageChange(stage)}
+        disabled={saveMutation.isPending}
+      />
 
       {/* Main 2-Column Content Layout (Feed Tabs + Right Side-Panel) */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">

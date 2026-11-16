@@ -8,6 +8,7 @@ import {
   CalendarClock,
   ChevronDown,
   Columns3,
+  Download,
   FileText,
   HelpCircle,
   LayoutDashboard,
@@ -497,6 +498,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </SheetHeader>
                 <nav className="flex-1 overflow-y-auto py-4">
                   <NavLinks onItemClick={() => setMobileOpen(false)} grouped />
+
+                  {/* PWA Install Entry in Mobile Menu */}
+                  <div className="px-4 pt-4 mt-4 border-t border-border/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        localStorage.removeItem("agrocrm.pwa.prompt_dismissed_until");
+                        window.location.reload();
+                      }}
+                      className="flex items-center gap-2.5 w-full rounded-xl bg-primary/10 border border-primary/20 p-3 text-left text-xs font-semibold text-primary transition-colors cursor-pointer"
+                    >
+                      <Download className="size-4 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div>Install App on Phone</div>
+                        <div className="text-[10px] text-muted-foreground font-normal">
+                          Full-screen app mode, zero browser bars
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </nav>
               </SheetContent>
             </Sheet>

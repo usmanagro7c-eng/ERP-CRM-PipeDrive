@@ -40,6 +40,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -67,34 +73,60 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Sora", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --shadow-xs: 0 1px 2px oklch(0.3 0.03 155 / 0.05);
+  --shadow-sm: 0 1px 3px oklch(0.3 0.03 155 / 0.08), 0 1px 2px oklch(0.3 0.03 155 / 0.06);
+  --shadow-md: 0 4px 6px -1px oklch(0.3 0.03 155 / 0.08), 0 2px 4px -1px oklch(0.3 0.03 155 / 0.06);
+  --shadow-lg: 0 10px 15px -3px oklch(0.3 0.03 155 / 0.08), 0 4px 6px -2px oklch(0.3 0.03 155 / 0.05);
+  --shadow-xl: 0 20px 25px -5px oklch(0.3 0.03 155 / 0.08), 0 10px 10px -5px oklch(0.3 0.03 155 / 0.04);
   --shadow-card: 0 1px 2px oklch(0.3 0.03 155 / 0.06), 0 4px 16px oklch(0.3 0.03 155 / 0.05);
   --shadow-pop: 0 4px 12px oklch(0.3 0.03 155 / 0.1), 0 12px 32px oklch(0.3 0.03 155 / 0.08);
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.99 0.004 150);
-  --foreground: oklch(0.24 0.02 160);
+
+  /* Base colors */
+  --background: oklch(0.985 0.004 150);
+  --foreground: oklch(0.22 0.02 160);
+
+  /* Surface colors */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.02 160);
+  --card-foreground: oklch(0.22 0.02 160);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.02 160);
-  /* L 0.51 keeps white text on the brand green at 5.2:1 and the green on its
-     own 10% tint at 4.75:1 (WCAG AA). */
+  --popover-foreground: oklch(0.22 0.02 160);
+
+  /* Brand colors - strategic green accent */
   --primary: oklch(0.51 0.115 158);
   --primary-foreground: oklch(0.985 0.01 150);
-  --secondary: oklch(0.962 0.008 150);
+
+  /* Secondary surfaces */
+  --secondary: oklch(0.97 0.006 150);
   --secondary-foreground: oklch(0.32 0.03 158);
-  --muted: oklch(0.962 0.008 150);
-  /* L 0.50 keeps the muted text readable on the muted surfaces too (4.7:1). */
-  --muted-foreground: oklch(0.5 0.02 155);
-  --accent: oklch(0.945 0.035 152);
+
+  /* Muted elements */
+  --muted: oklch(0.96 0.008 150);
+  --muted-foreground: oklch(0.48 0.02 155);
+
+  /* Accent surfaces */
+  --accent: oklch(0.955 0.025 152);
   --accent-foreground: oklch(0.36 0.07 155);
+
+  /* Semantic colors */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0.01 150);
-  --border: oklch(0.916 0.012 150);
-  --input: oklch(0.916 0.012 150);
+  --warning: oklch(0.72 0.14 75);
+  --warning-foreground: oklch(0.2 0.05 75);
+  --success: oklch(0.62 0.17 150);
+  --success-foreground: oklch(0.985 0.01 150);
+  --info: oklch(0.6 0.16 250);
+  --info-foreground: oklch(0.985 0.01 250);
+
+  /* Borders and inputs */
+  --border: oklch(0.91 0.01 150);
+  --input: oklch(0.91 0.01 150);
   --ring: oklch(0.62 0.1 158);
+
+  /* Status-specific colors */
   --won: oklch(0.62 0.17 150);
   --won-foreground: oklch(0.985 0.01 150);
   --lost: oklch(0.6 0.22 25);
@@ -103,62 +135,93 @@
   --open-foreground: oklch(0.985 0.01 250);
   --overdue: oklch(0.78 0.15 75);
   --overdue-foreground: oklch(0.2 0.05 75);
+
+  /* Chart colors */
   --chart-1: oklch(0.56 0.115 158);
   --chart-2: oklch(0.65 0.1 130);
   --chart-3: oklch(0.45 0.08 165);
   --chart-4: oklch(0.75 0.12 145);
   --chart-5: oklch(0.52 0.12 95);
-  --sidebar: oklch(0.99 0.004 150);
-  --sidebar-foreground: oklch(0.24 0.02 160);
+
+  /* Sidebar specific */
+  --sidebar: oklch(0.975 0.006 150);
+  --sidebar-foreground: oklch(0.22 0.02 160);
   --sidebar-primary: oklch(0.51 0.115 158);
   --sidebar-primary-foreground: oklch(0.985 0.01 150);
-  --sidebar-accent: oklch(0.945 0.035 152);
+  --sidebar-accent: oklch(0.955 0.025 152);
   --sidebar-accent-foreground: oklch(0.36 0.07 155);
-  --sidebar-border: oklch(0.916 0.012 150);
+  --sidebar-border: oklch(0.91 0.01 150);
   --sidebar-ring: oklch(0.62 0.1 158);
 }
 
 .dark {
-  --background: oklch(0.17 0.015 160);
+  /* Base colors */
+  --background: oklch(0.15 0.015 160);
   --foreground: oklch(0.97 0.006 150);
-  --card: oklch(0.21 0.02 160);
+
+  /* Surface colors */
+  --card: oklch(0.19 0.02 160);
   --card-foreground: oklch(0.97 0.006 150);
-  --popover: oklch(0.21 0.02 160);
+  --popover: oklch(0.19 0.02 160);
   --popover-foreground: oklch(0.97 0.006 150);
+
+  /* Brand colors */
   --primary: oklch(0.68 0.13 158);
-  --primary-foreground: oklch(0.17 0.015 160);
-  --secondary: oklch(0.27 0.02 160);
+  --primary-foreground: oklch(0.15 0.015 160);
+
+  /* Secondary surfaces */
+  --secondary: oklch(0.24 0.02 160);
   --secondary-foreground: oklch(0.97 0.006 150);
-  --muted: oklch(0.27 0.02 160);
-  --muted-foreground: oklch(0.68 0.02 152);
-  --accent: oklch(0.3 0.03 158);
+
+  /* Muted elements */
+  --muted: oklch(0.24 0.02 160);
+  --muted-foreground: oklch(0.64 0.02 152);
+
+  /* Accent surfaces */
+  --accent: oklch(0.27 0.03 158);
   --accent-foreground: oklch(0.95 0.02 150);
+
+  /* Semantic colors */
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0.01 150);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.15 0.015 75);
+  --success: oklch(0.7 0.15 150);
+  --success-foreground: oklch(0.15 0.015 160);
+  --info: oklch(0.7 0.15 250);
+  --info-foreground: oklch(0.15 0.015 160);
+
+  /* Borders and inputs */
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.1 158);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.68 0.1 158);
+
+  /* Status-specific colors */
   --won: oklch(0.7 0.15 150);
-  --won-foreground: oklch(0.17 0.015 160);
+  --won-foreground: oklch(0.15 0.015 160);
   --lost: oklch(0.72 0.19 25);
   --lost-foreground: oklch(0.985 0.01 25);
   --open: oklch(0.7 0.15 250);
-  --open-foreground: oklch(0.17 0.015 160);
+  --open-foreground: oklch(0.15 0.015 160);
   --overdue: oklch(0.8 0.14 75);
-  --overdue-foreground: oklch(0.17 0.015 75);
+  --overdue-foreground: oklch(0.15 0.015 75);
+
+  /* Chart colors */
   --chart-1: oklch(0.68 0.13 158);
   --chart-2: oklch(0.72 0.11 130);
   --chart-3: oklch(0.6 0.09 165);
   --chart-4: oklch(0.8 0.13 145);
   --chart-5: oklch(0.65 0.13 95);
-  --sidebar: oklch(0.19 0.015 160);
+
+  /* Sidebar specific */
+  --sidebar: oklch(0.17 0.015 160);
   --sidebar-foreground: oklch(0.97 0.006 150);
   --sidebar-primary: oklch(0.68 0.13 158);
-  --sidebar-primary-foreground: oklch(0.17 0.015 160);
-  --sidebar-accent: oklch(0.3 0.03 158);
+  --sidebar-primary-foreground: oklch(0.15 0.015 160);
+  --sidebar-accent: oklch(0.27 0.03 158);
   --sidebar-accent-foreground: oklch(0.95 0.02 150);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.62 0.1 158);
+  --sidebar-ring: oklch(0.68 0.1 158);
 }
 
 @layer base {
@@ -170,6 +233,36 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography hierarchy utilities */
+  .text-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .text-heading {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+
+  .text-body {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  .text-supporting {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--color-muted-foreground);
   }
 
   /* Sleek modern minimalist scrollbars */
@@ -190,6 +283,11 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: color-mix(in oklch, var(--color-muted-foreground) 45%, transparent);
+  }
+
+  /* Number formatting for CRM data */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 

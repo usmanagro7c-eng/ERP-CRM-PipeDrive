@@ -135,10 +135,10 @@ function NavLinks({
       return (
         <div
           key={item.to}
-          title={collapsed ? `${item.label} (Temporarily Disabled)` : "Temporarily Disabled"}
+          title={collapsed ? `${item.label} (Coming Soon)` : "Coming Soon"}
           aria-disabled="true"
           className={cn(
-            "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground/40 opacity-60 cursor-not-allowed select-none",
+            "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/30 opacity-50 cursor-not-allowed select-none",
             collapsed ? "justify-center px-2" : "",
           )}
         >
@@ -146,7 +146,7 @@ function NavLinks({
           {!collapsed && (
             <div className="flex flex-1 items-center justify-between min-w-0">
               <span className="truncate">{item.label}</span>
-              <span className="text-[9px] text-muted-foreground/50 bg-muted/60 px-1.5 py-0.5 rounded font-medium">
+              <span className="text-[10px] text-sidebar-foreground/40 bg-sidebar-accent/50 px-1.5 py-0.5 rounded-md font-medium">
                 Soon
               </span>
             </div>
@@ -165,21 +165,21 @@ function NavLinks({
         title={collapsed ? item.label : undefined}
         onClick={onItemClick}
         className={cn(
-          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.98]",
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 cursor-pointer",
           collapsed ? "justify-center px-2" : "",
           active
-            ? "bg-primary/10 text-primary font-semibold"
-            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            ? "bg-sidebar-primary/10 text-sidebar-primary font-semibold shadow-sm"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         )}
       >
-        {/* Active left accent bar */}
+        {/* Active indicator */}
         {active && !collapsed && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-sidebar-primary" />
         )}
         <item.icon
           className={cn(
             "size-[18px] shrink-0 transition-transform duration-150",
-            active ? "text-primary" : "opacity-60 group-hover:opacity-90",
+            active ? "text-sidebar-primary" : "opacity-80 group-hover:opacity-100",
           )}
         />
         {!collapsed && <span className="truncate">{item.label}</span>}
@@ -196,13 +196,13 @@ function NavLinks({
   }
 
   return (
-    <div className="flex flex-col gap-4 px-2">
+    <div className="flex flex-col gap-5 px-3">
       {groups
         .filter((g) => g.items.length > 0)
         .map((group) => (
-          <div key={group.label} className="flex flex-col gap-0.5">
+          <div key={group.label} className="flex flex-col gap-1">
             {group.label && (
-              <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              <span className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
                 {group.label}
               </span>
             )}
@@ -244,22 +244,22 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         <button
           type="button"
           className={cn(
-            "flex items-center gap-2.5 w-full rounded-lg p-2 text-left hover:bg-muted/60 transition-colors cursor-pointer",
-            collapsed && "justify-center p-1.5",
+            "flex items-center gap-3 w-full rounded-lg p-2.5 text-left hover:bg-sidebar-accent transition-colors cursor-pointer group",
+            collapsed && "justify-center p-2",
           )}
         >
-          {/* User initials avatar */}
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 text-xs font-bold shadow-sm">
+          {/* User avatar */}
+          <div className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0 text-xs font-bold shadow-sm">
             {(name ?? "User").slice(0, 2).toUpperCase()}
           </div>
 
           {!collapsed && (
             <div className="flex flex-1 items-center justify-between min-w-0">
               <div className="min-w-0 leading-tight">
-                <div className="text-[13px] font-semibold text-foreground truncate">{name}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{email}</div>
+                <div className="text-[13px] font-semibold text-sidebar-foreground truncate">{name}</div>
+                <div className="text-[11px] text-sidebar-foreground/60 truncate">{email}</div>
               </div>
-              <ChevronDown className="size-3.5 text-muted-foreground opacity-50 ml-1 shrink-0" />
+              <ChevronDown className="size-3.5 text-sidebar-foreground/50 ml-2 shrink-0 group-hover:text-sidebar-foreground/70 transition-colors" />
             </div>
           )}
         </button>
@@ -318,31 +318,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Desktop Sidebar ──────────────────────────────────────── */}
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-[#fafafa] dark:bg-[#141416] transition-all duration-200 md:flex",
-          collapsed ? "w-14" : "w-60",
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200 md:flex",
+          collapsed ? "w-16" : "w-64",
         )}
       >
         {/* Workspace Switcher Header */}
-        <div className="px-2 pt-3 pb-1">
+        <div className="px-3 pt-4 pb-2">
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
-        <div className="px-2 pb-1">
+        <div className="px-3 pb-2">
           <TestDataBadge collapsed={collapsed} />
         </div>
 
         {/* Quick Actions */}
-        <div className="px-2 py-1.5 space-y-0.5">
+        <div className="px-3 py-2 space-y-1">
           <button
             type="button"
             onClick={() => setCommandOpen(true)}
             title={collapsed ? "Search (Ctrl+K)" : undefined}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
               collapsed && "justify-center px-2",
             )}
           >
-            <Search className="size-[18px] shrink-0 opacity-70" />
+            <Search className="size-[18px] shrink-0" />
             {!collapsed && (
               <div className="flex flex-1 items-center justify-between">
                 <span>Search</span>
@@ -355,33 +355,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             title={collapsed ? "Notifications" : undefined}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
               collapsed && "justify-center px-2",
             )}
           >
-            <Bell className="size-[18px] shrink-0 opacity-70" />
+            <Bell className="size-[18px] shrink-0" />
             {!collapsed && <span>Notifications</span>}
           </button>
         </div>
 
-        <div className="h-px bg-border/50 mx-3 my-1" />
+        <div className="h-px bg-sidebar-border mx-3 my-2" />
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto scrollbar-none py-2" aria-label="Main">
-          <NavLinks collapsed={collapsed} />
+        <nav className="flex-1 overflow-y-auto scrollbar-none py-1" aria-label="Main">
+          <NavLinks collapsed={collapsed} grouped />
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="border-t border-border/50 p-2 space-y-0.5 shrink-0">
+        <div className="border-t border-sidebar-border p-3 space-y-1 shrink-0">
           <button
             type="button"
             title={collapsed ? "Help" : undefined}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
               collapsed && "justify-center px-2",
             )}
           >
-            <HelpCircle className="size-[18px] shrink-0 opacity-70" />
+            <HelpCircle className="size-[18px] shrink-0" />
             {!collapsed && <span>Help</span>}
           </button>
 
@@ -390,7 +390,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
-              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer",
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
               collapsed && "justify-center px-2",
             )}
           >

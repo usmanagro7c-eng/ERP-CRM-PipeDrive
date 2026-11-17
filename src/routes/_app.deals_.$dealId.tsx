@@ -50,6 +50,8 @@ import {
 } from "@/components/sales-orders/sales-order-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
+import { TerritorySelect } from "@/components/territory-select";
+import { quotationListOptions } from "@/hooks/use-quotations";
 import {
   dealDetailOptions,
   dealStatusesOptions,
@@ -64,7 +66,8 @@ import { RecordNotesTab } from "@/components/record-view/record-notes-tab";
 import { RecordCallsTab } from "@/components/record-view/record-calls-tab";
 import { RecordEmailsTab } from "@/components/record-view/record-emails-tab";
 import { RecordActivityFeed } from "@/components/record-view/record-activity-feed";
-import { DealDataTab } from "@/components/deals/deal-data-tab";
+import { DealDataTab, type ProductRow } from "@/components/deals/deal-data-tab";
+import { DealStageStepper } from "@/components/deals/deal-stage-stepper";
 import { RecordQuotationsTab } from "@/components/record-view/record-quotations-tab";
 import { triggerConfetti } from "@/lib/confetti";
 import * as api from "@/lib/api";
@@ -108,7 +111,7 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
+
 
 interface SidebarState {
   organization: string;
@@ -149,6 +152,15 @@ function DealDetailPage() {
   const { data: deal, isLoading, refetch } = useQuery(dealDetailOptions(dealId));
   const { data: stages = [] } = useQuery(dealStatusesOptions());
   const { data: users = [] } = useCrmUsers();
+  const { data: rawQuotations = [] } = useQuery(
+    quotationListOptions({
+      search: "",
+      filters: [],
+      start: 0,
+      limit: 50,
+      orderBy: "creation desc",
+    }),
+  );
 
   const saveMutation = useSaveDeal();
   const deleteMutation = useDeleteDeal();
@@ -162,20 +174,135 @@ function DealDetailPage() {
   const [salesOrderInitialValues, setSalesOrderInitialValues] =
     useState<SalesOrderInitialValues | null>(null);
 
+  // Collapsible sections
+  const [contactsOpen, setContactsOpen] = useState(true);
+  const [lostReasonOpen, setLostReasonOpen] = useState(false);
+  const [orgDetailsOpen, setOrgDetailsOpen] = useState(true);
+
+  // Editable local form fields for sidebar
+  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
+  const [draftProducts, setDraftProducts] = useState<ProductRow[] | null>(null);
+
+  const dealQuotationItems = useMemo<api.QuotationItem[]>(() => {
+    if (draftProducts && draftProducts.length > 0) {
+      return draftProducts
+        .filter((p) => p.item && p.item.trim().length > 0)
+        .map((p) => ({
+          item_code: p.item,
+          item_name: p.item,
+          qty: Number(p.qty) || 1,
+          rate: Number(p.rate) || 0,
+          amount: (Number(p.qty) || 1) * (Number(p.rate) || 0),
+        }));
+    }
+
+    const raw = Array.isArray(deal?.["products"])
+      ? (deal["products"] as Array<Record<string, unknown>>)
+      : Array.isArray(deal?.["items"])
+        ? (deal["items"] as Array<Record<string, unknown>>)
+        : [];
+
+    return raw
+      .map((p) => {
+        const code = String(p["product_code"] || p["item_code"] || p["item"] || "");
+        const name = String(p["product_name"] || p["item_name"] || p["product_code"] || code);
+        const qty = Number(p["qty"]) || 1;
+        const rate = Number(p["rate"] || p["price_list_rate"]) || 0;
+        const amount = Number(p["amount"]) || qty * rate;
+        return {
+          item_code: code,
+          item_name: name,
+          qty,
+          rate,
+          amount,
+        };
+      })
+      .filter((it) => it.item_code.trim().length > 0);
+  }, [deal, draftProducts]);
+
+  const linkedQuotations = useMemo(() => {
+    const list = (rawQuotations as api.Quotation[]) || [];
+    return list.filter((q) => {
+      const raw = q as Record<string, unknown>;
+      const crmDeal = String(raw["crm_deal"] || "");
+      const party = String(q.party_name || "");
+      const org = sidebarValues.organization || String(deal?.["organization_name"] || deal?.["organization"] || "");
+      if (crmDeal) return crmDeal === dealId;
+      if (org && party && party.toLowerCase() === org.toLowerCase()) return true;
+      return false;
+    });
+  }, [rawQuotations, dealId, sidebarValues.organization, deal]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function handleConvertToSalesOrder(quotation?: any) {
+  async function handleConvertToSalesOrder(quotation?: any) {
     if (quotation) {
+      let qItems = quotation.items;
+      let customerName = String(quotation.party_name || sidebarValues.organization || "");
+
+      if (!qItems || qItems.length === 0) {
+        try {
+          const fullQuotation = await api.getQuotation(quotation.name);
+          qItems = fullQuotation.items;
+          if (fullQuotation.party_name) {
+            customerName = fullQuotation.party_name;
+          }
+        } catch (err) {
+          console.warn("Could not fetch quotation items:", err);
+        }
+      }
+
       setSalesOrderInitialValues({
-        customer: String(quotation.party_name || sidebarValues.organization || ""),
-        items: quotation.items,
+        customer: customerName,
+        items: qItems && qItems.length > 0 ? qItems : undefined,
         quotation_ref: quotation.name,
       });
-    } else {
-      setSalesOrderInitialValues({
-        customer: sidebarValues.organization || undefined,
-        quotation_ref: undefined,
-      });
+      setSalesOrderModalOpen(true);
+      return;
     }
+
+    // If called without quotation, check if there is an existing quotation for this deal
+    if (linkedQuotations.length > 0) {
+      const latestQ = linkedQuotations[0];
+      let qItems = latestQ.items;
+      let customerName = String(latestQ.party_name || sidebarValues.organization || "");
+
+      try {
+        const fullQuotation = await api.getQuotation(latestQ.name);
+        qItems = fullQuotation.items;
+        if (fullQuotation.party_name) {
+          customerName = fullQuotation.party_name;
+        }
+      } catch (err) {
+        console.warn("Could not fetch latest quotation items:", err);
+      }
+
+      setSalesOrderInitialValues({
+        customer: customerName,
+        items: qItems && qItems.length > 0 ? qItems : undefined,
+        quotation_ref: latestQ.name,
+      });
+      setSalesOrderModalOpen(true);
+      return;
+    }
+
+    const dealProducts =
+      dealQuotationItems.length > 0
+        ? dealQuotationItems.map((p) => ({
+            item_code: p.item_code,
+            item_name: p.item_name || p.item_code,
+            qty: p.qty,
+            rate: p.rate,
+            amount: p.amount ?? p.qty * p.rate,
+          }))
+        : undefined;
+
+    setSalesOrderInitialValues({
+      customer:
+        String(deal?.["organization_name"] || deal?.["organization"] || sidebarValues.organization || "") ||
+        undefined,
+      items: dealProducts && dealProducts.length > 0 ? dealProducts : undefined,
+      quotation_ref: undefined,
+    });
     setSalesOrderModalOpen(true);
   }
 
@@ -204,14 +331,6 @@ function DealDetailPage() {
     window.addEventListener("hashchange", handleHash);
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
-
-  // Collapsible sections
-  const [contactsOpen, setContactsOpen] = useState(true);
-  const [lostReasonOpen, setLostReasonOpen] = useState(false);
-  const [orgDetailsOpen, setOrgDetailsOpen] = useState(true);
-
-  // Editable local form fields for sidebar
-  const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
 
   useEffect(() => {
     if (deal) {
@@ -267,13 +386,23 @@ function DealDetailPage() {
 
   async function handleStageChange(newStage: string) {
     if (!deal) return;
+    const isLost =
+      newStage.toLowerCase().includes("lost") ||
+      stages.find((s) => s.name === newStage)?.type?.toLowerCase() === "lost";
+    if (isLost) {
+      setLostModalOpen(true);
+      return;
+    }
     if (newStage.toLowerCase().includes("won")) {
       triggerConfetti();
     }
+    const oldStage = currentStage;
     try {
       await saveMutation.mutateAsync({
         name: dealId,
         values: { status: newStage },
+        fromStage: oldStage,
+        silent: true,
       });
       toast.success(`Stage updated to ${newStage}`);
     } catch {
@@ -283,11 +412,18 @@ function DealDetailPage() {
 
   async function handleMarkWon() {
     if (!deal) return;
+    const wonStage =
+      stages.find(
+        (s) =>
+          s.type?.toLowerCase() === "won" ||
+          s.name.toLowerCase() === "won" ||
+          s.deal_status?.toLowerCase() === "won",
+      )?.name || "Won";
     triggerConfetti();
     try {
       await saveMutation.mutateAsync({
         name: dealId,
-        values: { status: "Closed Won" },
+        values: { status: wonStage },
       });
       toast.success("Deal marked as Won! 🎉");
     } catch {
@@ -378,19 +514,22 @@ function DealDetailPage() {
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           <Button
             size="sm"
-            onClick={handleMarkWon}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0"
+            onClick={() => setQuotationModalOpen(true)}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            title="Convert to Quotation"
           >
-            Won
+            <FileText className="size-3.5" />
+            <span>Quotation</span>
           </Button>
 
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => setLostModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20 shrink-0"
+            onClick={() => handleConvertToSalesOrder()}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs gap-1 shrink-0"
+            title="Convert to Sales Order"
           >
-            Lost
+            <ShoppingCart className="size-3.5" />
+            <span>Sales Order</span>
           </Button>
 
           <DropdownMenu>
@@ -410,6 +549,12 @@ function DealDetailPage() {
                 className="cursor-pointer"
               >
                 <FileText className="size-3.5 mr-2" /> Convert to Quotation
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleConvertToSalesOrder()}
+                className="cursor-pointer"
+              >
+                <ShoppingCart className="size-3.5 mr-2" /> Convert to Sales Order
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => toast.info("Enrich feature: Deal intelligence updated")}
@@ -535,6 +680,12 @@ function DealDetailPage() {
               >
                 Quotation
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleConvertToSalesOrder()}
+                className="cursor-pointer"
+              >
+                Sales Order
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -542,33 +693,33 @@ function DealDetailPage() {
           <Button
             size="sm"
             onClick={() => setQuotationModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 shrink-0"
           >
             <FileText className="size-3.5" />
             <span className="hidden md:inline">Convert to Quotation</span>
             <span className="md:hidden">Quotation</span>
           </Button>
 
-          {/* Won Button */}
+          {/* Convert to Sales Order Button */}
           <Button
             size="sm"
-            onClick={handleMarkWon}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0"
+            onClick={() => handleConvertToSalesOrder()}
+            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs gap-1.5 shrink-0"
           >
-            <span>Won</span>
-          </Button>
-
-          {/* Lost Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setLostModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-rose-500/20 shrink-0"
-          >
-            <span>Lost</span>
+            <ShoppingCart className="size-3.5" />
+            <span className="hidden md:inline">Convert to Sales Order</span>
+            <span className="md:hidden">Sales Order</span>
           </Button>
         </div>
       </div>
+
+      {/* Pipedrive-Style Visual Chevron Pipeline Stage Stepper */}
+      <DealStageStepper
+        stages={stages}
+        currentStage={currentStage}
+        onSelectStage={(stage) => void handleStageChange(stage)}
+        disabled={saveMutation.isPending}
+      />
 
       {/* Main 2-Column Content Layout (Feed Tabs + Right Side-Panel) */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
@@ -653,8 +804,10 @@ function DealDetailPage() {
                   users={users}
                   onOpenModal={() => setEditModalOpen(true)}
                   onReload={() => void refetch()}
+                  onProductsChange={setDraftProducts}
                   onSave={async (values) => {
                     await saveMutation.mutateAsync({ name: dealId, values });
+                    setDraftProducts(null);
                   }}
                 />
               )}
@@ -1008,24 +1161,16 @@ function DealDetailPage() {
               {/* Territory */}
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Territory</span>
-                <Select
-                  value={sidebarValues.territory || ""}
+                <TerritorySelect
+                  value={sidebarValues.territory}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, territory: val }));
                     void handleFieldSave("territory", val);
                   }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Territory... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Add Territory... ▾"
+                  triggerClassName="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Annual Revenue */}
@@ -1122,8 +1267,11 @@ function DealDetailPage() {
         onOpenChange={setQuotationModalOpen}
         quotation={null}
         initialValues={{
-          party_name: sidebarValues.organization,
+          party_name:
+            sidebarValues.organization ||
+            String(deal?.["organization_name"] || deal?.["organization"] || ""),
           crm_deal: dealId,
+          items: dealQuotationItems.length > 0 ? dealQuotationItems : undefined,
         }}
       />
 

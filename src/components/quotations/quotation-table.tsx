@@ -10,6 +10,7 @@ import {
   Building2,
   Loader2,
   Eye,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/table";
 import { useSubmitQuotation, useDeleteQuotation, type Quotation } from "@/hooks/use-quotations";
 import { useCreateSalesOrderFromQuotation } from "@/hooks/use-sales-orders";
+import { QuotationWhatsAppModal } from "@/components/quotations/quotation-whatsapp-modal";
 import { cn } from "@/lib/utils";
 
 interface QuotationTableProps {
@@ -83,6 +85,7 @@ export function QuotationTable({
 
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [whatsAppQuotation, setWhatsAppQuotation] = useState<Quotation | null>(null);
 
   const allIds = rows.map((r) => r.name);
   const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
@@ -303,6 +306,13 @@ export function QuotationTable({
                           <Eye className="size-3.5 mr-1.5 text-muted-foreground" />
                           View Quotation Detail
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setWhatsAppQuotation(row)}
+                          className="font-medium cursor-pointer text-emerald-600 dark:text-emerald-400"
+                        >
+                          <MessageCircle className="size-3.5 mr-1.5" />
+                          Share on WhatsApp
+                        </DropdownMenuItem>
                         {onEdit && (
                           <DropdownMenuItem onClick={() => onEdit(row)}>
                             Edit Quotation
@@ -338,6 +348,13 @@ export function QuotationTable({
           })}
         </TableBody>
       </Table>
+
+      {/* Share Quotation on WhatsApp Modal */}
+      <QuotationWhatsAppModal
+        open={whatsAppQuotation !== null}
+        onOpenChange={(open) => !open && setWhatsAppQuotation(null)}
+        quotation={whatsAppQuotation}
+      />
     </div>
   );
 }

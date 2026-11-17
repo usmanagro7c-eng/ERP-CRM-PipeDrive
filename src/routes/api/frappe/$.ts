@@ -182,6 +182,14 @@ async function forward(request: Request): Promise<Response> {
     if (!result.ok) {
       return jsonResponse({ _proxy_error: result.reason }, 403);
     }
+    // The author of a comment is taken from the signed-in session, never from
+    // the request body (which is stripped by validateMethodBody). The Frappe
+    // site is reached with the integration API key, so it cannot infer the
+    // author itself and requires both fields explicitly.
+    if (rawPath === "api/method/frappe.desk.form.utils.add_comment") {
+      result.body["comment_by"] = session.u;
+      result.body["comment_email"] = session.u;
+    }
     forwardBody = new TextEncoder().encode(JSON.stringify(result.body)).buffer as ArrayBuffer;
     bodyDocType = typeof result.body["doctype"] === "string" ? result.body["doctype"] : undefined;
     if (!bodyDocType && typeof result.body["reference_doctype"] === "string") {

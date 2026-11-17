@@ -86,10 +86,13 @@ export function DealLostModal({
             lost_reason: reason,
             lost_notes: notes.trim() || undefined,
           },
+          silent: true,
         });
       }
+      toast.dismiss();
       toast.success(
         dealNames.length > 1 ? `Marked ${dealNames.length} deals as Lost` : "Deal marked as Lost",
+        { id: "deal-lost-status" },
       );
       onOpenChange(false);
       onSuccess?.();

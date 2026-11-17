@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@ta
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
+import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const CONTACT_QUERY_ROOT = "contacts";
 
@@ -74,9 +75,30 @@ export function useSaveContact() {
       }
       return api.createContact(values);
     },
-    onSuccess: async (_doc, variables) => {
+    onSuccess: async (doc, variables) => {
       await invalidate();
       toast.success(variables.name ? "Contact updated" : "Contact created");
+      const cName = String(
+        variables.values["full_name"] ||
+          variables.values["first_name"] ||
+          doc?.["full_name"] ||
+          variables.name ||
+          "Contact",
+      );
+      void notifyEntityChange({
+        doctype: api.CONTACT_DOCTYPE,
+        docname: doc?.["name"] || variables.name || "Contact",
+        title: cName,
+        action: variables.name ? "Updated" : "Created",
+        eventCategory: "otherRecords",
+        summary: `Contact "${cName}" was ${variables.name ? "updated" : "created"}.`,
+        details: {
+          "Name": cName,
+          "Email": variables.values["email_id"] || doc?.["email_id"],
+          "Mobile": variables.values["mobile_no"] || doc?.["mobile_no"],
+          "Organization": variables.values["company_name"] || doc?.["company_name"],
+        },
+      }).catch((err) => console.warn("Failed to notify contact change:", err));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not save the contact");
@@ -88,9 +110,17 @@ export function useDeleteContact() {
   const invalidate = useInvalidateContacts();
   return useMutation({
     mutationFn: (name: string) => api.deleteContact(name),
-    onSuccess: async () => {
+    onSuccess: async (_data, name) => {
       await invalidate();
       toast.success("Contact deleted");
+      void notifyEntityChange({
+        doctype: api.CONTACT_DOCTYPE,
+        docname: name,
+        title: name,
+        action: "Deleted",
+        eventCategory: "otherRecords",
+        summary: `Contact ${name} was deleted.`,
+      }).catch((err) => console.warn("Failed to notify contact delete:", err));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not delete the contact");

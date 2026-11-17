@@ -43,6 +43,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import { LeadFormModal } from "@/components/leads/lead-form-modal";
+import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   leadDetailOptions,
   leadStatusesOptions,
@@ -165,6 +167,8 @@ function LeadDetailPage() {
   const [convertModalOpen, setConvertModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [commentComposerOpen, setCommentComposerOpen] = useState(false);
+  const [lostModalOpen, setLostModalOpen] = useState(false);
+  const [targetLostStatus, setTargetLostStatus] = useState("Unqualified");
 
   // Hash tab router sync
   const [activeTab, setActiveTab] = useState<TabKey>("activity");
@@ -258,12 +262,19 @@ function LeadDetailPage() {
 
   async function handleStatusChange(newStatus: string) {
     if (!lead) return;
+    if (isLeadLostStatus(newStatus, statuses)) {
+      setTargetLostStatus(newStatus);
+      setLostModalOpen(true);
+      return;
+    }
     try {
       await saveMutation.mutateAsync({
         name: leadId,
         values: { status: newStatus },
+        silent: true,
       });
-      toast.success(`Status updated to ${newStatus}`);
+      toast.dismiss();
+      toast.success(`Status updated to ${newStatus}`, { id: "lead-status-action" });
     } catch {
       // toast shown by hook
     }
@@ -748,6 +759,31 @@ function LeadDetailPage() {
                 </SelectContent>
               </Select>
             </div>
+            {isLeadLostStatus(currentStatus, statuses) && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs space-y-1 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-destructive">Lost Reason</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetLostStatus(currentStatus);
+                      setLostModalOpen(true);
+                    }}
+                    className="text-[10px] text-destructive hover:underline cursor-pointer"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="text-[11px] font-medium text-foreground">
+                  {String(lead["lost_reason"] || "Not specified")}
+                </div>
+                {Boolean(lead["lost_notes"]) && (
+                  <div className="text-[11px] text-muted-foreground italic border-t border-destructive/20 pt-1 mt-1">
+                    "{String(lead["lost_notes"])}"
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Collapsible Details Section with 2-Column Key-Value Rows & Edit Modal Trigger */}
@@ -818,25 +854,16 @@ function LeadDetailPage() {
               {/* Territory */}
               <div className="grid grid-cols-[100px_1fr] items-center gap-1 text-xs py-0.5">
                 <span className="text-muted-foreground truncate">Territory</span>
-                <Select
-                  value={sidebarValues.territory || ""}
+                <TerritorySelect
+                  value={sidebarValues.territory}
                   onValueChange={(val) => {
                     setSidebarValues((p) => ({ ...p, territory: val }));
                     void handleFieldSave("territory", val);
                   }}
-                >
-                  <SelectTrigger className="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded">
-                    <SelectValue placeholder="Add Territory... ▾" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Territories">All Territories</SelectItem>
-                    <SelectItem value="Pakistan">Pakistan</SelectItem>
-                    <SelectItem value="Punjab">Punjab</SelectItem>
-                    <SelectItem value="Sindh">Sindh</SelectItem>
-                    <SelectItem value="KPK">KPK</SelectItem>
-                    <SelectItem value="Balochistan">Balochistan</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder="Add Territory... ▾"
+                  triggerClassName="h-6 w-full justify-between border-0 bg-transparent px-1 py-0 text-xs text-foreground shadow-none hover:bg-muted/40 focus:ring-0 focus:bg-background rounded"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Industry */}
@@ -1043,6 +1070,15 @@ function LeadDetailPage() {
 
       {/* Edit Lead Modal Matching Create/Edit Layout */}
       <LeadFormModal open={editModalOpen} onOpenChange={setEditModalOpen} lead={lead} />
+
+      {/* Lead Lost Modal */}
+      <LeadLostModal
+        open={lostModalOpen}
+        onOpenChange={setLostModalOpen}
+        leadNames={[leadId]}
+        leadTitle={leadName}
+        targetStatus={targetLostStatus}
+      />
     </div>
   );
 }

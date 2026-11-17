@@ -21,6 +21,7 @@ import { DealTable, type SortState } from "@/components/deals/deal-table";
 import { DealKanban } from "@/components/deals/deal-kanban";
 import { DealGrid } from "@/components/deals/deal-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
+import { FilterChipsBar } from "@/components/ui/filter-chips-bar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading";
@@ -49,6 +50,7 @@ import {
 } from "@/hooks/use-deals";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { defaultListColumns, isDisplayField } from "@/lib/frappe-meta";
+import type { QuotationItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -152,14 +154,38 @@ function DealsPage() {
   const [quotationInitialValues, setQuotationInitialValues] = useState<{
     party_name?: string;
     crm_deal?: string;
+    items?: QuotationItem[];
   } | null>(null);
 
   function handleCreateQuotation(deal: Record<string, unknown>) {
     const dealName = String(deal["name"] ?? "");
     const party = String(deal["organization_name"] ?? deal["organization"] ?? "");
+    const rawProducts = Array.isArray(deal["products"])
+      ? (deal["products"] as Array<Record<string, unknown>>)
+      : Array.isArray(deal["items"])
+        ? (deal["items"] as Array<Record<string, unknown>>)
+        : [];
+    const items: QuotationItem[] = rawProducts
+      .map((p) => {
+        const code = String(p["product_code"] || p["item_code"] || p["item"] || "");
+        const name = String(p["product_name"] || p["item_name"] || p["product_code"] || code);
+        const qty = Number(p["qty"]) || 1;
+        const rate = Number(p["rate"] || p["price_list_rate"]) || 0;
+        const amount = Number(p["amount"]) || qty * rate;
+        return {
+          item_code: code,
+          item_name: name,
+          qty,
+          rate,
+          amount,
+        };
+      })
+      .filter((it) => it.item_code.trim().length > 0);
+
     setQuotationInitialValues({
       crm_deal: dealName,
       party_name: party,
+      items: items.length > 0 ? items : undefined,
     });
     setQuotationModalOpen(true);
   }
@@ -245,6 +271,30 @@ function DealsPage() {
     }
     return list;
   }, [statusFilter]);
+
+  const activeChips = useMemo(() => {
+    const list: Array<{ id: string; label: string; value: string; onRemove: () => void }> = [];
+    if (searchText.trim()) {
+      list.push({
+        id: "search",
+        label: "Search",
+        value: searchText.trim(),
+        onRemove: () => {
+          setSearchText("");
+          void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
+        },
+      });
+    }
+    if (statusFilter) {
+      list.push({
+        id: "status",
+        label: "Status",
+        value: statusFilter,
+        onRemove: () => setStatusFilter(""),
+      });
+    }
+    return list;
+  }, [searchText, statusFilter, navigate]);
 
   const page = search.page ?? 1;
   const q = search.q ?? "";
@@ -440,6 +490,16 @@ function DealsPage() {
           )}
         </div>
       </div>
+
+      {/* Active Filter Chips Bar */}
+      <FilterChipsBar
+        chips={activeChips}
+        onClearAll={() => {
+          setSearchText("");
+          setStatusFilter("");
+          void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
+        }}
+      />
 
       {/* Main Content Area */}
       <div

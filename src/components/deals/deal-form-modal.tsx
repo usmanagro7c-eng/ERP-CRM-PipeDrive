@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSaveDeal, dealStatusesOptions } from "@/hooks/use-deals";
+import { TerritorySelect } from "@/components/territory-select";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { orgListOptions } from "@/hooks/use-organizations";
 import { contactListOptions } from "@/hooks/use-contacts";
@@ -63,8 +64,6 @@ const INDUSTRIES = [
   "Manufacturing",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
-
 interface FormDataState {
   // Org
   organization: string;
@@ -361,21 +360,13 @@ export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealF
                 {/* Row 2: Territory | Annual Revenue | Industry */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-normal text-muted-foreground">Territory</Label>
-                  <Select
-                    value={formData.territory || undefined}
+                  <TerritorySelect
+                    value={formData.territory}
                     onValueChange={(val) => handleChange("territory", val)}
-                  >
-                    <SelectTrigger className="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md">
-                      <SelectValue placeholder="Territory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TERRITORIES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Territory"
+                    triggerClassName="h-8.5 text-xs bg-muted/30 border-muted-foreground/20 cursor-pointer rounded-md"
+                    itemClassName="text-xs cursor-pointer"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-normal text-muted-foreground">

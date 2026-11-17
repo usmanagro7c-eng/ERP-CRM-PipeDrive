@@ -105,6 +105,10 @@ describe("classifyRequest", () => {
     expect(classifyRequest("GET", "api/resource/Item", none)?.kind).toBe("org-read");
     expect(classifyRequest("GET", "api/resource/Item/SKU001", none)?.kind).toBe("org-read");
     expect(classifyRequest("POST", "api/resource/Item", none)?.kind).toBe("org-write");
+    // CRM Territory (create-only; used by the app's territory picker)
+    expect(classifyRequest("POST", "api/resource/CRM Territory", none)?.kind).toBe("org-write");
+    expect(classifyRequest("PUT", "api/resource/CRM Territory/All Territories", none)).toBeNull();
+    expect(classifyRequest("DELETE", "api/resource/CRM Territory/All Territories", none)).toBeNull();
   });
 
   it("only allows metadata and count for the allowed CRM doctypes", () => {

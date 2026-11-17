@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -7,11 +7,14 @@ import {
   Link as LinkIcon,
   MoreVertical,
   Plus,
+  Trash2,
   User,
   AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { stripHtml } from "@/lib/frappe-error";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +87,42 @@ export function ActivityKanban({
 
   const [draggedActivityName, setDraggedActivityName] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem("agrocrm.hiddenActivityColumns");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("agrocrm.hiddenActivityColumns", JSON.stringify(hiddenColumns));
+    } catch {
+      // ignore
+    }
+  }, [hiddenColumns]);
+  const [confirmDelete, setConfirmDelete] = useState<null | {
+    title: string;
+    body: ReactNode;
+    confirmLabel: string;
+    action: () => Promise<void>;
+  }>(null);
+  const [confirmPending, setConfirmPending] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    setConfirmPending(true);
+    setConfirmError(null);
+    try {
+      await confirmDelete.action();
+    } catch (err) {
+      setConfirmError(stripHtml(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setConfirmPending(false);
+    }
+  }
 
   // Groupable fields from metadata
   const groupableFields = useMemo(() => {
@@ -167,6 +206,26 @@ export function ActivityKanban({
         </div>
 
         <div className="flex items-center gap-2">
+          {hiddenColumns.length > 0 && (
+            <Select
+              value=""
+              onValueChange={(val) => {
+                if (!val) return;
+                setHiddenColumns((prev) => prev.filter((c) => c !== val));
+              }}
+            >
+              <SelectTrigger aria-label="Restore hidden column" className="h-8 w-40 text-xs">
+                <SelectValue placeholder="Restore column..." />
+              </SelectTrigger>
+              <SelectContent>
+                {hiddenColumns.map((c) => (
+                  <SelectItem key={c} value={c} className="text-xs">
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <span className="text-xs font-medium text-muted-foreground">Group by:</span>
           <Select value={groupBy} onValueChange={onGroupByChange}>
             <SelectTrigger aria-label="Group tasks by" className="h-8 w-44 text-xs">
@@ -188,7 +247,7 @@ export function ActivityKanban({
 
       {/* Kanban Board Horizontal Scroll */}
       <div className="flex flex-1 gap-4 overflow-x-auto pb-4 pt-1 items-start">
-        {columns.map((col) => {
+        {columns.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
           const activities = groupedActivities.get(col.key) ?? [];
           const isOver = dragOverCol === col.key;
           const isUnassigned = col.key === UNASSIGNED_KEY;
@@ -219,7 +278,7 @@ export function ActivityKanban({
                 setDraggedActivityName(null);
               }}
               className={cn(
-                "flex w-[82vw] sm:w-80 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
+                "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/30 transition-all duration-150",
                 isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border",
               )}
             >
@@ -234,16 +293,29 @@ export function ActivityKanban({
                     </Badge>
                   </div>
 
-                  {!isUnassigned && onAddInStatus && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAddInStatus(col.key)}
-                      className="size-6 text-muted-foreground hover:text-foreground"
-                      title={`Add activity in ${col.label}`}
-                    >
-                      <Plus className="size-3.5" />
-                    </Button>
+                  {!isUnassigned && (
+                    <div className="flex items-center gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                        className="size-6 text-muted-foreground hover:text-destructive"
+                        title={`Hide column ${col.label}`}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                      {onAddInStatus && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onAddInStatus(col.key)}
+                          className="size-6 text-muted-foreground hover:text-foreground"
+                          title={`Add activity in ${col.label}`}
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -375,13 +447,21 @@ export function ActivityKanban({
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        `Are you sure you want to delete activity #${name}?`,
-                                      )
-                                    ) {
-                                      void deleteMutation.mutate(name);
-                                    }
+                                    setConfirmError(null);
+                                    setConfirmDelete({
+                                      title: `Delete activity "${name}"?`,
+                                      confirmLabel: "Delete",
+                                      body: (
+                                        <span>
+                                          This activity will be permanently deleted from your CRM.
+                                          This cannot be undone.
+                                        </span>
+                                      ),
+                                      action: async () => {
+                                        await deleteMutation.mutateAsync(name);
+                                        setConfirmDelete(null);
+                                      },
+                                    });
                                   }}
                                 >
                                   Delete Activity
@@ -446,6 +526,20 @@ export function ActivityKanban({
           );
         })}
       </div>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setConfirmDelete(null);
+          setConfirmError(null);
+        }}
+        title={confirmDelete?.title ?? "Confirm"}
+        description={confirmDelete?.body}
+        confirmLabel={confirmDelete?.confirmLabel ?? "Delete"}
+        pending={confirmPending}
+        error={confirmError}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </div>
   );
 }

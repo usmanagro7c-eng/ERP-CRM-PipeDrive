@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { TerritorySelect } from "@/components/territory-select";
 import {
   Select,
   SelectContent,
@@ -17,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { itemsListOptions } from "@/hooks/use-quotations";
 import { cn } from "@/lib/utils";
 
-interface ProductRow {
+export interface ProductRow {
   id: string;
   item: string;
   rate: number;
@@ -30,6 +31,7 @@ interface DealDataTabProps {
   onOpenModal?: () => void;
   onSave?: (updated: Record<string, unknown>) => Promise<void>;
   onReload?: () => void;
+  onProductsChange?: (products: ProductRow[]) => void;
 }
 
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
@@ -66,7 +68,6 @@ const INDUSTRIES = [
   "Transportation",
   "Other",
 ];
-const TERRITORIES = ["All Territories", "Pakistan", "Punjab", "Sindh", "KPK", "Balochistan"];
 
 interface FormDetails {
   organization: string;
@@ -82,7 +83,14 @@ interface FormDetails {
   deal_owner: string;
 }
 
-export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }: DealDataTabProps) {
+export function DealDataTab({
+  deal,
+  users = [],
+  onOpenModal,
+  onSave,
+  onReload,
+  onProductsChange,
+}: DealDataTabProps) {
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [productsOpen, setProductsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -150,6 +158,10 @@ export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }:
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  useEffect(() => {
+    onProductsChange?.(products);
+  }, [products, onProductsChange]);
 
   // Check if dirty
   const isDirty = useMemo(() => {
@@ -367,21 +379,13 @@ export function DealDataTab({ deal, users = [], onOpenModal, onSave, onReload }:
               {/* Territory */}
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground block">Territory</label>
-                <Select
-                  value={details.territory || undefined}
+                <TerritorySelect
+                  value={details.territory}
                   onValueChange={(val) => handleDetailChange("territory", val)}
-                >
-                  <SelectTrigger className="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md">
-                    <SelectValue placeholder="Territory" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TERRITORIES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Territory"
+                  triggerClassName="h-7 text-xs bg-secondary/30 hover:bg-secondary/50 focus:bg-background border-border/60 rounded-md"
+                  itemClassName="text-xs cursor-pointer"
+                />
               </div>
 
               {/* Row 2 */}

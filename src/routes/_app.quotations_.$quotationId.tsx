@@ -15,6 +15,7 @@ import {
   FileText,
   List,
   Loader2,
+  MessageCircle,
   MoreVertical,
   Plus,
   RefreshCw,
@@ -47,6 +48,7 @@ import {
   type Quotation,
 } from "@/hooks/use-quotations";
 import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
+import { QuotationWhatsAppModal } from "@/components/quotations/quotation-whatsapp-modal";
 import { SalesOrderFormModal } from "@/components/sales-orders/sales-order-form-modal";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +95,7 @@ function QuotationDetailPage() {
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
+  const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
 
   const submitMutation = useSubmitQuotation();
   const deleteMutation = useDeleteQuotation();
@@ -195,6 +198,16 @@ function QuotationDetailPage() {
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           <Button
             size="sm"
+            onClick={() => setWhatsAppModalOpen(true)}
+            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-xs gap-1 shrink-0"
+            title="Share on WhatsApp"
+          >
+            <MessageCircle className="size-3.5" />
+            <span>WhatsApp</span>
+          </Button>
+
+          <Button
+            size="sm"
             onClick={() => setSalesOrderModalOpen(true)}
             className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
           >
@@ -213,7 +226,13 @@ function QuotationDetailPage() {
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="text-xs w-44">
+            <DropdownMenuContent align="end" className="text-xs w-48">
+              <DropdownMenuItem
+                onClick={() => setWhatsAppModalOpen(true)}
+                className="cursor-pointer font-medium text-emerald-600 dark:text-emerald-400 gap-2"
+              >
+                <MessageCircle className="size-3.5" /> Share on WhatsApp
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void refetch()} className="cursor-pointer">
                 <RefreshCw className="size-3.5 mr-2" /> Refresh
               </DropdownMenuItem>
@@ -264,6 +283,18 @@ function QuotationDetailPage() {
             </Button>
           )}
 
+          {/* WhatsApp Share Button */}
+          <Button
+            size="sm"
+            onClick={() => setWhatsAppModalOpen(true)}
+            title="Share on WhatsApp"
+            aria-label="Share on WhatsApp"
+            className="h-7 text-xs font-semibold px-2.5 sm:px-3 rounded-md cursor-pointer bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-xs gap-1.5 transition-colors shrink-0"
+          >
+            <MessageCircle className="size-3.5" />
+            <span>WhatsApp</span>
+          </Button>
+
           {/* Prominent CONVERT TO SALES ORDER Button */}
           <Button
             size="sm"
@@ -298,7 +329,14 @@ function QuotationDetailPage() {
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 text-xs">
+            <DropdownMenuContent align="end" className="w-48 text-xs">
+              <DropdownMenuItem
+                onClick={() => setWhatsAppModalOpen(true)}
+                className="cursor-pointer gap-2 font-medium text-emerald-600 dark:text-emerald-400"
+              >
+                <MessageCircle className="size-3.5" />
+                <span>Share on WhatsApp</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setEditModalOpen(true)}
                 className="cursor-pointer gap-2"
@@ -626,6 +664,12 @@ function QuotationDetailPage() {
           items: quotation.items,
           quotation_ref: quotation.name,
         }}
+      />
+      {/* Share Quotation on WhatsApp Modal */}
+      <QuotationWhatsAppModal
+        open={whatsAppModalOpen}
+        onOpenChange={setWhatsAppModalOpen}
+        quotation={quotation}
       />
     </div>
   );

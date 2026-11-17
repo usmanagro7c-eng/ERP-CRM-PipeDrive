@@ -266,8 +266,13 @@ function LeadsPage() {
 
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
+    // Read the value straight from the input to avoid a stale `searchText`
+    // state when Enter is pressed before the controlled input has committed.
+    const form = event.currentTarget as HTMLFormElement | null;
+    const input = form?.querySelector("input") as HTMLInputElement | null;
+    const value = (input?.value ?? searchText).trim();
     void navigate({
-      search: (prev) => ({ ...prev, q: searchText.trim() || undefined, page: undefined }),
+      search: (prev) => ({ ...prev, q: value || undefined, page: undefined }),
     });
   }
 

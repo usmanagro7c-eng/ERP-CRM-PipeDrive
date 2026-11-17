@@ -1,7 +1,9 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { friendlyFrappeError } from "@/lib/frappe-error";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
+import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const LEAD_QUERY_ROOT = "leads";
 
@@ -18,6 +20,14 @@ export function leadStatusesOptions() {
     queryKey: [LEAD_QUERY_ROOT, "statuses"],
     queryFn: () => api.getLeadStatuses(),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function leadLostReasonsOptions() {
+  return queryOptions({
+    queryKey: [LEAD_QUERY_ROOT, "lost-reasons"],
+    queryFn: () => api.getLinkOptions("CRM Lost Reason"),
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -72,6 +82,7 @@ function useInvalidateLeads() {
 export interface SaveLeadInput {
   name?: string | undefined; // present => update, absent => create
   values: Record<string, unknown>;
+  silent?: boolean;
 }
 
 export function useSaveLead() {
@@ -83,9 +94,27 @@ export function useSaveLead() {
       }
       return api.createLead(values);
     },
-    onSuccess: async (_doc, variables) => {
+    onSuccess: async (doc, variables) => {
       await invalidate();
-      toast.success(variables.name ? "Lead updated" : "Lead created");
+      if (!variables.silent) {
+        toast.success(variables.name ? "Lead updated" : "Lead created");
+      }
+      const leadName = (doc?.lead_name as string) || (variables.values.lead_name as string) || doc?.name || variables.name || "Lead";
+      void notifyEntityChange({
+        doctype: "CRM Lead",
+        docname: doc?.name || variables.name || "Lead",
+        title: leadName,
+        action: variables.name ? "Updated" : "Created",
+        eventCategory: "leads",
+        summary: `Lead "${leadName}" was ${variables.name ? "updated" : "created"}. Status: ${doc?.status || variables.values.status || "Open"}`,
+        linkPath: `/leads/${doc?.name || variables.name}`,
+        details: {
+          "Name": leadName,
+          "Status": (doc?.status as string) || (variables.values.status as string),
+          "Organization": (doc?.organization as string) || (variables.values.organization as string),
+          "Email": (doc?.email_id as string) || (variables.values.email_id as string),
+        },
+      }).catch((err) => console.warn("Failed to notify lead change:", err));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not save the lead");
@@ -97,12 +126,20 @@ export function useDeleteLead() {
   const invalidate = useInvalidateLeads();
   return useMutation({
     mutationFn: (name: string) => api.deleteLead(name),
-    onSuccess: async () => {
+    onSuccess: async (_data, name) => {
       await invalidate();
       toast.success("Lead deleted");
+      void notifyEntityChange({
+        doctype: "CRM Lead",
+        docname: name,
+        title: name,
+        action: "Deleted",
+        eventCategory: "leads",
+        summary: `Lead ${name} has been deleted.`,
+      }).catch((err) => console.warn("Failed to notify lead delete:", err));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Could not delete the lead");
+      toast.error(friendlyFrappeError(error, "Could not delete the lead"));
     },
   });
 }

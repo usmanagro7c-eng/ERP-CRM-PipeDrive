@@ -9,6 +9,7 @@ import {
   Calendar,
   Loader2,
   FileText,
+  Layers,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -249,17 +250,23 @@ export function DealTable({
 
   if (!loading && rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-          <CircleSlash className="size-6 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 my-4 mx-2">
+        <div className="relative flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-xs">
+          <Layers className="size-7" />
+          <span className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+            +
+          </span>
         </div>
-        <div className="space-y-1">
-          <h3 className="text-base font-semibold">No deals found</h3>
-          <p className="text-xs text-muted-foreground max-w-sm">
-            No deals match your search criteria or none have been created yet.
+        <div className="space-y-1.5 max-w-sm">
+          <h3 className="text-base font-semibold text-foreground tracking-tight">
+            No deals found in this pipeline
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            No active deals match your current search or status filter. Try clearing your filters or
+            create a new deal to kick off your pipeline.
           </p>
         </div>
-        {emptyAction}
+        {emptyAction && <div className="mt-2">{emptyAction}</div>}
       </div>
     );
   }

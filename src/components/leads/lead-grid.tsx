@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Briefcase, Building2, Mail, MoreVertical, Phone, User, CircleSlash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 import { MoveToSubmenu } from "@/components/organizations/move-to-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeadStatusBadge, LeadTemperatureBadge } from "@/components/leads/lead-stage-badge";
+import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
 import { useSaveLead, useDeleteLead, type FrappeDocTypeMeta } from "@/hooks/use-leads";
 
 interface LeadGridProps {
@@ -46,6 +47,18 @@ export function LeadGrid({
 }: LeadGridProps) {
   const saveMutation = useSaveLead();
   const deleteMutation = useDeleteLead();
+
+  const [lostModalState, setLostModalState] = useState<{
+    open: boolean;
+    leadNames: string[];
+    leadTitle?: string;
+    targetStatus: string;
+  }>({
+    open: false,
+    leadNames: [],
+    leadTitle: undefined,
+    targetStatus: "Unqualified",
+  });
 
   const statusOptions = useMemo(() => {
     return statuses.map((s) => ({
@@ -151,6 +164,15 @@ export function LeadGrid({
                         currentValue={status}
                         options={statusOptions}
                         onSelect={(newStatus) => {
+                          if (isLeadLostStatus(newStatus, statuses)) {
+                            setLostModalState({
+                              open: true,
+                              leadNames: [name],
+                              leadTitle: fullName || name,
+                              targetStatus: newStatus,
+                            });
+                            return;
+                          }
                           void saveMutation.mutateAsync({
                             name,
                             values: { status: newStatus },
@@ -219,6 +241,14 @@ export function LeadGrid({
           </div>
         );
       })}
+
+      <LeadLostModal
+        open={lostModalState.open}
+        onOpenChange={(open) => setLostModalState((p) => ({ ...p, open }))}
+        leadNames={lostModalState.leadNames}
+        leadTitle={lostModalState.leadTitle}
+        targetStatus={lostModalState.targetStatus}
+      />
     </div>
   );
 }

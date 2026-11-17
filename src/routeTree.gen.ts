@@ -21,6 +21,7 @@ import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
 import { Route as AppQuotationsRouteImport } from './routes/_app.quotations'
 import { Route as AppSalesOrdersRouteImport } from './routes/_app.sales-orders'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as FilesSplatRouteImport } from './routes/files.$'
 import { Route as AppContactsContactIdRouteImport } from './routes/_app.contacts_.$contactId'
 import { Route as AppDealsDealIdRouteImport } from './routes/_app.deals_.$dealId'
@@ -91,6 +92,11 @@ const AppQuotationsRoute = AppQuotationsRouteImport.update({
 const AppSalesOrdersRoute = AppSalesOrdersRouteImport.update({
   id: '/sales-orders',
   path: '/sales-orders',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const FilesSplatRoute = FilesSplatRouteImport.update({
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/settings': typeof AppSettingsRoute
   '/files/$': typeof FilesSplatRoute
   '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/quotations': typeof AppQuotationsRoute
   '/sales-orders': typeof AppSalesOrdersRoute
+  '/settings': typeof AppSettingsRoute
   '/files/$': typeof FilesSplatRoute
   '/contacts/$contactId': typeof AppContactsContactIdRoute
   '/deals/$dealId': typeof AppDealsDealIdRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/quotations': typeof AppQuotationsRoute
   '/_app/sales-orders': typeof AppSalesOrdersRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/files/$': typeof FilesSplatRoute
   '/_app/contacts_/$contactId': typeof AppContactsContactIdRoute
   '/_app/deals_/$dealId': typeof AppDealsDealIdRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/settings'
     | '/files/$'
     | '/contacts/$contactId'
     | '/deals/$dealId'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/quotations'
     | '/sales-orders'
+    | '/settings'
     | '/files/$'
     | '/contacts/$contactId'
     | '/deals/$dealId'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/quotations'
     | '/_app/sales-orders'
+    | '/_app/settings'
     | '/files/$'
     | '/_app/contacts_/$contactId'
     | '/_app/deals_/$dealId'
@@ -409,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSalesOrdersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/files/$': {
       id: '/files/$'
       path: '/files/$'
@@ -506,6 +525,7 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppQuotationsRoute: typeof AppQuotationsRoute
   AppSalesOrdersRoute: typeof AppSalesOrdersRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppContactsContactIdRoute: typeof AppContactsContactIdRoute
   AppDealsDealIdRoute: typeof AppDealsDealIdRoute
   AppLeadsLeadIdRoute: typeof AppLeadsLeadIdRoute
@@ -524,6 +544,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppQuotationsRoute: AppQuotationsRoute,
   AppSalesOrdersRoute: AppSalesOrdersRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppContactsContactIdRoute: AppContactsContactIdRoute,
   AppDealsDealIdRoute: AppDealsDealIdRoute,
   AppLeadsLeadIdRoute: AppLeadsLeadIdRoute,

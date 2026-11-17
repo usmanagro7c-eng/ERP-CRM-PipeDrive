@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Fails when the repository contains a hard-coded credential.
  *

@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { friendlyFrappeError } from "@/lib/frappe-error";
 import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 
 export const ACTIVITY_QUERY_ROOT = "activities";
@@ -88,7 +89,7 @@ export function useDeleteActivity() {
       toast.success("Activity deleted");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Could not delete the activity");
+      toast.error(friendlyFrappeError(error, "Could not delete the activity"));
     },
   });
 }

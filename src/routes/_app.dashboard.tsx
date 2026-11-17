@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   RotateCw,
-  Edit,
   Calendar,
   User as UserIcon,
   ChevronDown,
@@ -14,10 +13,10 @@ import {
   Users,
   StickyNote,
   PhoneCall,
-  Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Page, PageHeader, PageContainer } from "@/components/page-header";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,7 +78,7 @@ function DashboardPage() {
 
   // Find user label
   const selectedUserLabel = useMemo(() => {
-    if (!selectedUser) return "Sales User";
+    if (!selectedUser) return "All Users";
     const found = users.find((u) => u.name === selectedUser || u.email === selectedUser);
     return found ? found.full_name || found.first_name || found.name : selectedUser;
   }, [selectedUser, users]);
@@ -111,111 +110,100 @@ function DashboardPage() {
   const dealsBySalespersonWidget = chartMap.get("deals_by_salesperson");
 
   return (
-    <div className="flex flex-1 flex-col overflow-y-auto bg-background text-foreground">
-      {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px] overflow-x-auto">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm min-w-0 shrink-0">
-          <span className="font-semibold text-foreground">Dashboard</span>
-          <span className="text-muted-foreground/60">/</span>
-          <span className="text-muted-foreground font-medium">Overview</span>
-          <span className="inline-flex items-center gap-1.5 ml-1 sm:ml-2 rounded-full bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+    <Page>
+      <PageHeader
+        title="Dashboard"
+        breadcrumbs={[
+          { label: "Dashboard" },
+          { label: "Overview" },
+        ]}
+        badge={
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success border border-success/20">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
             </span>
-            <span className="hidden sm:inline">Live Sync</span>
+            <span>Live</span>
           </span>
-        </div>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="h-8 px-3 gap-1.5 text-xs font-medium"
+            >
+              <RotateCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Refresh Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label="Refresh dashboard data"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-            className="h-7 px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer"
-          >
-            <RotateCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-
-          {/* Date Range Preset Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer"
-              >
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span className="truncate max-w-[70px] sm:max-w-none">{preset}</span>
-                <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              {PRESETS.map((p) => (
-                <DropdownMenuItem
-                  key={p}
-                  onClick={() => setPreset(p)}
-                  className="text-xs cursor-pointer"
-                >
-                  {p}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Sales User Filter Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 sm:px-2.5 gap-1 text-xs font-medium cursor-pointer max-w-[85px] sm:max-w-none"
-              >
-                <UserIcon className="h-3 w-3 text-muted-foreground shrink-0" />
-                <span className="truncate">{selectedUserLabel}</span>
-                <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 max-h-64 overflow-y-auto">
-              <DropdownMenuItem
-                onClick={() => setSelectedUser(null)}
-                className="text-xs font-medium cursor-pointer"
-              >
-                All Sales Users
-              </DropdownMenuItem>
-              {users
-                .filter((u) => u.name && u.full_name)
-                .map((u) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="max-w-[100px] truncate">{preset}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {PRESETS.map((p) => (
                   <DropdownMenuItem
-                    key={u.name}
-                    onClick={() => setSelectedUser(u.name)}
+                    key={p}
+                    onClick={() => setPreset(p)}
                     className="text-xs cursor-pointer"
                   >
-                    {u.full_name || u.first_name || u.name}
+                    {p}
                   </DropdownMenuItem>
                 ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-      {/* Main Content Area */}
-      <div className="flex-1 space-y-4 p-4 sm:space-y-6 sm:p-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
+                  <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="max-w-[100px] truncate">{selectedUserLabel}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 max-h-64 overflow-y-auto">
+                <DropdownMenuItem
+                  onClick={() => setSelectedUser(null)}
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  All Users
+                </DropdownMenuItem>
+                {users
+                  .filter((u) => u.name && u.full_name)
+                  .map((u) => (
+                    <DropdownMenuItem
+                      key={u.name}
+                      onClick={() => setSelectedUser(u.name)}
+                      className="text-xs cursor-pointer"
+                    >
+                      {u.full_name || u.first_name || u.name}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
+
+      <PageContainer>
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-2 animate-pulse sm:gap-4 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-3 animate-pulse sm:grid-cols-4 lg:grid-cols-7">
             {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-lg bg-card/40 border border-border" />
+              <div key={i} className="h-28 rounded-xl bg-card border border-border" />
             ))}
           </div>
         ) : (
           <>
-            {/* Top 7 KPI Cards */}
+            {/* KPI Cards */}
             {numberWidgets.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                 {numberWidgets.map((w) => (
                   <DashboardKpiCard
                     key={w.name}
@@ -226,39 +214,29 @@ function DashboardPage() {
             )}
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-              {/* Row 1: Sales Trend & Forecasted Revenue */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {salesTrendWidget?.data && (
-                <div className="h-full">
-                  <DashboardTrendChart
-                    data={salesTrendWidget.data as unknown as DashboardAxisChartData}
-                  />
-                </div>
+                <DashboardTrendChart
+                  data={salesTrendWidget.data as unknown as DashboardAxisChartData}
+                />
               )}
 
               {forecastedRevenueWidget?.data && (
-                <div className="h-full">
-                  <DashboardTrendChart
-                    data={forecastedRevenueWidget.data as unknown as DashboardAxisChartData}
-                  />
-                </div>
+                <DashboardTrendChart
+                  data={forecastedRevenueWidget.data as unknown as DashboardAxisChartData}
+                />
               )}
 
-              {/* Row 2: Funnel Conversion & Deals by Stage */}
               {funnelWidget?.data && (
-                <div className="h-full">
-                  <DashboardFunnelChart
-                    data={funnelWidget.data as unknown as DashboardAxisChartData}
-                  />
-                </div>
+                <DashboardFunnelChart
+                  data={funnelWidget.data as unknown as DashboardAxisChartData}
+                />
               )}
 
               {dealsByStageWidget?.data && (
-                <div className="h-full">
-                  <DashboardDonutChart
-                    data={dealsByStageWidget.data as unknown as DashboardDonutChartData}
-                  />
-                </div>
+                <DashboardDonutChart
+                  data={dealsByStageWidget.data as unknown as DashboardDonutChartData}
+                />
               )}
 
               {/* Row 3: Leads by Source & Deals by Source */}
@@ -393,7 +371,7 @@ function DashboardPage() {
             </Link>
           </div>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </Page>
   );
 }

@@ -13,8 +13,10 @@ import {
   RefreshCw,
   Search,
   TriangleAlert,
+  Filter,
 } from "lucide-react";
 
+import { Page, PageHeader } from "@/components/page-header";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
 import { DealTable, type SortState } from "@/components/deals/deal-table";
@@ -185,7 +187,7 @@ function DealsPage() {
     setQuotationInitialValues({
       crm_deal: dealName,
       party_name: party,
-      items: items.length > 0 ? items : undefined,
+      ...(items.length > 0 ? { items } : {}),
     });
     setQuotationModalOpen(true);
   }
@@ -369,143 +371,136 @@ function DealsPage() {
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <span className="font-medium text-foreground">Deals</span>
-          <span className="text-muted-foreground/60">/</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-xs sm:text-sm">
-                <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate max-w-[100px] sm:max-w-none">{currentViewObj.label}</span>
-                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 text-xs">
-              <DropdownMenuLabel>Switch View</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {viewOptions.map((opt) => {
-                const Icon = opt.icon;
-                const isSelected = activeView === opt.mode;
-                return (
-                  <DropdownMenuItem
-                    key={opt.mode}
-                    onClick={() => handleViewChange(opt.mode)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-muted-foreground" />
-                      <span>{opt.label}</span>
-                    </div>
-                    {isSelected && <Check className="size-3.5 text-primary" />}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <Page>
+      <PageHeader
+        title="Deals"
+        breadcrumbs={[
+          { label: "Sales" },
+          { label: "Deals" },
+        ]}
+        actions={
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
+                  <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="max-w-[100px] truncate">{currentViewObj.label}</span>
+                  <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 text-xs">
+                <DropdownMenuLabel>View</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {viewOptions.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = activeView === opt.mode;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.mode}
+                      onClick={() => handleViewChange(opt.mode)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="size-4 text-muted-foreground" />
+                        <span>{opt.label}</span>
+                      </div>
+                      {isSelected && <Check className="size-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreateModal}
-            disabled={!meta}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1 sm:gap-1.5"
-          >
-            <Plus className="size-3.5" />
-            <span>Create</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Secondary Filter Toolbar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0 flex-1">
-          {/* Search Input */}
-          <form
-            onSubmit={submitSearch}
-            className="relative flex-1 min-w-[110px] max-w-[180px] sm:max-w-[210px]"
-          >
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search deals..."
-              className="h-7 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-md w-full"
-            />
-          </form>
-
-          {/* Status Quick Filter */}
-          <Select
-            value={statusFilter}
-            onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
-          >
-            <SelectTrigger
-              aria-label="Filter deals by status"
-              className="h-7 text-xs px-2 bg-muted/40 border-border/60 rounded-md cursor-pointer gap-1 w-auto min-w-[85px] sm:min-w-[110px] shrink-0"
+            <Button
+              size="sm"
+              onClick={handleOpenCreateModal}
+              disabled={!meta}
+              className="h-8 px-3 gap-1.5 text-xs font-semibold"
             >
-              <span className="hidden sm:inline text-muted-foreground">Status:</span>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">
-                All Statuses
-              </SelectItem>
-              {stages.map((s) => (
-                <SelectItem key={s.name} value={s.name} className="text-xs">
-                  {s.name}
+              <Plus className="size-3.5" />
+              <span>New Deal</span>
+            </Button>
+          </>
+        }
+        filters={
+          <div className="flex items-center gap-2 flex-1">
+            <form onSubmit={submitSearch} className="relative min-w-[180px] max-w-[240px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search deals..."
+                className="h-8 pl-9 pr-3 text-xs bg-muted/40 border-input"
+              />
+            </form>
+
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
+            >
+              <SelectTrigger className="h-8 text-xs px-3 bg-muted/40 border-input w-auto min-w-[140px]">
+                <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">
+                  All Statuses
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+                {stages.map((s) => (
+                  <SelectItem key={s.name} value={s.name} className="text-xs">
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void metaQuery.refetch();
-              void listQuery.refetch();
-              void countQuery.refetch();
-            }}
-            className="h-7 w-7 p-0 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
+            <div className="flex items-center gap-1 ml-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void metaQuery.refetch();
+                  void listQuery.refetch();
+                  void countQuery.refetch();
+                }}
+                className="h-8 w-8 p-0"
+                title="Refresh"
+              >
+                <RefreshCw className="size-3.5" />
+              </Button>
 
-          {/* Column chooser only in table view */}
-          {activeView === "table" && meta && (
-            <ColumnChooser
-              meta={meta}
-              selected={columns}
-              onChange={(next) => {
-                setSavedColumns(next);
-                saveColumns(next);
-              }}
-            />
-          )}
-        </div>
-      </div>
+              {activeView === "table" && meta && (
+                <ColumnChooser
+                  meta={meta}
+                  selected={columns}
+                  onChange={(next) => {
+                    setSavedColumns(next);
+                    saveColumns(next);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        }
+      />
 
       {/* Active Filter Chips Bar */}
-      <FilterChipsBar
-        chips={activeChips}
-        onClearAll={() => {
-          setSearchText("");
-          setStatusFilter("");
-          void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
-        }}
-      />
+      {activeChips.length > 0 && (
+        <FilterChipsBar
+          chips={activeChips}
+          onClearAll={() => {
+            setSearchText("");
+            setStatusFilter("");
+            void navigate({ search: (prev) => ({ ...prev, q: undefined, page: undefined }) });
+          }}
+        />
+      )}
 
       {/* Main Content Area */}
       <div
         className={cn(
-          "flex-1 min-h-0 flex flex-col",
-          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-auto p-4 sm:p-6",
+          "flex-1 min-h-0",
+          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6" : "overflow-auto p-4 sm:p-6",
         )}
       >
         {error ? (
@@ -567,7 +562,7 @@ function DealsPage() {
             />
           ) : (
             <div className="space-y-4">
-              <div className="rounded-lg border bg-card">
+              <div className="rounded-xl border bg-card shadow-sm">
                 <DealTable
                   meta={meta}
                   rows={listQuery.data ?? []}
@@ -598,18 +593,18 @@ function DealsPage() {
                 />
               </div>
 
-              {/* Pagination for Table view matching Frappe CRM */}
+              {/* Pagination for Table view */}
               {total > 0 && (
-                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground px-2 pt-2">
-                  <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground px-2">
+                  <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border">
                     {[20, 50, 100].map((size) => (
                       <button
                         key={size}
                         type="button"
                         className={cn(
-                          "px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer",
+                          "px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer",
                           pageSize === size
-                            ? "bg-background text-foreground shadow-xs font-semibold"
+                            ? "bg-background text-foreground shadow-sm font-semibold"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                         onClick={() => setPageSize(size)}
@@ -620,13 +615,14 @@ function DealsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span>{total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}</span>
+                    <span className="font-medium">
+                      {total === 0 ? "0 of 0" : `${firstRow} - ${lastRow} of ${total}`}
+                    </span>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Previous page"
-                        className="size-6 text-muted-foreground hover:text-foreground"
+                        className="size-7 text-muted-foreground hover:text-foreground"
                         disabled={page <= 1}
                         onClick={() =>
                           void navigate({
@@ -634,13 +630,12 @@ function DealsPage() {
                           })
                         }
                       >
-                        <ChevronLeft className="size-3.5" />
+                        <ChevronLeft className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Next page"
-                        className="size-6 text-muted-foreground hover:text-foreground"
+                        className="size-7 text-muted-foreground hover:text-foreground"
                         disabled={page >= pageCount}
                         onClick={() =>
                           void navigate({
@@ -648,7 +643,7 @@ function DealsPage() {
                           })
                         }
                       >
-                        <ChevronRight className="size-3.5" />
+                        <ChevronRight className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -659,7 +654,7 @@ function DealsPage() {
         ) : (
           <LoadingState
             title="Loading Deals..."
-            description="Fetching sales deals and stage pipelines from Frappe CRM..."
+            description="Fetching sales deals and pipeline data..."
           />
         )}
       </div>
@@ -681,6 +676,6 @@ function DealsPage() {
         onOpenChange={setQuotationModalOpen}
         initialValues={quotationInitialValues}
       />
-    </div>
+    </Page>
   );
 }

@@ -15,6 +15,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
+import { Page, PageHeader } from "@/components/page-header";
 import { OrgFormModal } from "@/components/organizations/org-form-modal";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { OrgTable, type SortState } from "@/components/organizations/org-table";
@@ -282,103 +283,98 @@ function OrganizationsPage() {
   const CurrentIcon = currentViewObj.icon;
 
   return (
-    <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <span className="font-medium text-foreground truncate">Organizations</span>
-          <span className="text-muted-foreground/60">/</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 sm:gap-1.5 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-xs sm:text-sm truncate">
-                <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate">{currentViewObj.label}</span>
-                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 text-xs">
-              <DropdownMenuLabel>Switch View</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {viewOptions.map((opt) => {
-                const Icon = opt.icon;
-                const isSelected = activeView === opt.mode;
-                return (
-                  <DropdownMenuItem
-                    key={opt.mode}
-                    onClick={() => handleViewChange(opt.mode)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-muted-foreground" />
-                      <span>{opt.label}</span>
-                    </div>
-                    {isSelected && <Check className="size-3.5 text-primary" />}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <Page>
+      <PageHeader
+        title="Organizations"
+        breadcrumbs={[
+          { label: "Contacts" },
+          { label: "Organizations" },
+        ]}
+        actions={
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
+                  <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="max-w-[100px] truncate">{currentViewObj.label}</span>
+                  <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 text-xs">
+                <DropdownMenuLabel>View</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {viewOptions.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = activeView === opt.mode;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.mode}
+                      onClick={() => handleViewChange(opt.mode)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="size-4 text-muted-foreground" />
+                        <span>{opt.label}</span>
+                      </div>
+                      {isSelected && <Check className="size-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreateModal}
-            disabled={!meta}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1 sm:gap-1.5"
-          >
-            <Plus className="size-3.5" />
-            <span>Create</span>
-          </Button>
-        </div>
-      </div>
+            <Button
+              size="sm"
+              onClick={handleOpenCreateModal}
+              disabled={!meta}
+              className="h-8 px-3 gap-1.5 text-xs font-semibold"
+            >
+              <Plus className="size-3.5" />
+              <span>New Organization</span>
+            </Button>
+          </>
+        }
+        filters={
+          <div className="flex items-center gap-2 flex-1">
+            <form onSubmit={submitSearch} className="relative min-w-[180px] max-w-[240px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search organizations..."
+                className="h-8 pl-9 pr-3 text-xs bg-muted/40 border-input"
+              />
+            </form>
 
-      {/* Secondary Filter Toolbar Matching Frappe CRM */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0">
-        <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
-          {/* Search Input */}
-          <form
-            onSubmit={submitSearch}
-            className="relative flex-1 min-w-[120px] max-w-[210px] sm:w-52"
-          >
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search organizations..."
-              className="h-7 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-md"
-            />
-          </form>
-        </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void metaQuery.refetch();
+                  void listQuery.refetch();
+                  void countQuery.refetch();
+                }}
+                className="h-8 w-8 p-0"
+                title="Refresh"
+              >
+                <RefreshCw className="size-3.5" />
+              </Button>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void metaQuery.refetch();
-              void listQuery.refetch();
-              void countQuery.refetch();
-            }}
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-
-          {/* Column chooser only in table view */}
-          {activeView === "table" && meta && (
-            <ColumnChooser
-              meta={meta}
-              selected={columns}
-              onChange={(next) => {
-                setSavedColumns(next);
-                saveColumns(next);
-              }}
-            />
-          )}
-        </div>
-      </div>
+              {activeView === "table" && meta && (
+                <ColumnChooser
+                  meta={meta}
+                  selected={columns}
+                  onChange={(next) => {
+                    setSavedColumns(next);
+                    saveColumns(next);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        }
+      />
 
       {/* Main Content Area */}
       <div
@@ -558,6 +554,6 @@ function OrganizationsPage() {
           organization={editingOrg ?? modalInitialDoc}
         />
       )}
-    </div>
+    </Page>
   );
 }

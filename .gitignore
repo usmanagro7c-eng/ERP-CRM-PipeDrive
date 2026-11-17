@@ -45,4 +45,5 @@ playwright-report/
 # Lighthouse / UI audit output
 ui-audit/lighthouse/
 .ui-audit-cache/
+.claude-flow
 

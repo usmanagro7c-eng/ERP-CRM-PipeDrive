@@ -1,8 +1,5 @@
 import * as api from "@/lib/api";
-import {
-  getNotificationSettings,
-  type NotificationEvents,
-} from "./notification-settings";
+import { getNotificationSettings, type NotificationEvents } from "./notification-settings";
 
 const APP_BASE_URL = "https://pipedrive-crm.usman-agro7c.workers.dev";
 
@@ -144,9 +141,10 @@ async function getCrmCarrierDoc(): Promise<{ doctype: string; docname: string } 
   }
   try {
     const deals = await api.listDeals({ limit: 1, search: "", filters: [], start: 0 });
-    if (deals.length > 0 && deals[0].name) {
-      cachedCrmDocName = deals[0].name;
-      return { doctype: api.DEAL_DOCTYPE, docname: deals[0].name };
+    const firstDeal = deals[0];
+    if (typeof firstDeal?.["name"] === "string" && firstDeal["name"]) {
+      cachedCrmDocName = firstDeal["name"];
+      return { doctype: api.DEAL_DOCTYPE, docname: firstDeal["name"] };
     }
   } catch {
     // fallback
@@ -156,118 +154,35 @@ async function getCrmCarrierDoc(): Promise<{ doctype: string; docname: string } 
 
 /**
  * Dispatch automated email alert for a Deal stage change.
+ *
+ * NOTE: Browser-side email dispatch is now a NO-OP.
+ * Email notifications are handled server-side by Frappe doc_events
+ * (custom_crm_sync.api.notify.on_change) based on CRM Sales Hierarchy.
+ * Signatures are preserved to avoid breaking existing UI hooks.
  */
-export async function notifyStageChange(args: StageChangeAlertArgs): Promise<void> {
-  const settings = getNotificationSettings();
-  if (!settings.enabled || !settings.events.dealStageChange) {
-    return;
-  }
-
-  const validRecipients = settings.recipients.filter((r) => r.includes("@"));
-  if (validRecipients.length === 0) return;
-
-  const recipientsStr = validRecipients.join(", ");
-  const subject = `🎯 [Stage Alert] Deal "${args.dealTitle || args.dealId}" moved to "${args.toStage}"`;
-  const content = formatStageChangeHtml(args);
-
-  try {
-    await api.sendEmail({
-      recipients: recipientsStr,
-      subject,
-      content,
-      doctype: api.DEAL_DOCTYPE,
-      docname: args.dealId,
-      now: true,
-    });
-  } catch (err) {
-    console.warn("Could not dispatch stage change notification email:", err);
-  }
+export async function notifyStageChange(_args: StageChangeAlertArgs): Promise<void> {
+  // Server-side hook now owns dispatch. No-op on client.
 }
 
 /**
  * Dispatch automated email alert for any entity change.
+ *
+ * NOTE: Browser-side email dispatch is now a NO-OP.
+ * Email notifications are handled server-side by Frappe doc_events
+ * (custom_crm_sync.api.notify.on_change) based on CRM Sales Hierarchy.
+ * Signatures are preserved to avoid breaking existing UI hooks.
  */
-export async function notifyEntityChange(args: EntityChangeAlertArgs): Promise<void> {
-  const settings = getNotificationSettings();
-  if (!settings.enabled) return;
-
-  // Check event category toggle if specified
-  if (args.eventCategory && !settings.events[args.eventCategory]) {
-    return;
-  }
-
-  const validRecipients = settings.recipients.filter((r) => r.includes("@"));
-  if (validRecipients.length === 0) return;
-
-  const recipientsStr = validRecipients.join(", ");
-  const subject = `[AgroCRM Alert] ${args.doctype} "${args.docname}" was ${args.action}`;
-  const content = formatEntityChangeHtml(args);
-
-  let carrierDoctype = args.doctype;
-  let carrierDocname = args.docname;
-
-  // ERPNext DocTypes (Quotation, Sales Order) route to dev06 where email.make is unavailable.
-  // Use Frappe CRM (dev03) carrier to ensure reliable email delivery.
-  if (carrierDoctype === api.QUOTATION_DOCTYPE || carrierDoctype === api.SALES_ORDER_DOCTYPE) {
-    const carrier = await getCrmCarrierDoc();
-    if (carrier) {
-      carrierDoctype = carrier.doctype;
-      carrierDocname = carrier.docname;
-    }
-  }
-
-  try {
-    await api.sendEmail({
-      recipients: recipientsStr,
-      subject,
-      content,
-      doctype: carrierDoctype,
-      docname: carrierDocname,
-      now: true,
-    });
-  } catch (err) {
-    console.warn(`Could not dispatch ${args.doctype} notification email:`, err);
-  }
+export async function notifyEntityChange(_args: EntityChangeAlertArgs): Promise<void> {
+  // Server-side hook now owns dispatch. No-op on client.
 }
 
 /**
- * Dispatch an immediate test email to verify recipient delivery.
+ * Dispatch an immediate test email via the server endpoint.
  */
-export async function sendTestNotification(recipients: string[]): Promise<void> {
-  const valid = recipients.filter((r) => r.includes("@"));
-  if (valid.length === 0) {
-    throw new Error("No valid recipient emails configured.");
-  }
-
-  const carrier = await getCrmCarrierDoc();
-
-  const subject = "✅ [AgroCRM] Test Notification Email";
-  const now = new Date().toLocaleString("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-  const content = `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #10b981; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
-  <div style="background-color: #10b981; padding: 20px 24px; color: #ffffff;">
-    <h1 style="margin: 0; font-size: 18px; font-weight: 700;">AgroCRM Notification Setup Verified</h1>
-  </div>
-  <div style="padding: 24px;">
-    <p style="font-size: 14px; color: #334155; margin-top: 0;">This test confirms that your AgroCRM email notifications are working and properly configured.</p>
-    <p style="font-size: 12px; color: #64748b;">Recipients configured: <strong>${valid.join(", ")}</strong></p>
-    <p style="font-size: 12px; color: #64748b;">Timestamp: ${now}</p>
-    <div style="margin-top: 20px;">
-      <a href="${APP_BASE_URL}" style="background-color: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; display: inline-block;">Go to AgroCRM Dashboard</a>
-    </div>
-  </div>
-</div>
-`.trim();
-
-  await api.sendEmail({
-    recipients: valid.join(", "),
-    subject,
-    content,
-    doctype: carrier?.doctype || api.DEAL_DOCTYPE,
-    docname: carrier?.docname,
-    now: true,
-  });
+export async function sendTestNotification(_recipients?: string[]): Promise<{
+  success: boolean;
+  recipients: string[];
+  count: number;
+}> {
+  return await api.sendTestNotification();
 }

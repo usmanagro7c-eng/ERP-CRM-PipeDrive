@@ -247,7 +247,12 @@ export async function deleteDealStatus(name: string): Promise<void> {
   });
 }
 
-export async function createDealStatus(values: { deal_status: string; type?: string; color?: string; position?: number }): Promise<void> {
+export async function createDealStatus(values: {
+  deal_status: string;
+  type?: string;
+  color?: string;
+  position?: number;
+}): Promise<void> {
   await proxyRequest(`api/resource/${DEAL_STATUS_DOCTYPE}`, {
     method: "POST",
     body: {
@@ -357,7 +362,12 @@ export async function deleteLeadStatus(name: string): Promise<void> {
   });
 }
 
-export async function createLeadStatus(values: { lead_status: string; type?: string; color?: string; position?: number }): Promise<void> {
+export async function createLeadStatus(values: {
+  lead_status: string;
+  type?: string;
+  color?: string;
+  position?: number;
+}): Promise<void> {
   await proxyRequest(`api/resource/${LEAD_STATUS_DOCTYPE}`, {
     method: "POST",
     body: {
@@ -1342,7 +1352,18 @@ export async function deleteNote(name: string): Promise<void> {
 export interface CrmCallLog {
   name: string;
   type?: "Incoming" | "Outgoing" | string | undefined;
-  status?: "Initiated" | "Ringing" | "In Progress" | "Completed" | "Failed" | "Busy" | "No Answer" | "Queued" | "Canceled" | string | undefined;
+  status?:
+    | "Initiated"
+    | "Ringing"
+    | "In Progress"
+    | "Completed"
+    | "Failed"
+    | "Busy"
+    | "No Answer"
+    | "Queued"
+    | "Canceled"
+    | string
+    | undefined;
   duration?: number | undefined;
   from?: string | undefined;
   to?: string | undefined;
@@ -1710,6 +1731,96 @@ export async function getRecordActivities(
     // handled
   }
   return [];
+}
+
+// ---------------------------------------------------------------------------
+// Hierarchy-based Email Notifications
+// ---------------------------------------------------------------------------
+
+export interface HierarchyNode {
+  name: string;
+  label: string;
+  parent: string;
+  is_group: number;
+  user?: string;
+  email?: string;
+}
+
+export interface ServerNotificationSettings {
+  enabled: boolean | number;
+  mode: "Direct Parent" | "All Ancestors" | "Selected Nodes";
+  selected_nodes: string[];
+  include_actor: boolean | number;
+  extra_emails?: string;
+  app_base_url?: string;
+  deal_stage_change?: boolean | number;
+  deal_updates?: boolean | number;
+  leads?: boolean | number;
+  tasks?: boolean | number;
+  quotations?: boolean | number;
+  sales_orders?: boolean | number;
+  other_records?: boolean | number;
+}
+
+export interface GetNotificationSettingsResponse {
+  settings: ServerNotificationSettings;
+  tree: HierarchyNode[];
+}
+
+export interface PreviewRecipientsResponse {
+  recipients: string[];
+  count: number;
+}
+
+export async function getNotificationSettings(): Promise<GetNotificationSettingsResponse> {
+  const payload = await proxyRequest(
+    "api/method/custom_crm_sync.api.notify.get_notification_settings",
+    { method: "POST", body: {} },
+  );
+  const data = (payload as { message?: GetNotificationSettingsResponse }).message ?? payload;
+  return data as GetNotificationSettingsResponse;
+}
+
+export async function saveNotificationSettings(
+  settings: Partial<ServerNotificationSettings>,
+): Promise<{ success: boolean }> {
+  const payload = await proxyRequest(
+    "api/method/custom_crm_sync.api.notify.save_notification_settings",
+    {
+      method: "POST",
+      body: { payload: settings },
+    },
+  );
+  const data = (payload as { message?: { success: boolean } }).message ?? payload;
+  return data as { success: boolean };
+}
+
+export async function previewNotificationRecipients(args: {
+  mode: "Direct Parent" | "All Ancestors" | "Selected Nodes";
+  selected_nodes?: string[];
+  user?: string;
+}): Promise<PreviewRecipientsResponse> {
+  const payload = await proxyRequest("api/method/custom_crm_sync.api.notify.preview_recipients", {
+    method: "POST",
+    body: args,
+  });
+  const data = (payload as { message?: PreviewRecipientsResponse }).message ?? payload;
+  return data as PreviewRecipientsResponse;
+}
+
+export async function sendTestNotification(): Promise<{
+  success: boolean;
+  recipients: string[];
+  count: number;
+}> {
+  const payload = await proxyRequest(
+    "api/method/custom_crm_sync.api.notify.send_test_notification",
+    { method: "POST", body: {} },
+  );
+  const data =
+    (payload as { message?: { success: boolean; recipients: string[]; count: number } }).message ??
+    payload;
+  return data as { success: boolean; recipients: string[]; count: number };
 }
 
 // Local type import to avoid a circular-looking import in editors.

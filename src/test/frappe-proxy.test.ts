@@ -108,7 +108,9 @@ describe("classifyRequest", () => {
     // CRM Territory (create-only; used by the app's territory picker)
     expect(classifyRequest("POST", "api/resource/CRM Territory", none)?.kind).toBe("org-write");
     expect(classifyRequest("PUT", "api/resource/CRM Territory/All Territories", none)).toBeNull();
-    expect(classifyRequest("DELETE", "api/resource/CRM Territory/All Territories", none)).toBeNull();
+    expect(
+      classifyRequest("DELETE", "api/resource/CRM Territory/All Territories", none),
+    ).toBeNull();
   });
 
   it("only allows metadata and count for the allowed CRM doctypes", () => {
@@ -707,6 +709,90 @@ describe("validateMethodBody", () => {
         recipients: "a@b.com",
       }).ok,
     ).toBe(false);
+  });
+
+  describe("hierarchy notification methods validation", () => {
+    it("validates get_notification_settings and send_test_notification", () => {
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.get_notification_settings", {}),
+      ).toEqual({ ok: true, body: {} });
+
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.send_test_notification", {
+          extra: "ignored",
+        }),
+      ).toEqual({ ok: true, body: {} });
+    });
+
+    it("validates preview_recipients parameters", () => {
+      const valid = validateMethodBody("api/method/custom_crm_sync.api.notify.preview_recipients", {
+        mode: "All Ancestors",
+        user: "qa@example.com",
+        selected_nodes: ["node1", "node2"],
+      });
+      expect(valid).toEqual({
+        ok: true,
+        body: {
+          mode: "All Ancestors",
+          user: "qa@example.com",
+          selected_nodes: ["node1", "node2"],
+        },
+      });
+
+      // Rejects invalid mode
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.preview_recipients", {
+          mode: "InvalidMode",
+        }).ok,
+      ).toBe(false);
+
+      // Rejects non-array selected_nodes
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.preview_recipients", {
+          mode: "Selected Nodes",
+          selected_nodes: "not-an-array",
+        }).ok,
+      ).toBe(false);
+    });
+
+    it("validates and sanitizes save_notification_settings payload", () => {
+      const valid = validateMethodBody(
+        "api/method/custom_crm_sync.api.notify.save_notification_settings",
+        {
+          payload: {
+            mode: "Direct Parent",
+            enabled: true,
+            include_actor: false,
+            selected_nodes: ["nodeA"],
+            extra_emails: "audit@example.com",
+            deal_stage_change: true,
+            quotations: false,
+            injected_danger: "drop-me",
+          },
+        },
+      );
+      expect(valid).toEqual({
+        ok: true,
+        body: {
+          payload: {
+            mode: "Direct Parent",
+            enabled: 1,
+            include_actor: 0,
+            selected_nodes: ["nodeA"],
+            extra_emails: "audit@example.com",
+            deal_stage_change: 1,
+            quotations: 0,
+          },
+        },
+      });
+
+      // Rejects invalid mode
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
+          payload: { mode: "HackerMode" },
+        }).ok,
+      ).toBe(false);
+    });
   });
 });
 

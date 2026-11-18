@@ -25,6 +25,7 @@ export const IGNORED_DIRECTORIES = new Set([
   ".wrangler",
   ".tanstack",
   ".playwright-mcp",
+  ".claude-flow",
   "dist",
   "playwright-report",
   "test-results",

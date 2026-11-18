@@ -280,7 +280,11 @@ export function classifyRequest(
       path === "api/method/frappe.core.doctype.communication.email.make" ||
       path === "api/method/crm.api.dashboard.get_dashboard" ||
       path === "api/method/crm.api.session.get_users" ||
-      path === "api/method/crm.api.activities.get_activities"
+      path === "api/method/crm.api.activities.get_activities" ||
+      path === "api/method/custom_crm_sync.api.notify.get_notification_settings" ||
+      path === "api/method/custom_crm_sync.api.notify.save_notification_settings" ||
+      path === "api/method/custom_crm_sync.api.notify.preview_recipients" ||
+      path === "api/method/custom_crm_sync.api.notify.send_test_notification"
     ) {
       return { kind: "org-write" };
     }
@@ -548,6 +552,19 @@ const MAX_COMMENT_LENGTH = 10_000;
 const MAX_EMAIL_SUBJECT_LENGTH = 250;
 const MAX_EMAIL_BODY_LENGTH = 50_000;
 const MAX_RECIPIENTS_LENGTH = 1_000;
+const ALLOWED_NOTIFICATION_MODES = new Set(["Direct Parent", "All Ancestors", "Selected Nodes"]);
+const MAX_EXTRA_EMAILS_LENGTH = 1_000;
+const MAX_SELECTED_NODES_COUNT = 200;
+const MAX_APP_BASE_URL_LENGTH = 200;
+const NOTIFICATION_EVENT_KEYS = [
+  "deal_stage_change",
+  "deal_updates",
+  "leads",
+  "tasks",
+  "quotations",
+  "sales_orders",
+  "other_records",
+] as const;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -563,6 +580,10 @@ export const VALIDATED_METHODS = new Set([
   "api/method/frappe.client.cancel",
   "api/method/frappe.desk.form.utils.add_comment",
   "api/method/frappe.core.doctype.communication.email.make",
+  "api/method/custom_crm_sync.api.notify.get_notification_settings",
+  "api/method/custom_crm_sync.api.notify.save_notification_settings",
+  "api/method/custom_crm_sync.api.notify.preview_recipients",
+  "api/method/custom_crm_sync.api.notify.send_test_notification",
 ]);
 
 /**
@@ -699,6 +720,130 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
           now: 1,
         },
       };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.get_notification_settings":
+    case "api/method/custom_crm_sync.api.notify.send_test_notification": {
+      return { ok: true, body: {} };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.preview_recipients": {
+      const mode = body["mode"];
+      if (typeof mode !== "string" || !ALLOWED_NOTIFICATION_MODES.has(mode)) {
+        return { ok: false, reason: "preview_recipients: invalid or missing mode" };
+      }
+      const sanitized: Record<string, unknown> = { mode };
+
+      if ("user" in body && body["user"] !== undefined && body["user"] !== null) {
+        if (typeof body["user"] !== "string" || body["user"].length > MAX_DOC_NAME_LENGTH) {
+          return { ok: false, reason: "preview_recipients: invalid user" };
+        }
+        sanitized["user"] = body["user"].trim();
+      }
+
+      if (
+        "selected_nodes" in body &&
+        body["selected_nodes"] !== undefined &&
+        body["selected_nodes"] !== null
+      ) {
+        if (!Array.isArray(body["selected_nodes"])) {
+          return { ok: false, reason: "preview_recipients: selected_nodes must be an array" };
+        }
+        if (body["selected_nodes"].length > MAX_SELECTED_NODES_COUNT) {
+          return { ok: false, reason: "preview_recipients: too many selected nodes" };
+        }
+        for (const item of body["selected_nodes"]) {
+          if (typeof item !== "string" || item.length > MAX_DOC_NAME_LENGTH) {
+            return { ok: false, reason: "preview_recipients: invalid node id" };
+          }
+        }
+        sanitized["selected_nodes"] = body["selected_nodes"].map((s: string) => s.trim());
+      }
+
+      return { ok: true, body: sanitized };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.save_notification_settings": {
+      const input = isPlainObject(body["payload"])
+        ? (body["payload"] as Record<string, unknown>)
+        : body;
+      const sanitized: Record<string, unknown> = {};
+
+      if ("mode" in input && input["mode"] !== undefined) {
+        if (typeof input["mode"] !== "string" || !ALLOWED_NOTIFICATION_MODES.has(input["mode"])) {
+          return { ok: false, reason: "save_notification_settings: invalid mode" };
+        }
+        sanitized["mode"] = input["mode"];
+      }
+
+      if ("enabled" in input) {
+        sanitized["enabled"] = Boolean(input["enabled"]) ? 1 : 0;
+      }
+
+      if ("include_actor" in input) {
+        sanitized["include_actor"] = Boolean(input["include_actor"]) ? 1 : 0;
+      }
+
+      if (
+        "app_base_url" in input &&
+        input["app_base_url"] !== undefined &&
+        input["app_base_url"] !== null
+      ) {
+        if (
+          typeof input["app_base_url"] !== "string" ||
+          input["app_base_url"].length > MAX_APP_BASE_URL_LENGTH
+        ) {
+          return { ok: false, reason: "save_notification_settings: invalid app_base_url" };
+        }
+        sanitized["app_base_url"] = input["app_base_url"].trim();
+      }
+
+      if (
+        "extra_emails" in input &&
+        input["extra_emails"] !== undefined &&
+        input["extra_emails"] !== null
+      ) {
+        if (
+          typeof input["extra_emails"] !== "string" ||
+          input["extra_emails"].length > MAX_EXTRA_EMAILS_LENGTH
+        ) {
+          return {
+            ok: false,
+            reason: "save_notification_settings: extra_emails exceeds maximum length",
+          };
+        }
+        sanitized["extra_emails"] = input["extra_emails"].trim();
+      }
+
+      if (
+        "selected_nodes" in input &&
+        input["selected_nodes"] !== undefined &&
+        input["selected_nodes"] !== null
+      ) {
+        if (!Array.isArray(input["selected_nodes"])) {
+          return {
+            ok: false,
+            reason: "save_notification_settings: selected_nodes must be an array",
+          };
+        }
+        if (input["selected_nodes"].length > MAX_SELECTED_NODES_COUNT) {
+          return { ok: false, reason: "save_notification_settings: too many selected nodes" };
+        }
+        for (const item of input["selected_nodes"]) {
+          if (typeof item !== "string" || item.length > MAX_DOC_NAME_LENGTH) {
+            return { ok: false, reason: "save_notification_settings: invalid node id" };
+          }
+        }
+        sanitized["selected_nodes"] = input["selected_nodes"].map((s: string) => s.trim());
+      }
+
+      for (const key of NOTIFICATION_EVENT_KEYS) {
+        if (key in input) {
+          sanitized[key] = Boolean(input[key]) ? 1 : 0;
+        }
+      }
+
+      return { ok: true, body: { payload: sanitized } };
     }
 
     default:

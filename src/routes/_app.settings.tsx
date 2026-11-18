@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   Check,
@@ -26,6 +26,10 @@ import {
   Server,
   LogOut,
   Layers,
+  Network,
+  GitBranch,
+  Eye,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,8 +37,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -46,19 +59,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { sessionQueryOptions, logout, SESSION_QUERY_KEY } from "@/lib/auth-client";
-import {
-  getNotificationSettings,
-  saveNotificationSettings,
-  DEFAULT_NOTIFICATION_SETTINGS,
-  type NotificationSettings,
-  type NotificationEvents,
-} from "@/lib/notification-settings";
-import { sendTestNotification } from "@/lib/change-notifications";
-import {
-  readStoredTheme,
-  setTheme,
-  type Theme,
-} from "@/lib/theme";
+import * as api from "@/lib/api";
+import { HierarchyTreePicker } from "@/components/settings/hierarchy-tree-picker";
+import { readStoredTheme, setTheme, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -72,19 +75,96 @@ function SettingsPage() {
   const { data: session } = useQuery(sessionQueryOptions());
   const { data: crmUsers = [], isLoading: isLoadingUsers } = useCrmUsers();
 
-  const [activeTab, setActiveTab] = useState<"appearance" | "notifications" | "account">("notifications");
+  const [activeTab, setActiveTab] = useState<"appearance" | "notifications" | "account">(
+    "notifications",
+  );
   const [currentTheme, setCurrentTheme] = useState<Theme>("light");
   const [compactMode, setCompactMode] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
-  const [settings, setSettings] = useState<NotificationSettings>(getNotificationSettings());
-  const [newEmail, setNewEmail] = useState("");
-  const [userSearch, setUserSearch] = useState("");
-  const [isSendingTest, setIsSendingTest] = useState(false);
+  // Server-backed notification settings & hierarchy tree
+  const {
+    data: serverData,
+    isLoading: isLoadingSettings,
+    error: settingsError,
+    refetch: refetchSettings,
+  } = useQuery({
+    queryKey: ["crm-notification-settings"],
+    queryFn: api.getNotificationSettings,
+  });
+
+  const [formState, setFormState] = useState<api.ServerNotificationSettings>({
+    enabled: 1,
+    mode: "All Ancestors",
+    selected_nodes: [],
+    include_actor: 0,
+    extra_emails: "",
+    app_base_url: "https://pipedrive-crm.usman-agro7c.workers.dev",
+    deal_stage_change: 1,
+    deal_updates: 1,
+    leads: 1,
+    tasks: 1,
+    quotations: 1,
+    sales_orders: 1,
+    other_records: 1,
+  });
+
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [previewActor, setPreviewActor] = useState<string>("");
 
   useEffect(() => {
-    setSettings(getNotificationSettings());
+    if (serverData?.settings) {
+      setFormState({
+        ...serverData.settings,
+        selected_nodes: Array.isArray(serverData.settings.selected_nodes)
+          ? serverData.settings.selected_nodes
+          : [],
+      });
+    }
+  }, [serverData]);
+
+  // Live Recipient Preview Query
+  const effectivePreviewActor = previewActor || (session?.user ?? "");
+  const {
+    data: previewData,
+    isLoading: isLoadingPreview,
+    isFetching: isFetchingPreview,
+  } = useQuery({
+    queryKey: [
+      "preview-notification-recipients",
+      formState.mode,
+      formState.selected_nodes,
+      formState.mode === "Selected Nodes" ? null : effectivePreviewActor,
+      formState.include_actor,
+      formState.extra_emails,
+    ],
+    queryFn: () =>
+      api.previewNotificationRecipients({
+        mode: formState.mode,
+        selected_nodes: formState.selected_nodes,
+        ...(formState.mode === "Selected Nodes" ? {} : { user: effectivePreviewActor }),
+      }),
+    enabled: Boolean(serverData),
+    staleTime: 500,
+  });
+
+  // Save Settings Mutation
+  const saveMutation = useMutation({
+    mutationFn: (payload: Partial<api.ServerNotificationSettings>) =>
+      api.saveNotificationSettings(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crm-notification-settings"] });
+      setHasChanges(false);
+      toast.success("Notification settings saved successfully!");
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Failed to save settings";
+      toast.error(msg);
+    },
+  });
+
+  useEffect(() => {
     const stored = readStoredTheme();
     if (stored) {
       setCurrentTheme(stored);
@@ -120,170 +200,89 @@ function SettingsPage() {
   };
 
   const handleToggleMaster = (checked: boolean) => {
-    setSettings((prev) => ({ ...prev, enabled: checked }));
+    setFormState((prev) => ({ ...prev, enabled: checked ? 1 : 0 }));
     setHasChanges(true);
   };
 
-  const handleToggleEvent = (key: keyof NotificationEvents, checked: boolean) => {
-    setSettings((prev) => ({
+  const handleModeChange = (mode: "Direct Parent" | "All Ancestors" | "Selected Nodes") => {
+    setFormState((prev) => ({ ...prev, mode }));
+    setHasChanges(true);
+  };
+
+  const handleToggleEvent = (key: keyof api.ServerNotificationSettings, checked: boolean) => {
+    setFormState((prev) => ({
       ...prev,
-      events: {
-        ...prev.events,
-        [key]: checked,
-      },
+      [key]: checked ? 1 : 0,
     }));
     setHasChanges(true);
   };
 
   const applyPreset = (preset: "all" | "stageOnly" | "salesPipeline" | "none") => {
-    setSettings((prev) => {
-      let events: NotificationEvents;
+    setFormState((prev) => {
       switch (preset) {
         case "all":
-          events = {
-            dealStageChange: true,
-            dealUpdates: true,
-            quotations: true,
-            salesOrders: true,
-            leads: true,
-            otherRecords: true,
+          return {
+            ...prev,
+            deal_stage_change: 1,
+            deal_updates: 1,
+            quotations: 1,
+            sales_orders: 1,
+            leads: 1,
+            tasks: 1,
+            other_records: 1,
           };
-          toast.success("Enabled all notification events");
-          break;
         case "stageOnly":
-          events = {
-            dealStageChange: true,
-            dealUpdates: false,
-            quotations: false,
-            salesOrders: false,
-            leads: false,
-            otherRecords: false,
+          return {
+            ...prev,
+            deal_stage_change: 1,
+            deal_updates: 0,
+            quotations: 0,
+            sales_orders: 0,
+            leads: 0,
+            tasks: 0,
+            other_records: 0,
           };
-          toast.success("Set preset: Deal Stage Changes Only");
-          break;
         case "salesPipeline":
-          events = {
-            dealStageChange: true,
-            dealUpdates: true,
-            quotations: true,
-            salesOrders: true,
-            leads: false,
-            otherRecords: false,
+          return {
+            ...prev,
+            deal_stage_change: 1,
+            deal_updates: 1,
+            quotations: 1,
+            sales_orders: 1,
+            leads: 0,
+            tasks: 0,
+            other_records: 0,
           };
-          toast.success("Set preset: Sales Pipeline Events");
-          break;
         case "none":
-          events = {
-            dealStageChange: false,
-            dealUpdates: false,
-            quotations: false,
-            salesOrders: false,
-            leads: false,
-            otherRecords: false,
+          return {
+            ...prev,
+            deal_stage_change: 0,
+            deal_updates: 0,
+            quotations: 0,
+            sales_orders: 0,
+            leads: 0,
+            tasks: 0,
+            other_records: 0,
           };
-          toast.info("Disabled all notification events");
-          break;
       }
-      return { ...prev, events };
     });
     setHasChanges(true);
-  };
-
-  const handleToggleUserEmail = (email: string) => {
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed) return;
-    setSettings((prev) => {
-      const exists = prev.recipients.map((r) => r.toLowerCase()).includes(trimmed);
-      const updated = exists
-        ? prev.recipients.filter((r) => r.toLowerCase() !== trimmed)
-        : [...prev.recipients, trimmed];
-      return { ...prev, recipients: updated };
-    });
-    setHasChanges(true);
-  };
-
-  const handleSelectAllUsers = () => {
-    const allUserEmails = crmUsers
-      .map((u) => u.email?.trim().toLowerCase())
-      .filter((e): e is string => Boolean(e && e.includes("@")));
-    setSettings((prev) => {
-      const merged = Array.from(new Set([...prev.recipients, ...allUserEmails]));
-      return { ...prev, recipients: merged };
-    });
-    setHasChanges(true);
-    toast.success("Added all active CRM users to recipients");
-  };
-
-  const handleDeselectAllUsers = () => {
-    const allUserEmails = new Set(
-      crmUsers
-        .map((u) => u.email?.trim().toLowerCase())
-        .filter((e): e is string => Boolean(e && e.includes("@"))),
-    );
-    setSettings((prev) => ({
-      ...prev,
-      recipients: prev.recipients.filter((r) => !allUserEmails.has(r.toLowerCase())),
-    }));
-    setHasChanges(true);
-    toast.info("Deselected all system CRM users");
-  };
-
-  const handleAddCustomEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newEmail.trim().toLowerCase();
-    if (!trimmed) return;
-    if (!trimmed.includes("@") || !trimmed.includes(".")) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    if (settings.recipients.map((r) => r.toLowerCase()).includes(trimmed)) {
-      toast.info("This email is already in the recipient list");
-      return;
-    }
-    setSettings((prev) => ({
-      ...prev,
-      recipients: [...prev.recipients, trimmed],
-    }));
-    setNewEmail("");
-    setHasChanges(true);
-    toast.success(`Added ${trimmed} to recipients`);
-  };
-
-  const handleRemoveRecipient = (email: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      recipients: prev.recipients.filter((r) => r.toLowerCase() !== email.toLowerCase()),
-    }));
-    setHasChanges(true);
-  };
-
-  const handleResetToDefaults = () => {
-    setSettings(DEFAULT_NOTIFICATION_SETTINGS);
-    setHasChanges(true);
-    toast.info("Notification settings reset to defaults");
-  };
-
-  const handleClearAllRecipients = () => {
-    setSettings((prev) => ({ ...prev, recipients: [] }));
-    setHasChanges(true);
-    toast.info("Cleared all notification recipients");
+    toast.success(`Preset applied: ${preset}`);
   };
 
   const handleSave = () => {
-    saveNotificationSettings(settings);
-    setHasChanges(false);
-    toast.success("Settings saved successfully!");
+    saveMutation.mutate(formState);
   };
 
   const handleSendTestEmail = async () => {
-    if (settings.recipients.length === 0) {
-      toast.error("Please add at least one recipient email before sending a test");
-      return;
-    }
     setIsSendingTest(true);
     try {
-      await sendTestNotification(settings.recipients);
-      toast.success(`Test email dispatched to ${settings.recipients.join(", ")}`);
+      const res = await api.sendTestNotification();
+      if (res.count > 0) {
+        toast.success(`Test email sent to ${res.count} recipient(s): ${res.recipients.join(", ")}`);
+      } else {
+        toast.info("Test notification triggered (no recipients resolved for your account).");
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to send test email";
       toast.error(msg);
@@ -299,23 +298,29 @@ function SettingsPage() {
     await navigate({ to: "/login" });
   };
 
-  // Selected system users count
-  const selectedCrmUsersCount = useMemo(() => {
-    const recipientSet = new Set(settings.recipients.map((r) => r.toLowerCase()));
-    return crmUsers.filter((u) => u.email && recipientSet.has(u.email.toLowerCase())).length;
-  }, [crmUsers, settings.recipients]);
+  // Distinct actors available for preview
+  const previewActorOptions = useMemo(() => {
+    const list: Array<{ label: string; email: string }> = [];
+    const seen = new Set<string>();
 
-  const filteredCrmUsers = useMemo(() => {
-    if (!userSearch.trim()) return crmUsers;
-    const term = userSearch.toLowerCase();
-    return crmUsers.filter(
-      (u) =>
-        (u.full_name && u.full_name.toLowerCase().includes(term)) ||
-        (u.email && u.email.toLowerCase().includes(term)) ||
-        (u.name && u.name.toLowerCase().includes(term)),
-    );
-  }, [crmUsers, userSearch]);
+    if (serverData?.tree) {
+      for (const node of serverData.tree) {
+        if (node.email && !seen.has(node.email.toLowerCase())) {
+          seen.add(node.email.toLowerCase());
+          list.push({ label: `${node.label} (${node.email})`, email: node.email });
+        }
+      }
+    }
 
+    for (const u of crmUsers) {
+      if (u.email && !seen.has(u.email.toLowerCase())) {
+        seen.add(u.email.toLowerCase());
+        list.push({ label: `${u.full_name || u.name} (${u.email})`, email: u.email });
+      }
+    }
+
+    return list;
+  }, [serverData?.tree, crmUsers]);
   const userName = session?.name || session?.user || "User";
   const userEmail = session?.user || "admin@agrovisions.pk";
 
@@ -331,7 +336,8 @@ function SettingsPage() {
             <div>
               <h1 className="text-xl font-bold tracking-tight text-foreground">Settings</h1>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Customize appearance, manage automated notifications, and review system configuration.
+                Customize appearance, manage automated notifications, and review system
+                configuration.
               </p>
             </div>
           </div>
@@ -341,7 +347,7 @@ function SettingsPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleSendTestEmail}
-                disabled={isSendingTest || settings.recipients.length === 0}
+                disabled={isSendingTest || !formState.enabled}
                 className="h-8 text-xs gap-1.5 cursor-pointer"
               >
                 {isSendingTest ? (
@@ -355,9 +361,14 @@ function SettingsPage() {
             <Button
               size="sm"
               onClick={handleSave}
+              disabled={saveMutation.isPending}
               className="h-8 text-xs gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
             >
-              <Check className="size-3.5" />
+              {saveMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Check className="size-3.5" />
+              )}
               <span>Save Settings</span>
             </Button>
           </div>
@@ -397,386 +408,579 @@ function SettingsPage() {
 
           {/* TAB 1: NOTIFICATIONS */}
           <TabsContent value="notifications" className="space-y-6 mt-4">
-            {/* Master Toggle Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Bell className="size-4 text-primary" />
-                    <h2 className="text-sm font-semibold text-foreground">
-                      Automated Change Notifications
-                    </h2>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically dispatch an email notification to configured recipients whenever a deal,
-                    quotation, sales order, or lead is created, updated, or moved between stages.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="master-toggle"
-                    checked={settings.enabled}
-                    onCheckedChange={handleToggleMaster}
-                    className="size-5"
-                  />
-                  <Label htmlFor="master-toggle" className="text-xs font-semibold cursor-pointer">
-                    {settings.enabled ? "Active" : "Disabled"}
-                  </Label>
-                </div>
+            {isLoadingSettings ? (
+              <div className="rounded-xl border border-border bg-card p-12 text-center shadow-2xs space-y-3">
+                <Loader2 className="size-6 animate-spin mx-auto text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  Loading hierarchy notification settings...
+                </p>
               </div>
-            </div>
-
-            {/* Recipients Configuration Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Mail className="size-4 text-primary" />
-                    Notification Recipients
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Configure the recipient email addresses that receive real-time notifications on updates and stage changes.
-                  </p>
+            ) : settingsError ? (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 text-destructive font-medium text-sm">
+                  <AlertCircle className="size-4" />
+                  <span>Failed to load notification settings from Frappe CRM</span>
                 </div>
-
-                {/* Quick Actions Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1.5 self-start sm:self-auto cursor-pointer"
-                    >
-                      <MoreVertical className="size-3.5 text-muted-foreground" />
-                      <span>Options</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 text-xs">
-                    <DropdownMenuItem onClick={handleSelectAllUsers} className="cursor-pointer">
-                      <Users className="size-3.5 mr-2 text-primary" />
-                      <span>Select All CRM Users</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDeselectAllUsers} className="cursor-pointer">
-                      <RotateCcw className="size-3.5 mr-2 text-muted-foreground" />
-                      <span>Deselect All CRM Users</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleResetToDefaults} className="cursor-pointer">
-                      <RotateCcw className="size-3.5 mr-2" />
-                      <span>Reset to Defaults</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleClearAllRecipients}
-                      className="cursor-pointer text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="size-3.5 mr-2" />
-                      <span>Clear All Recipients</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <p className="text-xs text-muted-foreground">
+                  {settingsError instanceof Error ? settingsError.message : "Network error"}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetchSettings()}
+                  className="h-8 text-xs gap-1.5"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Retry</span>
+                </Button>
               </div>
-
-              {/* Active Recipients Chips */}
-              <div>
-                <Label className="text-xs font-medium text-muted-foreground block mb-2">
-                  Active Recipients ({settings.recipients.length})
-                </Label>
-                {settings.recipients.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic bg-muted/40 p-3 rounded-lg border border-dashed">
-                    No recipients configured yet. Select system users or add custom email addresses below.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {settings.recipients.map((email) => (
-                      <Badge
-                        key={email}
-                        variant="secondary"
-                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs bg-muted/80 text-foreground border border-border/60"
-                      >
-                        <span>{email}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRecipient(email)}
-                          className="text-muted-foreground hover:text-destructive cursor-pointer ml-1"
-                          title="Remove recipient"
+            ) : (
+              <>
+                {/* Master Toggle Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Bell className="size-4 text-primary" />
+                        <h2 className="text-sm font-semibold text-foreground">
+                          Hierarchy Email Notifications
+                        </h2>
+                        <Badge
+                          variant={formState.enabled ? "default" : "secondary"}
+                          className="text-[10px] h-4 font-normal"
                         >
-                          <Trash2 className="size-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Controls Bar: System Users Dropdown & Custom Email Input */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2">
-                {/* System Users Multi-Select Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isLoadingUsers || crmUsers.length === 0}
-                      className="h-8 text-xs gap-2 justify-between min-w-[210px] cursor-pointer"
-                    >
-                      <span className="flex items-center gap-1.5 truncate">
-                        <Users className="size-3.5 text-primary shrink-0" />
-                        <span>
-                          {isLoadingUsers
-                            ? "Loading users..."
-                            : `System Users (${selectedCrmUsersCount}/${crmUsers.length})`}
-                        </span>
-                      </span>
-                      <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-80 max-h-96 overflow-y-auto">
-                    <DropdownMenuLabel className="text-xs font-semibold flex items-center justify-between">
-                      <span>Select System CRM Users</span>
-                      <Badge variant="outline" className="text-[10px] h-4 font-normal">
-                        {selectedCrmUsersCount} selected
-                      </Badge>
-                    </DropdownMenuLabel>
-                    <div className="p-2 border-b border-border/50">
-                      <Input
-                        placeholder="Search users..."
-                        value={userSearch}
-                        onChange={(e) => setUserSearch(e.target.value)}
-                        className="h-7 text-xs bg-muted/30"
+                          {formState.enabled ? "Active" : "Disabled"}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Automatically dispatch emails strictly to parent nodes in the CRM Sales
+                        Hierarchy when records are created, updated, or stage-shifted.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="master-toggle"
+                        checked={Boolean(formState.enabled)}
+                        onCheckedChange={handleToggleMaster}
                       />
                     </div>
-                    <div className="px-2 py-1 flex items-center justify-between text-[11px] border-b border-border/40 bg-muted/20">
-                      <button
-                        type="button"
-                        onClick={handleSelectAllUsers}
-                        className="text-primary hover:underline font-medium cursor-pointer"
-                      >
-                        Select All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDeselectAllUsers}
-                        className="text-muted-foreground hover:text-destructive cursor-pointer"
-                      >
-                        Deselect All
-                      </button>
-                    </div>
-                    <div className="py-1">
-                      {filteredCrmUsers.length === 0 ? (
-                        <div className="p-3 text-xs text-muted-foreground text-center italic">
-                          No users match your search.
-                        </div>
-                      ) : (
-                        filteredCrmUsers.map((user) => {
-                          const userEmail = (user.email || "").trim().toLowerCase();
-                          if (!userEmail) return null;
-                          const isChecked = settings.recipients
-                            .map((r) => r.toLowerCase())
-                            .includes(userEmail);
+                  </div>
+                </div>
 
-                          return (
-                            <DropdownMenuCheckboxItem
-                              key={user.name}
-                              checked={isChecked}
-                              onCheckedChange={() => handleToggleUserEmail(userEmail)}
-                              className="cursor-pointer text-xs py-2"
-                            >
-                              <div className="flex flex-col min-w-0 ml-1">
-                                <span className="font-medium text-foreground truncate">
-                                  {user.full_name || user.name}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground truncate">
-                                  {userEmail}
-                                </span>
-                              </div>
-                            </DropdownMenuCheckboxItem>
-                          );
-                        })
-                      )}
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Hierarchy Routing Mode Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                  <div className="border-b border-border/60 pb-3">
+                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Network className="size-4 text-primary" />
+                      Recipient Resolution Mode
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Choose how the CRM resolves recipients from the &quot;CRM Sales
+                      Hierarchy&quot; tree.
+                    </p>
+                  </div>
 
-                {/* Add Custom Email Field */}
-                <form onSubmit={handleAddCustomEmail} className="flex gap-2 flex-1 items-center">
-                  <Input
-                    type="email"
-                    placeholder="Add custom email (e.g. manager@agrovisions.pk)..."
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="h-8 text-xs bg-muted/30 flex-1 min-w-[200px]"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="outline"
-                    disabled={!newEmail.trim()}
-                    className="h-8 text-xs gap-1.5 cursor-pointer shrink-0"
+                  <RadioGroup
+                    value={formState.mode}
+                    onValueChange={(val) =>
+                      handleModeChange(val as "Direct Parent" | "All Ancestors" | "Selected Nodes")
+                    }
+                    className="grid grid-cols-1 md:grid-cols-3 gap-3"
                   >
-                    <Plus className="size-3.5" />
-                    <span>Add</span>
-                  </Button>
-                </form>
-              </div>
-            </div>
-
-            {/* Event Triggers Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ShieldCheck className="size-4 text-primary" />
-                    Event Triggers
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Select which system events automatically dispatch notifications.
-                  </p>
-                </div>
-
-                {/* Event Presets Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1.5 self-start sm:self-auto cursor-pointer"
+                    {/* Mode 1: All Ancestors */}
+                    <label
+                      htmlFor="mode-all-ancestors"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        formState.mode === "All Ancestors"
+                          ? "border-primary bg-primary/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
                     >
-                      <SlidersHorizontal className="size-3 text-muted-foreground" />
-                      <span>Event Presets</span>
-                      <ChevronDown className="size-3 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 text-xs">
-                    <DropdownMenuItem onClick={() => applyPreset("all")} className="cursor-pointer">
-                      <span>Enable All Events</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => applyPreset("stageOnly")} className="cursor-pointer">
-                      <span>Deal Stage Changes Only</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => applyPreset("salesPipeline")} className="cursor-pointer">
-                      <span>Sales Pipeline (Deals & Orders)</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => applyPreset("none")}
-                      className="cursor-pointer text-muted-foreground"
-                    >
-                      <span>Disable All Events</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="space-y-3 pt-1">
-                <div className="flex items-start gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
-                  <Checkbox
-                    id="event-stage"
-                    checked={settings.events.dealStageChange}
-                    onCheckedChange={(c) => handleToggleEvent("dealStageChange", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label
-                      htmlFor="event-stage"
-                      className="text-xs font-semibold text-foreground cursor-pointer flex items-center gap-2"
-                    >
-                      <span>Deal Stage Changes</span>
-                      <Badge variant="outline" className="text-[10px] h-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                        High Priority
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Layers className="size-3.5 text-primary" />
+                            All Ancestors
+                          </span>
+                          <RadioGroupItem value="All Ancestors" id="mode-all-ancestors" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Alerts traverse upward through the entire hierarchy chain to all parent
+                          leaders up to root.
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] mt-3 self-start font-normal border-primary/30 text-primary"
+                      >
+                        Default Recommendation
                       </Badge>
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      Send highlighted email with banner whenever a Deal changes stage (e.g. Won, Lost, Negotiation).
-                    </p>
+                    </label>
+
+                    {/* Mode 2: Direct Parent */}
+                    <label
+                      htmlFor="mode-direct-parent"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        formState.mode === "Direct Parent"
+                          ? "border-primary bg-primary/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <GitBranch className="size-3.5 text-primary" />
+                            Direct Parent Only
+                          </span>
+                          <RadioGroupItem value="Direct Parent" id="mode-direct-parent" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Alerts go strictly to the immediate manager / parent node of whoever
+                          modified the record.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] mt-3 self-start font-normal">
+                        Single Step
+                      </Badge>
+                    </label>
+
+                    {/* Mode 3: Selected Nodes */}
+                    <label
+                      htmlFor="mode-selected-nodes"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        formState.mode === "Selected Nodes"
+                          ? "border-primary bg-primary/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Users className="size-3.5 text-primary" />
+                            Selected Nodes
+                          </span>
+                          <RadioGroupItem value="Selected Nodes" id="mode-selected-nodes" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Alerts go only to explicitly ticked hierarchy nodes, regardless of who
+                          modified the record.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] mt-3 self-start font-normal">
+                        Custom Team
+                      </Badge>
+                    </label>
+                  </RadioGroup>
+                </div>
+
+                {/* Tree Picker (shown only when Selected Nodes is chosen) */}
+                {formState.mode === "Selected Nodes" && (
+                  <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                    <div className="border-b border-border/60 pb-3">
+                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Users className="size-4 text-primary" />
+                        Select Hierarchy Recipient Nodes
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Tick the hierarchy branches and individuals who will receive automated alert
+                        emails.
+                      </p>
+                    </div>
+
+                    <HierarchyTreePicker
+                      nodes={serverData?.tree || []}
+                      selectedNodes={formState.selected_nodes || []}
+                      onChange={(nodes) => {
+                        setFormState((prev) => ({ ...prev, selected_nodes: nodes }));
+                        setHasChanges(true);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Live Recipient Preview Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                    <div>
+                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Eye className="size-4 text-primary" />
+                        Live Recipient Preview
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Test and verify which emails will be dispatched under the current
+                        configuration.
+                      </p>
+                    </div>
+
+                    {/* Actor selector for All Ancestors / Direct Parent */}
+                    {formState.mode !== "Selected Nodes" && (
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <Label
+                          htmlFor="preview-actor"
+                          className="text-xs text-muted-foreground shrink-0"
+                        >
+                          Simulate Actor:
+                        </Label>
+                        <Select
+                          value={effectivePreviewActor}
+                          onValueChange={(val) => setPreviewActor(val)}
+                        >
+                          <SelectTrigger id="preview-actor" className="h-8 text-xs min-w-[200px]">
+                            <SelectValue placeholder="Select user..." />
+                          </SelectTrigger>
+                          <SelectContent className="text-xs max-h-60">
+                            {previewActorOptions.map((opt) => (
+                              <SelectItem key={opt.email} value={opt.email}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 rounded-lg border border-border/60 bg-muted/20 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Mail className="size-3.5 text-primary" />
+                        Resolved Target Recipients
+                        {isFetchingPreview && (
+                          <Loader2 className="size-3 animate-spin text-muted-foreground ml-1" />
+                        )}
+                      </span>
+                      <Badge variant="outline" className="text-[11px] h-5">
+                        {previewData?.count ?? 0} recipient{previewData?.count === 1 ? "" : "s"}
+                      </Badge>
+                    </div>
+
+                    {isLoadingPreview ? (
+                      <div className="flex items-center gap-2 py-3 text-xs text-muted-foreground">
+                        <Loader2 className="size-3.5 animate-spin" />
+                        <span>Resolving hierarchy nodes...</span>
+                      </div>
+                    ) : (previewData?.recipients?.length ?? 0) === 0 ? (
+                      <p className="text-xs text-muted-foreground italic py-2">
+                        {formState.mode === "Selected Nodes"
+                          ? "No nodes selected. Tick nodes in the hierarchy tree above to receive emails."
+                          : "No parent leader recipients resolved for this actor. Check if the actor is mapped in CRM Sales Hierarchy."}
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {previewData?.recipients.map((email) => (
+                          <Badge
+                            key={email}
+                            variant="secondary"
+                            className="text-xs px-2.5 py-1 bg-background border border-border/70 text-foreground font-mono flex items-center gap-1.5"
+                          >
+                            <Mail className="size-3 text-muted-foreground" />
+                            <span>{email}</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                  <Checkbox
-                    id="event-deals"
-                    checked={settings.events.dealUpdates}
-                    onCheckedChange={(c) => handleToggleEvent("dealUpdates", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="event-deals" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Deal Updates & Products
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When a Deal is created, line items/products modified, or deal value/revenue updated.
+                {/* Additional Delivery Options Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                  <div className="border-b border-border/60 pb-3">
+                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <SlidersHorizontal className="size-4 text-primary" />
+                      Delivery &amp; Link Settings
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Configure actor copies, fallback CC addresses, and application link domains.
                     </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Include Actor Switch */}
+                    <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60 bg-muted/10">
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="include-actor"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Include Actor in Email Delivery
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Also send a copy of the notification email to the person who created or
+                          edited the record.
+                        </p>
+                      </div>
+                      <Switch
+                        id="include-actor"
+                        checked={Boolean(formState.include_actor)}
+                        onCheckedChange={(checked) => {
+                          setFormState((prev) => ({ ...prev, include_actor: checked ? 1 : 0 }));
+                          setHasChanges(true);
+                        }}
+                      />
+                    </div>
+
+                    {/* Extra Emails */}
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="extra-emails"
+                        className="text-xs font-semibold text-foreground"
+                      >
+                        Additional Notification CCs (comma-separated)
+                      </Label>
+                      <Input
+                        id="extra-emails"
+                        placeholder="e.g. notifications@agrovisions.pk, auditor@agrovisions.pk"
+                        value={formState.extra_emails || ""}
+                        onChange={(e) => {
+                          setFormState((prev) => ({ ...prev, extra_emails: e.target.value }));
+                          setHasChanges(true);
+                        }}
+                        className="h-8 text-xs bg-muted/20"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        These email addresses will always be copied on every alert regardless of
+                        hierarchy resolution.
+                      </p>
+                    </div>
+
+                    {/* Base URL */}
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="app-base-url"
+                        className="text-xs font-semibold text-foreground"
+                      >
+                        AgroCRM Application Base URL
+                      </Label>
+                      <Input
+                        id="app-base-url"
+                        placeholder="https://pipedrive-crm.usman-agro7c.workers.dev"
+                        value={formState.app_base_url || ""}
+                        onChange={(e) => {
+                          setFormState((prev) => ({ ...prev, app_base_url: e.target.value }));
+                          setHasChanges(true);
+                        }}
+                        className="h-8 text-xs bg-muted/20 font-mono"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Used to construct the &quot;Open in AgroCRM&quot; action button link inside
+                        email notifications.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                  <Checkbox
-                    id="event-quotations"
-                    checked={settings.events.quotations}
-                    onCheckedChange={(c) => handleToggleEvent("quotations", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="event-quotations" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Quotations Created & Submitted
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When a Quotation is created from a Deal or submitted in ERPNext.
-                    </p>
-                  </div>
-                </div>
+                {/* Event Triggers Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                    <div>
+                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <ShieldCheck className="size-4 text-primary" />
+                        Event Triggers
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Select which system events automatically dispatch notifications.
+                      </p>
+                    </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                  <Checkbox
-                    id="event-orders"
-                    checked={settings.events.salesOrders}
-                    onCheckedChange={(c) => handleToggleEvent("salesOrders", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="event-orders" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Sales Orders Created & Submitted
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When a Sales Order is created from a Quotation/Deal or submitted.
-                    </p>
+                    {/* Event Presets Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5 self-start sm:self-auto cursor-pointer"
+                        >
+                          <SlidersHorizontal className="size-3 text-muted-foreground" />
+                          <span>Event Presets</span>
+                          <ChevronDown className="size-3 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 text-xs">
+                        <DropdownMenuItem
+                          onClick={() => applyPreset("all")}
+                          className="cursor-pointer"
+                        >
+                          <span>Enable All Events</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => applyPreset("stageOnly")}
+                          className="cursor-pointer"
+                        >
+                          <span>Deal Stage Changes Only</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => applyPreset("salesPipeline")}
+                          className="cursor-pointer"
+                        >
+                          <span>Sales Pipeline (Deals &amp; Orders)</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => applyPreset("none")}
+                          className="cursor-pointer text-muted-foreground"
+                        >
+                          <span>Disable All Events</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                  <Checkbox
-                    id="event-leads"
-                    checked={settings.events.leads}
-                    onCheckedChange={(c) => handleToggleEvent("leads", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="event-leads" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Leads Created & Converted
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When a new lead arrives or is converted into an organization/deal.
-                    </p>
-                  </div>
-                </div>
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-start gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                      <Checkbox
+                        id="event-stage"
+                        checked={Boolean(formState.deal_stage_change)}
+                        onCheckedChange={(c) => handleToggleEvent("deal_stage_change", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-stage"
+                          className="text-xs font-semibold text-foreground cursor-pointer flex items-center gap-2"
+                        >
+                          <span>Deal Stage Changes</span>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          >
+                            High Priority
+                          </Badge>
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Send highlighted email whenever a Deal changes stage (e.g. Won, Lost,
+                          Negotiation).
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                  <Checkbox
-                    id="event-other"
-                    checked={settings.events.otherRecords}
-                    onCheckedChange={(c) => handleToggleEvent("otherRecords", Boolean(c))}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="event-other" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Organizations, Contacts, Tasks, Notes & Comments
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When customer contacts, organizations, notes, or tasks are modified or comments added.
-                    </p>
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-deals"
+                        checked={Boolean(formState.deal_updates)}
+                        onCheckedChange={(c) => handleToggleEvent("deal_updates", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-deals"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Deal Updates &amp; Products
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When a Deal is created, line items/products modified, or deal
+                          value/revenue updated.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-quotations"
+                        checked={Boolean(formState.quotations)}
+                        onCheckedChange={(c) => handleToggleEvent("quotations", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-quotations"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Quotations Created &amp; Submitted
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When a Quotation is created from a Deal or submitted in ERPNext.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-orders"
+                        checked={Boolean(formState.sales_orders)}
+                        onCheckedChange={(c) => handleToggleEvent("sales_orders", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-orders"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Sales Orders Created &amp; Submitted
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When a Sales Order is created from a Quotation/Deal or submitted.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-leads"
+                        checked={Boolean(formState.leads)}
+                        onCheckedChange={(c) => handleToggleEvent("leads", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-leads"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Leads Created &amp; Converted
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When a new lead arrives or is converted into an organization/deal.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-tasks"
+                        checked={Boolean(formState.tasks)}
+                        onCheckedChange={(c) => handleToggleEvent("tasks", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-tasks"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Tasks Created &amp; Assigned
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When follow-up tasks, calls, or to-dos are created or assigned.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
+                      <Checkbox
+                        id="event-other"
+                        checked={Boolean(formState.other_records)}
+                        onCheckedChange={(c) => handleToggleEvent("other_records", Boolean(c))}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor="event-other"
+                          className="text-xs font-semibold text-foreground cursor-pointer"
+                        >
+                          Organizations, Contacts, Tasks, Notes &amp; Comments
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          When customer contacts, organizations, notes, or tasks are modified or
+                          comments added.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </TabsContent>
 
           {/* TAB 2: APPEARANCE & DARK MODE */}
@@ -789,7 +993,8 @@ function SettingsPage() {
                   Color Theme (Dark Mode / Light Mode)
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Choose how AgroCRM looks on your screen. Switch between light, dark, or system-matching themes.
+                  Choose how AgroCRM looks on your screen. Switch between light, dark, or
+                  system-matching themes.
                 </p>
               </div>
 
@@ -896,11 +1101,15 @@ function SettingsPage() {
               <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60">
                   <div className="space-y-0.5">
-                    <Label htmlFor="compact-mode-toggle" className="text-xs font-semibold cursor-pointer">
+                    <Label
+                      htmlFor="compact-mode-toggle"
+                      className="text-xs font-semibold cursor-pointer"
+                    >
                       Compact Table Density
                     </Label>
                     <p className="text-[11px] text-muted-foreground">
-                      Reduces vertical padding in tables to show more deals and quotations per screen.
+                      Reduces vertical padding in tables to show more deals and quotations per
+                      screen.
                     </p>
                   </div>
                   <Checkbox
@@ -913,7 +1122,10 @@ function SettingsPage() {
 
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60">
                   <div className="space-y-0.5">
-                    <Label htmlFor="anim-toggle" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5">
+                    <Label
+                      htmlFor="anim-toggle"
+                      className="text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                    >
                       <Sparkles className="size-3 text-amber-500" />
                       <span>Confetti & Animations</span>
                     </Label>
@@ -955,7 +1167,10 @@ function SettingsPage() {
                     <div className="text-sm font-bold text-foreground">{userName}</div>
                     <div className="text-xs text-muted-foreground">{userEmail}</div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
+                      >
                         ● Active Session
                       </Badge>
                       <Badge variant="secondary" className="text-[10px] h-4">
@@ -992,20 +1207,29 @@ function SettingsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">Frappe CRM Backend</span>
-                    <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">
+                    <span className="text-xs font-semibold text-foreground">
+                      Frappe CRM Backend
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
+                    >
                       Operational
                     </Badge>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Hosts Deals, Leads, Organizations, Contacts, Activities, and Communication Email dispatcher.
+                    Hosts Deals, Leads, Organizations, Contacts, Activities, and Communication Email
+                    dispatcher.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">ERPNext Backend</span>
-                    <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
+                    >
                       Operational
                     </Badge>
                   </div>

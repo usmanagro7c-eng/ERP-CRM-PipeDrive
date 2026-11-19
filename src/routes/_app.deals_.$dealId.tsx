@@ -57,6 +57,7 @@ import {
   dealStatusesOptions,
   useSaveDeal,
   useDeleteDeal,
+  findWonStageName,
 } from "@/hooks/use-deals";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { RecordCommentsThread } from "@/components/record-view/record-comments-thread";
@@ -255,6 +256,7 @@ function DealDetailPage() {
         customer: customerName,
         items: qItems && qItems.length > 0 ? qItems : undefined,
         quotation_ref: quotation.name,
+        deal_id: dealId,
       });
       setSalesOrderModalOpen(true);
       return;
@@ -281,6 +283,7 @@ function DealDetailPage() {
           customer: customerName,
           items: qItems && qItems.length > 0 ? qItems : undefined,
           quotation_ref: latestQ.name,
+          deal_id: dealId,
         });
         setSalesOrderModalOpen(true);
         return;
@@ -304,6 +307,7 @@ function DealDetailPage() {
         undefined,
       items: dealProducts && dealProducts.length > 0 ? dealProducts : undefined,
       quotation_ref: undefined,
+      deal_id: dealId,
     });
     setSalesOrderModalOpen(true);
   }
@@ -396,7 +400,11 @@ function DealDetailPage() {
       setLostModalOpen(true);
       return;
     }
-    if (newStage.toLowerCase().includes("won")) {
+    const isWon =
+      newStage.toLowerCase().includes("won") ||
+      stages.find((s) => s.name === newStage)?.type?.toLowerCase() === "won" ||
+      stages.find((s) => s.name === newStage)?.deal_status?.toLowerCase() === "won";
+    if (isWon) {
       triggerConfetti();
     }
     const oldStage = currentStage;
@@ -408,6 +416,10 @@ function DealDetailPage() {
         silent: true,
       });
       toast.success(`Stage updated to ${newStage}`);
+      if (isWon) {
+        toast.info("Generating Sales Order for Won deal...");
+        void handleConvertToSalesOrder();
+      }
     } catch {
       // toast handled
     }
@@ -415,20 +427,15 @@ function DealDetailPage() {
 
   async function handleMarkWon() {
     if (!deal) return;
-    const wonStage =
-      stages.find(
-        (s) =>
-          s.type?.toLowerCase() === "won" ||
-          s.name.toLowerCase() === "won" ||
-          s.deal_status?.toLowerCase() === "won",
-      )?.name || "Won";
+    const wonStage = findWonStageName(stages);
     triggerConfetti();
     try {
       await saveMutation.mutateAsync({
         name: dealId,
         values: { status: wonStage },
       });
-      toast.success("Deal marked as Won! 🎉");
+      toast.success("Deal marked as Won! 🎉 Opening Sales Order...");
+      void handleConvertToSalesOrder();
     } catch {
       // toast handled
     }

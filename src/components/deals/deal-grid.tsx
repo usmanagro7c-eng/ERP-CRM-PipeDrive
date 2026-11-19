@@ -24,16 +24,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StageBadge, formatCurrency } from "@/components/deals/deal-stage-badge";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
+import { triggerConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 interface DealGridProps {
   meta: FrappeDocTypeMeta;
   rows: Record<string, unknown>[];
   stages: Array<{ name: string; label?: string }>;
-  onRowClick?: (name: string) => void;
-  onEdit?: (deal: Record<string, unknown>) => void;
+  onRowClick?: ((name: string) => void) | undefined;
+  onEdit?: ((deal: Record<string, unknown>) => void) | undefined;
+  onDealWon?: ((dealOrName: string | Record<string, unknown>) => void) | undefined;
   loading: boolean;
-  emptyAction?: React.ReactNode;
+  emptyAction?: React.ReactNode | undefined;
 }
 
 export function DealGrid({
@@ -42,6 +44,7 @@ export function DealGrid({
   stages,
   onRowClick,
   onEdit,
+  onDealWon,
   loading,
   emptyAction,
 }: DealGridProps) {
@@ -75,12 +78,19 @@ export function DealGrid({
   }
 
   async function handleMove(dealName: string, targetStage: string) {
+    const isTargetWon = targetStage.toLowerCase().includes("won");
+    if (isTargetWon) {
+      triggerConfetti();
+    }
     setMovingDeals((prev) => ({ ...prev, [dealName]: targetStage }));
     try {
       await saveMutation.mutateAsync({
         name: dealName,
         values: { status: targetStage },
       });
+      if (isTargetWon && onDealWon) {
+        onDealWon(dealName);
+      }
     } finally {
       setMovingDeals((prev) => {
         const next = { ...prev };

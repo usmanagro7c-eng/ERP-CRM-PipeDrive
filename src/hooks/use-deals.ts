@@ -24,6 +24,20 @@ export function dealStatusesOptions() {
   });
 }
 
+export function findWonStageName(
+  stages?: Array<{ name: string; type?: string; deal_status?: string }>,
+): string {
+  if (!stages || stages.length === 0) return "Won";
+  const found = stages.find(
+    (s) =>
+      s.type?.toLowerCase() === "won" ||
+      s.name.toLowerCase() === "won" ||
+      s.deal_status?.toLowerCase() === "won" ||
+      s.name.toLowerCase().includes("won"),
+  );
+  return found?.name || "Won";
+}
+
 export function lostReasonsOptions() {
   return queryOptions({
     queryKey: [DEAL_QUERY_ROOT, "lost-reasons"],

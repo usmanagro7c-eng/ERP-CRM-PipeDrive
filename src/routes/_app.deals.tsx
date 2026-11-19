@@ -19,6 +19,11 @@ import {
 import { Page, PageHeader } from "@/components/page-header";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { QuotationFormModal } from "@/components/quotations/quotation-form-modal";
+import {
+  SalesOrderFormModal,
+  type SalesOrderInitialValues,
+} from "@/components/sales-orders/sales-order-form-modal";
+import * as api from "@/lib/api";
 import { DealTable, type SortState } from "@/components/deals/deal-table";
 import { DealKanban } from "@/components/deals/deal-kanban";
 import { DealGrid } from "@/components/deals/deal-grid";
@@ -190,6 +195,82 @@ function DealsPage() {
       ...(items.length > 0 ? { items } : {}),
     });
     setQuotationModalOpen(true);
+  }
+
+  const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
+  const [salesOrderInitialValues, setSalesOrderInitialValues] =
+    useState<SalesOrderInitialValues | null>(null);
+
+  async function handleOpenSalesOrderForDeal(dealOrName: string | Record<string, unknown>) {
+    let dealObj: Record<string, unknown> | null = null;
+    let dealName = "";
+
+    if (typeof dealOrName === "string") {
+      dealName = dealOrName;
+      try {
+        const fullDeal = await api.getDeal(dealName);
+        dealObj = fullDeal as unknown as Record<string, unknown>;
+      } catch (err) {
+        console.warn("Could not fetch deal details for sales order:", err);
+      }
+    } else {
+      dealObj = dealOrName;
+      dealName = String(dealOrName["name"] || "");
+    }
+
+    const customerName = String(
+      dealObj?.["organization_name"] ||
+        dealObj?.["organization"] ||
+        dealObj?.["lead_name"] ||
+        "",
+    );
+
+    // Check if deal has existing quotation
+    let qItems: QuotationItem[] | undefined;
+    let quotationRef: string | undefined;
+
+    try {
+      const qList = await api.listQuotations({
+        search: "",
+        filters: [["crm_deal", "=", dealName]],
+        limit: 1,
+        start: 0,
+      });
+      if (qList.length > 0 && qList[0]) {
+        const fullQ = await api.getQuotation(qList[0].name);
+        qItems = fullQ.items;
+        quotationRef = fullQ.name;
+      }
+    } catch (err) {
+      console.warn("Could not search quotations for deal:", err);
+    }
+
+    if (!qItems || qItems.length === 0) {
+      const rawProducts = Array.isArray(dealObj?.["products"])
+        ? (dealObj["products"] as Array<Record<string, unknown>>)
+        : Array.isArray(dealObj?.["items"])
+          ? (dealObj["items"] as Array<Record<string, unknown>>)
+          : [];
+      if (rawProducts.length > 0) {
+        qItems = rawProducts
+          .map((p) => ({
+            item_code: String(p["product_code"] || p["item_code"] || p["item"] || ""),
+            item_name: String(p["product_name"] || p["item_name"] || p["product_code"] || ""),
+            qty: Number(p["qty"]) || 1,
+            rate: Number(p["rate"] || p["price_list_rate"]) || 0,
+            amount: Number(p["amount"]) || (Number(p["qty"]) || 1) * (Number(p["rate"]) || 0),
+          }))
+          .filter((it) => it.item_code.trim().length > 0);
+      }
+    }
+
+    setSalesOrderInitialValues({
+      customer: customerName || undefined,
+      items: qItems && qItems.length > 0 ? qItems : undefined,
+      quotation_ref: quotationRef,
+      deal_id: dealName,
+    });
+    setSalesOrderModalOpen(true);
   }
 
   const [savedColumns, setSavedColumns] = useState<string[] | null>(null);
@@ -541,6 +622,7 @@ function DealsPage() {
               }}
               onEdit={handleEditDeal}
               onCreateQuotation={handleCreateQuotation}
+              onDealWon={handleOpenSalesOrderForDeal}
               onAddInStage={handleAddInStage}
             />
           ) : activeView === "grid" ? (
@@ -553,6 +635,7 @@ function DealsPage() {
                 void navigate({ to: "/deals/$dealId", params: { dealId: name } });
               }}
               onEdit={handleEditDeal}
+              onDealWon={handleOpenSalesOrderForDeal}
               emptyAction={
                 <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5">
                   <Plus className="size-4" />
@@ -583,6 +666,7 @@ function DealsPage() {
                   }}
                   onEdit={handleEditDeal}
                   onCreateQuotation={handleCreateQuotation}
+                  onDealWon={handleOpenSalesOrderForDeal}
                   loading={loading}
                   emptyAction={
                     <Button size="sm" onClick={handleOpenCreateModal} className="gap-1.5">
@@ -675,6 +759,14 @@ function DealsPage() {
         open={quotationModalOpen}
         onOpenChange={setQuotationModalOpen}
         initialValues={quotationInitialValues}
+      />
+
+      {/* Convert / Create Sales Order for Won Deal */}
+      <SalesOrderFormModal
+        open={salesOrderModalOpen}
+        onOpenChange={setSalesOrderModalOpen}
+        order={null}
+        initialValues={salesOrderInitialValues}
       />
     </Page>
   );

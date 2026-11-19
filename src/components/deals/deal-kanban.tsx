@@ -81,8 +81,9 @@ interface DealKanbanProps {
   }>;
   onRowClick?: (name: string) => void;
   onEdit?: (deal: Record<string, unknown>) => void;
-  onCreateQuotation?: (deal: Record<string, unknown>) => void;
-  onAddInStage?: (stageName: string) => void;
+  onCreateQuotation?: ((deal: Record<string, unknown>) => void) | undefined;
+  onDealWon?: ((dealOrName: string | Record<string, unknown>) => void) | undefined;
+  onAddInStage?: ((stageName: string) => void) | undefined;
   loading: boolean;
   groupBy: string;
   onGroupByChange: (newGroupBy: string) => void;
@@ -107,6 +108,7 @@ export function DealKanban({
   onRowClick,
   onEdit,
   onCreateQuotation,
+  onDealWon,
   onAddInStage,
   loading,
   groupBy,
@@ -472,12 +474,16 @@ export function DealKanban({
     setMovingDeals((prev) => ({ ...prev, [dealName]: targetColKey }));
 
     // Check if target stage is "Won"
-    if (targetColKey.toLowerCase().includes("won")) {
+    const isTargetWon = targetColKey.toLowerCase().includes("won");
+    if (isTargetWon) {
       triggerConfetti();
     }
 
     try {
       await saveMutation.mutateAsync({ name: dealName, values: patch });
+      if (isTargetWon && onDealWon) {
+        onDealWon(dealName);
+      }
     } finally {
       setMovingDeals((prev) => {
         const next = { ...prev };
@@ -596,9 +602,17 @@ export function DealKanban({
                         targetStatus: newStage,
                       });
                     } else {
+                      const isTargetWon = newStage.toLowerCase().includes("won");
+                      if (isTargetWon) {
+                        triggerConfetti();
+                      }
                       void saveMutation.mutateAsync({
                         name,
                         values: { status: newStage },
+                      }).then(() => {
+                        if (isTargetWon && onDealWon) {
+                          onDealWon(deal);
+                        }
                       });
                     }
                   }}

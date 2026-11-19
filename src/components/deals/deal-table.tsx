@@ -36,6 +36,7 @@ import {
 import { StageBadge, formatCurrency } from "@/components/deals/deal-stage-badge";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
 import { useSaveDeal, useDeleteDeal, type FrappeDocTypeMeta } from "@/hooks/use-deals";
+import { triggerConfetti } from "@/lib/confetti";
 import {
   fieldsByNames,
   fieldLabel,
@@ -58,9 +59,10 @@ interface DealTableProps {
   onSortChange: (sort: SortState) => void;
   onRowClick?: (name: string) => void;
   onEdit?: (deal: Record<string, unknown>) => void;
-  onCreateQuotation?: (deal: Record<string, unknown>) => void;
+  onCreateQuotation?: ((deal: Record<string, unknown>) => void) | undefined;
+  onDealWon?: ((dealOrName: string | Record<string, unknown>) => void) | undefined;
   loading: boolean;
-  emptyAction?: React.ReactNode;
+  emptyAction?: React.ReactNode | undefined;
 }
 
 function SortButton({
@@ -188,6 +190,7 @@ export function DealTable({
   onRowClick,
   onEdit,
   onCreateQuotation,
+  onDealWon,
   loading,
   emptyAction,
 }: DealTableProps) {
@@ -357,9 +360,17 @@ export function DealTable({
                               targetStatus: newStage,
                             });
                           } else {
+                            const isTargetWon = newStage.toLowerCase().includes("won");
+                            if (isTargetWon) {
+                              triggerConfetti();
+                            }
                             void saveMutation.mutateAsync({
                               name,
                               values: { status: newStage },
+                            }).then(() => {
+                              if (isTargetWon && onDealWon) {
+                                onDealWon(row);
+                              }
                             });
                           }
                         }}

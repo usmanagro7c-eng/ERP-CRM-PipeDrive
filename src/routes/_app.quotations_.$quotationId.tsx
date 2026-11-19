@@ -664,6 +664,7 @@ function QuotationDetailPage() {
           customer: quotation.party_name,
           items: quotation.items,
           quotation_ref: quotation.name,
+          deal_id: quotation.crm_deal || undefined,
         }}
       />
       {/* Share Quotation on WhatsApp Modal */}

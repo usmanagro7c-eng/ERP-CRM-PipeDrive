@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Maximize2, Minimize2, X, ShoppingCart, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -26,12 +26,15 @@ import {
   salesOrderDetailOptions,
   type SalesOrder,
 } from "@/hooks/use-sales-orders";
+import { DEAL_QUERY_ROOT, findWonStageName } from "@/hooks/use-deals";
+import * as api from "@/lib/api";
 import type { QuotationItem } from "@/lib/api";
 
 export interface SalesOrderInitialValues {
   customer?: string | undefined;
   items?: QuotationItem[] | undefined;
   quotation_ref?: string | undefined;
+  deal_id?: string | undefined;
 }
 
 export interface SalesOrderFormModalProps {
@@ -39,6 +42,7 @@ export interface SalesOrderFormModalProps {
   onOpenChange: (open: boolean) => void;
   order?: SalesOrder | null;
   initialValues?: SalesOrderInitialValues | null | undefined;
+  onSuccess?: ((createdOrder: SalesOrder) => void) | undefined;
 }
 
 export function SalesOrderFormModal({
@@ -46,7 +50,9 @@ export function SalesOrderFormModal({
   onOpenChange,
   order,
   initialValues,
+  onSuccess,
 }: SalesOrderFormModalProps) {
+  const queryClient = useQueryClient();
   const { data: customerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
 
@@ -183,6 +189,22 @@ export function SalesOrderFormModal({
       if (shouldSubmit && created?.name) {
         await submitMutation.mutateAsync(created.name);
       }
+
+      // Automatically mark linked deal as Won when Sales Order is created
+      const targetDealId = initialValues?.deal_id || quotationData?.crm_deal;
+      if (targetDealId) {
+        try {
+          const statuses = await api.getDealStatuses();
+          const wonStage = findWonStageName(statuses);
+          await api.updateDeal(targetDealId, { status: wonStage });
+          void queryClient.invalidateQueries({ queryKey: [DEAL_QUERY_ROOT] });
+          toast.success(`Deal ${targetDealId} automatically marked as Won! 🏆`);
+        } catch (err) {
+          console.warn("Could not auto-mark linked deal as Won:", err);
+        }
+      }
+
+      onSuccess?.(created);
       onOpenChange(false);
     } catch {
       // Error toasted by mutation hooks

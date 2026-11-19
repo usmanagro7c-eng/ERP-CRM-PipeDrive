@@ -53,6 +53,20 @@ function formatRelativeTime(dateStr: unknown): string {
   }
 }
 
+function stripHtml(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function NotesPage() {
   const [searchTitle, setSearchTitle] = useState("");
   const [searchContent, setSearchContent] = useState("");
@@ -232,7 +246,7 @@ function NotesPage() {
 
                     {note.content && (
                       <p className="text-xs text-muted-foreground line-clamp-4 leading-relaxed break-words">
-                        {note.content}
+                        {stripHtml(note.content)}
                       </p>
                     )}
                   </div>

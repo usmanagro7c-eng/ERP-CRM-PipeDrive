@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContactStatusBadge, getContactStatusStyle } from "@/components/contacts/contact-badge";
+import { resolveContactCompany } from "@/components/contacts/contact-table";
 import { useSaveContact, useDeleteContact, type FrappeDocTypeMeta } from "@/hooks/use-contacts";
 import { fieldLabel, selectOptions } from "@/lib/frappe-meta";
 import { cn } from "@/lib/utils";
@@ -298,7 +299,7 @@ export function ContactKanban({
                     const phone =
                       String(contact["mobile_no"] ?? "").trim() ||
                       String(contact["phone"] ?? "").trim();
-                    const company = String(contact["company_name"] ?? "");
+                    const company = resolveContactCompany(contact);
                     const designation = String(contact["designation"] ?? "");
 
                     return (

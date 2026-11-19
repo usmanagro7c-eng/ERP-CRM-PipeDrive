@@ -10,6 +10,16 @@ import {
   type FrappeDocTypeMeta,
 } from "@/lib/frappe-meta";
 
+const IGNORED_COLUMN_FIELDS = new Set([
+  "google_contacts",
+  "google_contacts_id",
+  "sync_with_google_contacts",
+  "pulled_from_google_contacts",
+  "user_id",
+  "middle_name",
+  "unsubscribed",
+]);
+
 interface ColumnChooserProps {
   meta: FrappeDocTypeMeta;
   selected: string[];
@@ -17,7 +27,9 @@ interface ColumnChooserProps {
 }
 
 export function ColumnChooser({ meta, selected, onChange }: ColumnChooserProps) {
-  const fields = (meta.fields ?? []).filter(isDisplayField);
+  const fields = (meta.fields ?? []).filter(
+    (field) => isDisplayField(field) && !IGNORED_COLUMN_FIELDS.has(field.fieldname),
+  );
 
   function toggle(fieldname: string) {
     if (selected.includes(fieldname)) {

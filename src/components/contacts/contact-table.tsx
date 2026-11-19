@@ -64,6 +64,30 @@ interface ContactTableProps {
   emptyAction?: React.ReactNode;
 }
 
+export function resolveContactCompany(contact: Record<string, unknown>): string {
+  let company = String(contact["company_name"] || contact["organization"] || "").trim();
+  if (!company && Array.isArray(contact["links"])) {
+    const orgLink = (contact["links"] as Array<Record<string, unknown>>).find((l) => {
+      const dt = String(l["link_doctype"] || "").toLowerCase();
+      return dt === "crm organization" || dt === "customer" || dt === "organization";
+    });
+    if (orgLink) {
+      company = String(orgLink["link_name"] || "").trim();
+    }
+  }
+  if (!company) {
+    const name = String(contact["name"] || "");
+    if (name.includes("-")) {
+      const parts = name.split("-");
+      if (parts.length > 1) {
+        const candidate = parts.slice(1).join("-").replace(/\s*\d+$/, "").trim();
+        if (candidate) company = candidate;
+      }
+    }
+  }
+  return company;
+}
+
 function ContactCellValue({
   field,
   contact,
@@ -153,7 +177,7 @@ function ContactCellValue({
   }
 
   if (field.fieldname === "company_name" || field.fieldname === "organization") {
-    const company = String(contact[field.fieldname] ?? "");
+    const company = resolveContactCompany(contact);
     if (!company) return <span className="text-muted-foreground/40 text-xs">—</span>;
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-foreground truncate max-w-[180px]">

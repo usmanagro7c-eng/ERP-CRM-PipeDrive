@@ -729,7 +729,9 @@ export function LeadKanban({
         confirmDisabled={confirmDelete?.confirmDisabled}
         pending={confirmPending}
         error={confirmError}
-        onConfirm={() => void handleConfirmDelete()}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
       />
       <LeadLostModal
         open={lostModalState.open}

@@ -30,13 +30,13 @@ import { cn } from "@/lib/utils";
 interface QuotationFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  quotation?: Quotation | null;
+  quotation?: Quotation | null | undefined;
   initialValues?: {
-    party_name?: string;
-    crm_deal?: string;
-    items?: QuotationItem[];
-  } | null;
-  onConvertToSalesOrder?: (quotation: Quotation) => void;
+    party_name?: string | undefined;
+    crm_deal?: string | undefined;
+    items?: QuotationItem[] | undefined;
+  } | null | undefined;
+  onConvertToSalesOrder?: ((quotation: Quotation) => void) | undefined;
 }
 
 export function QuotationFormModal({
@@ -71,6 +71,7 @@ export function QuotationFormModal({
   const [transactionDate, setTransactionDate] = useState("");
   const [validTill, setValidTill] = useState("");
   const [items, setItems] = useState<QuotationItem[]>([]);
+  const currency = String(quotation?.currency || dealData?.["currency"] || "PKR");
 
   // Initialize or reset form state when modal opens
   useEffect(() => {
@@ -170,11 +171,11 @@ export function QuotationFormModal({
         values: payload,
       });
 
-      if (crmDeal.trim() && payload.items) {
+      if (crmDeal.trim() && payload["items"]) {
         try {
           await api.syncDealProductsFromQuotation(
             crmDeal.trim(),
-            payload.items as Array<Record<string, unknown>>,
+            payload["items"] as Array<Record<string, unknown>>,
           );
         } catch (err) {
           console.warn("Could not sync deal products from quotation:", err);
@@ -325,7 +326,7 @@ export function QuotationFormModal({
                 <span>Loading products from Deal {crmDealRef}...</span>
               </div>
             ) : (
-              <ItemRowPicker items={items} onChange={setItems} />
+              <ItemRowPicker items={items} onChange={setItems} currency={currency} />
             )}
           </div>
 
@@ -341,7 +342,7 @@ export function QuotationFormModal({
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-medium text-muted-foreground">Grand Total:</span>
               <span className="text-base sm:text-lg font-bold text-foreground">
-                PKR {grandTotal.toLocaleString()}
+                {currency} {grandTotal.toLocaleString()}
               </span>
             </div>
           </div>

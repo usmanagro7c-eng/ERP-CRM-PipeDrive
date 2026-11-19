@@ -88,7 +88,7 @@ export function LeadLostModal({
   // Sync default reason if list loads and current reason is not in list
   useEffect(() => {
     if (reasons.length > 0 && !reasons.includes(reason)) {
-      setReason(reasons[0]);
+      setReason(reasons[0] ?? "Not Interested");
     }
   }, [reasons, reason]);
 

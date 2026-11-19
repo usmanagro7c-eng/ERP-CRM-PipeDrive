@@ -206,7 +206,7 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
                   <SalesOrderStatusBadge status={row.status} />
                 </TableCell>
                 <TableCell className="font-semibold text-xs whitespace-nowrap">
-                  PKR {Number(row.grand_total || 0).toLocaleString()}
+                  {(row.currency as string) || "PKR"} {Number(row.grand_total || 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">
                   {row.delivery_date || "—"}

@@ -263,26 +263,28 @@ function DealDetailPage() {
     // If called without quotation, check if there is an existing quotation for this deal
     if (linkedQuotations.length > 0) {
       const latestQ = linkedQuotations[0];
-      let qItems = latestQ.items;
-      let customerName = String(latestQ.party_name || sidebarValues.organization || "");
+      if (latestQ) {
+        let qItems = latestQ.items;
+        let customerName = String(latestQ.party_name || sidebarValues.organization || "");
 
-      try {
-        const fullQuotation = await api.getQuotation(latestQ.name);
-        qItems = fullQuotation.items;
-        if (fullQuotation.party_name) {
-          customerName = fullQuotation.party_name;
+        try {
+          const fullQuotation = await api.getQuotation(latestQ.name);
+          qItems = fullQuotation.items;
+          if (fullQuotation.party_name) {
+            customerName = fullQuotation.party_name;
+          }
+        } catch (err) {
+          console.warn("Could not fetch latest quotation items:", err);
         }
-      } catch (err) {
-        console.warn("Could not fetch latest quotation items:", err);
-      }
 
-      setSalesOrderInitialValues({
-        customer: customerName,
-        items: qItems && qItems.length > 0 ? qItems : undefined,
-        quotation_ref: latestQ.name,
-      });
-      setSalesOrderModalOpen(true);
-      return;
+        setSalesOrderInitialValues({
+          customer: customerName,
+          items: qItems && qItems.length > 0 ? qItems : undefined,
+          quotation_ref: latestQ.name,
+        });
+        setSalesOrderModalOpen(true);
+        return;
+      }
     }
 
     const dealProducts =
@@ -364,6 +366,7 @@ function DealDetailPage() {
 
   const currentStage = String(deal?.["status"] || "Qualification");
   const dealValue = Number(deal?.["annual_revenue"] || deal?.["deal_value"] || 0);
+  const dealCurrency = String(deal?.["currency"] || "PKR");
   const email = String(deal?.["email"] || "");
   const phone = String(deal?.["mobile_no"] || deal?.["phone"] || "");
 
@@ -953,7 +956,7 @@ function DealDetailPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Deal Value</span>
               <span className="font-bold text-foreground">
-                PKR {dealValue.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                {dealCurrency} {dealValue.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">

@@ -94,7 +94,7 @@ export function useSaveOrganization() {
       const orgName = String(variables.values["organization_name"] || doc?.["organization_name"] || variables.name || "Organization");
       void notifyEntityChange({
         doctype: api.ORG_DOCTYPE,
-        docname: doc?.["name"] || variables.name || "Organization",
+        docname: String(doc?.["name"] || variables.name || "Organization"),
         title: orgName,
         action: variables.name ? "Updated" : "Created",
         eventCategory: "otherRecords",

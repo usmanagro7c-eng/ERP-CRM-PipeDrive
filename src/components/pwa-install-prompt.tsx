@@ -36,7 +36,9 @@ export function PwaInstallPrompt() {
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const isAppleMobile = /iphone|ipad|ipod/.test(userAgent) && !window.MSStream;
+    const isAppleMobile =
+      /iphone|ipad|ipod/.test(userAgent) &&
+      !Boolean((window as unknown as { MSStream?: unknown }).MSStream);
     setIsIos(isAppleMobile);
 
     // Capture Android / Chrome PWA install trigger

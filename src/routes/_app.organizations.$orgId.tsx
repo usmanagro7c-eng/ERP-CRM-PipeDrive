@@ -518,6 +518,7 @@ function OrganizationDetailPage() {
                     );
                     const status = String(deal["status"] || "Qualification");
                     const amount = Number(deal["annual_revenue"] || deal["deal_value"] || 0);
+                    const dealCurrency = String(deal["currency"] || "PKR");
                     return (
                       <Link
                         key={dealName}
@@ -536,7 +537,7 @@ function OrganizationDetailPage() {
                         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/50">
                           <span className="font-mono text-[11px]">{dealName}</span>
                           <span className="font-semibold text-foreground">
-                            {amount > 0 ? `PKR ${amount.toLocaleString()}` : "PKR 0.00"}
+                            {amount > 0 ? `${dealCurrency} ${amount.toLocaleString()}` : `${dealCurrency} 0.00`}
                           </span>
                         </div>
                       </Link>

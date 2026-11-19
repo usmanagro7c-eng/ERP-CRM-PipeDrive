@@ -99,7 +99,7 @@ function SettingsPage() {
     selected_nodes: [],
     include_actor: 0,
     extra_emails: "",
-    app_base_url: "https://pipedrive-crm.usman-agro7c.workers.dev",
+    app_base_url: typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://pipedrive-crm.usman-agro7c.workers.dev",
     deal_stage_change: 1,
     deal_updates: 1,
     leads: 1,
@@ -322,7 +322,7 @@ function SettingsPage() {
     return list;
   }, [serverData?.tree, crmUsers]);
   const userName = session?.name || session?.user || "User";
-  const userEmail = session?.user || "admin@agrovisions.pk";
+  const userEmail = session?.user || (session as Record<string, unknown> | undefined)?.["email"] as string || "admin";
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-background">

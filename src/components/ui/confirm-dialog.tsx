@@ -18,15 +18,15 @@ export interface ConfirmDialogProps {
   /** Short action headline, e.g. 'Delete status "Nurture"'. */
   title: string;
   /** Supporting copy. Use it to explain consequences. */
-  description?: React.ReactNode;
+  description?: React.ReactNode | undefined;
   /** Label of the primary destructive button. */
-  confirmLabel?: string;
+  confirmLabel?: string | undefined;
   /** When true, the primary button is disabled (e.g. column has records). */
-  confirmDisabled?: boolean;
+  confirmDisabled?: boolean | undefined;
   /** Show a spinner and block interaction while the action runs. */
-  pending?: boolean;
+  pending?: boolean | undefined;
   /** Optional inline error message (renders in a destructive callout, keeps dialog open). */
-  error?: string | null;
+  error?: string | null | undefined;
   onConfirm: () => void;
 }
 

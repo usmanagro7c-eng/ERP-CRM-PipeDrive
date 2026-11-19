@@ -57,7 +57,7 @@ export function useSaveTask() {
       const taskTitle = String(variables["title"] || doc?.["title"] || variables.name || "Task");
       void notifyEntityChange({
         doctype: "CRM Task",
-        docname: doc?.["name"] || variables.name || "Task",
+        docname: String(doc?.["name"] || variables.name || "Task"),
         title: taskTitle,
         action: variables.name ? "Updated" : "Created",
         eventCategory: "otherRecords",

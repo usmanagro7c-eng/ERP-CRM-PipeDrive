@@ -89,8 +89,9 @@ export function useSaveQuotation() {
       const itemsList = Array.isArray(variables.values["items"])
         ? (variables.values["items"] as Array<Record<string, unknown>>)
         : [];
+      const currency = (variables.values["currency"] as string) || (doc && typeof doc === "object" ? (doc as any)["currency"] : undefined) || "PKR";
       const itemsSummary = itemsList.length > 0
-        ? `${itemsList.length} line item(s): ${itemsList.map(it => `${it.item_code || it.item_name || "Item"} (Qty: ${it.qty || 1}, Rate: PKR ${Number(it.rate || 0).toLocaleString()})`).join("; ")}`
+        ? `${itemsList.length} line item(s): ${itemsList.map(it => `${it["item_code"] || it["item_name"] || "Item"} (Qty: ${it["qty"] || 1}, Rate: ${currency} ${Number(it["rate"] || 0).toLocaleString()})`).join("; ")}`
         : "";
 
       const grandTotalVal = variables.values["grand_total"] || (doc && typeof doc === "object" ? (doc as any)["grand_total"] : undefined);
@@ -101,7 +102,7 @@ export function useSaveQuotation() {
         docname: qName,
         action: variables.name ? "Data Updated" : "Created",
         eventCategory: "quotations",
-        summary: `Customer: ${partyName || "N/A"}${grandTotalVal ? ` | Total: PKR ${Number(grandTotalVal).toLocaleString()}` : ""}${itemsList.length > 0 ? ` | ${itemsList.length} item(s)` : ""}`,
+        summary: `Customer: ${partyName || "N/A"}${grandTotalVal ? ` | Total: ${currency} ${Number(grandTotalVal).toLocaleString()}` : ""}${itemsList.length > 0 ? ` | ${itemsList.length} item(s)` : ""}`,
         details: {
           "Customer": partyName || undefined,
           "Grand Total": grandTotalVal ? `PKR ${Number(grandTotalVal).toLocaleString()}` : undefined,

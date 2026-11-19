@@ -387,6 +387,7 @@ export function OrgKanban({
                           typeof org["annual_revenue"] === "number" ? org["annual_revenue"] : null;
                         const territoryVal =
                           typeof org["territory"] === "string" ? org["territory"] : null;
+                        const currency = String(org["currency"] || "PKR");
                         const website = typeof org["website"] === "string" ? org["website"] : null;
 
                         return (
@@ -521,7 +522,7 @@ export function OrgKanban({
                               )}
                               {revenueVal != null && revenueVal > 0 && (
                                 <span className="ml-auto text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                                  PKR{" "}
+                                  {currency}{" "}
                                   {revenueVal >= 1_000_000
                                     ? `${(revenueVal / 1_000_000).toFixed(1)}M`
                                     : revenueVal.toLocaleString()}

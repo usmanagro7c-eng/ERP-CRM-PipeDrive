@@ -189,7 +189,7 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
               <div className="flex items-baseline justify-between pt-1">
                 <span className="text-[11px] font-medium text-muted-foreground">Grand Total:</span>
                 <span className="text-base font-bold text-primary">
-                  PKR {Number(row.grand_total || 0).toLocaleString()}
+                  {(row.currency as string) || "PKR"} {Number(row.grand_total || 0).toLocaleString()}
                 </span>
               </div>
             </div>

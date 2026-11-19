@@ -1,7 +1,12 @@
 import * as api from "@/lib/api";
 import { getNotificationSettings, type NotificationEvents } from "./notification-settings";
 
-const APP_BASE_URL = "https://pipedrive-crm.usman-agro7c.workers.dev";
+function getAppBaseUrl(): string {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+  return "https://pipedrive-crm.usman-agro7c.workers.dev";
+}
 
 export interface StageChangeAlertArgs {
   dealId: string;
@@ -26,24 +31,25 @@ export interface EntityChangeAlertArgs {
 }
 
 function getRecordUrl(doctype: string, docname: string, customPath?: string): string {
+  const baseUrl = getAppBaseUrl();
   if (customPath) {
-    return `${APP_BASE_URL}${customPath.startsWith("/") ? "" : "/"}${customPath}`;
+    return `${baseUrl}${customPath.startsWith("/") ? "" : "/"}${customPath}`;
   }
   switch (doctype) {
     case api.DEAL_DOCTYPE:
-      return `${APP_BASE_URL}/deals/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/deals/${encodeURIComponent(docname)}`;
     case api.LEAD_DOCTYPE:
-      return `${APP_BASE_URL}/leads/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/leads/${encodeURIComponent(docname)}`;
     case api.QUOTATION_DOCTYPE:
-      return `${APP_BASE_URL}/quotations/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/quotations/${encodeURIComponent(docname)}`;
     case api.SALES_ORDER_DOCTYPE:
-      return `${APP_BASE_URL}/orders/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/orders/${encodeURIComponent(docname)}`;
     case api.ORG_DOCTYPE:
-      return `${APP_BASE_URL}/organizations/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/organizations/${encodeURIComponent(docname)}`;
     case api.CONTACT_DOCTYPE:
-      return `${APP_BASE_URL}/contacts/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/contacts/${encodeURIComponent(docname)}`;
     default:
-      return APP_BASE_URL;
+      return baseUrl;
   }
 }
 

@@ -499,6 +499,7 @@ function ContactDetailPage() {
                   );
                   const status = String(deal["status"] || "Qualification");
                   const value = Number(deal["annual_revenue"] || deal["deal_value"] || 0);
+                  const currency = String(deal["currency"] || "PKR");
                   const closeDate = String(deal["closed_date"] || deal["expected_closing"] || "");
 
                   return (
@@ -524,7 +525,7 @@ function ContactDetailPage() {
                           <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
                             {value > 0 && (
                               <span className="font-medium text-foreground">
-                                PKR {value.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                                {currency} {value.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                               </span>
                             )}
                             {closeDate && <span>Closing: {closeDate}</span>}

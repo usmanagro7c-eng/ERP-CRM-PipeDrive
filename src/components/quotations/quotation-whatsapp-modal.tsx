@@ -88,6 +88,7 @@ export function QuotationWhatsAppModal({
     const grandTotal = Number(quotation.grand_total || 0).toLocaleString("en-PK");
     const validTill = quotation.valid_till || "upon confirmation";
     const items = quotation.items || [];
+    const currency = quotation.currency || "PKR";
 
     const itemsSummary = items
       .map((item, idx) => {
@@ -96,7 +97,7 @@ export function QuotationWhatsAppModal({
         const uom = item.uom || item.stock_uom || "Unit";
         const rate = Number(item.rate || 0).toLocaleString("en-PK");
         const amount = Number(item.amount || item.qty * item.rate || 0).toLocaleString("en-PK");
-        return `${idx + 1}. *${itemName}* — ${qty} ${uom} @ PKR ${rate} = PKR ${amount}`;
+        return `${idx + 1}. *${itemName}* — ${qty} ${uom} @ ${currency} ${rate} = ${currency} ${amount}`;
       })
       .join("\n");
 
@@ -105,7 +106,7 @@ export function QuotationWhatsAppModal({
         `Assalam-o-Alaikum *${customerName}*,\n\n` +
         `AgroCRM ki taraf se aapki Quotation *${qtnId}* tayyar hai:\n\n` +
         `📋 *Total Items:* ${items.length}\n` +
-        `💰 *Grand Total:* PKR ${grandTotal}\n` +
+        `💰 *Grand Total:* ${currency} ${grandTotal}\n` +
         `📅 *Valid Till:* ${validTill}\n\n` +
         (itemsSummary ? `*Item Details:*\n${itemsSummary}\n\n` : "") +
         `Aap apna order confirm karne ke liye is number par reply kar sakte hain.\n\n` +
@@ -117,7 +118,7 @@ export function QuotationWhatsAppModal({
         `Dear *${customerName}*,\n\n` +
         `Please find below quotation *${qtnId}* from AgroCRM:\n\n` +
         `📋 *Total Items:* ${items.length}\n` +
-        `💰 *Grand Total:* PKR ${grandTotal}\n` +
+        `💰 *Grand Total:* ${currency} ${grandTotal}\n` +
         `📅 *Valid Until:* ${validTill}\n\n` +
         (itemsSummary ? `*Item Summary:*\n${itemsSummary}\n\n` : "") +
         `Please reply to this message to confirm your order.\n\n` +

@@ -80,6 +80,7 @@ export function SalesOrderFormModal({
   const [orderType, setOrderType] = useState("Sales");
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [isSubmittingDirect, setIsSubmittingDirect] = useState(false);
+  const currency = String(activeOrder?.currency || quotationData?.currency || "PKR");
 
   useEffect(() => {
     if (!open) return;
@@ -321,7 +322,7 @@ export function SalesOrderFormModal({
                 <span>Loading items from Quotation {quotationRef}...</span>
               </div>
             ) : (
-              <ItemRowPicker items={items} onChange={setItems} />
+              <ItemRowPicker items={items} onChange={setItems} currency={currency} />
             )}
           </div>
 
@@ -334,7 +335,7 @@ export function SalesOrderFormModal({
               </div>
               <div className="flex justify-between font-semibold text-sm pt-1 border-t border-border/60">
                 <span>Grand Total:</span>
-                <span className="text-foreground">PKR {grandTotal.toLocaleString()}</span>
+                <span className="text-foreground">{currency} {grandTotal.toLocaleString()}</span>
               </div>
             </div>
           </div>

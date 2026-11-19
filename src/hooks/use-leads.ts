@@ -99,20 +99,20 @@ export function useSaveLead() {
       if (!variables.silent) {
         toast.success(variables.name ? "Lead updated" : "Lead created");
       }
-      const leadName = (doc?.lead_name as string) || (variables.values.lead_name as string) || doc?.name || variables.name || "Lead";
+      const leadName = String(doc?.["lead_name"] || variables.values["lead_name"] || doc?.["name"] || variables.name || "Lead");
       void notifyEntityChange({
         doctype: "CRM Lead",
-        docname: doc?.name || variables.name || "Lead",
+        docname: String(doc?.["name"] || variables.name || "Lead"),
         title: leadName,
         action: variables.name ? "Updated" : "Created",
         eventCategory: "leads",
-        summary: `Lead "${leadName}" was ${variables.name ? "updated" : "created"}. Status: ${doc?.status || variables.values.status || "Open"}`,
-        linkPath: `/leads/${doc?.name || variables.name}`,
+        summary: `Lead "${leadName}" was ${variables.name ? "updated" : "created"}. Status: ${doc?.["status"] || variables.values["status"] || "Open"}`,
+        linkPath: `/leads/${String(doc?.["name"] || variables.name)}`,
         details: {
           "Name": leadName,
-          "Status": (doc?.status as string) || (variables.values.status as string),
-          "Organization": (doc?.organization as string) || (variables.values.organization as string),
-          "Email": (doc?.email_id as string) || (variables.values.email_id as string),
+          "Status": (doc?.["status"] as string) || (variables.values["status"] as string),
+          "Organization": (doc?.["organization"] as string) || (variables.values["organization"] as string),
+          "Email": (doc?.["email_id"] as string) || (variables.values["email_id"] as string),
         },
       }).catch((err) => console.warn("Failed to notify lead change:", err));
     },

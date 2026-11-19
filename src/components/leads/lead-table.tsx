@@ -214,7 +214,7 @@ export function LeadTable({
   const [lostModalState, setLostModalState] = useState<{
     open: boolean;
     leadNames: string[];
-    leadTitle?: string;
+    leadTitle?: string | undefined;
     targetStatus: string;
   }>({
     open: false,

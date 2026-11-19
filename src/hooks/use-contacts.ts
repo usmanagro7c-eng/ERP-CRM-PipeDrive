@@ -87,7 +87,7 @@ export function useSaveContact() {
       );
       void notifyEntityChange({
         doctype: api.CONTACT_DOCTYPE,
-        docname: doc?.["name"] || variables.name || "Contact",
+        docname: String(doc?.["name"] || variables.name || "Contact"),
         title: cName,
         action: variables.name ? "Updated" : "Created",
         eventCategory: "otherRecords",

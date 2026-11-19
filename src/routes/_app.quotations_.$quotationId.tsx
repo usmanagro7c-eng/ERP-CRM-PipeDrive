@@ -141,6 +141,7 @@ function QuotationDetailPage() {
   const items = quotation.items || [];
   const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
   const grandTotal = Number(quotation.grand_total || 0);
+  const currency = quotation.currency || "PKR";
 
   async function handleSubmit() {
     try {
@@ -428,7 +429,7 @@ function QuotationDetailPage() {
                   Grand Total
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-                  <span className="text-xs font-semibold text-muted-foreground mr-1.5">PKR</span>
+                  <span className="text-xs font-semibold text-muted-foreground mr-1.5">{currency}</span>
                   {grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                 </div>
                 <Button
@@ -465,9 +466,9 @@ function QuotationDetailPage() {
                         <TableHead className="w-[50px] pl-4">#</TableHead>
                         <TableHead className="min-w-[180px]">Item Code / Name</TableHead>
                         <TableHead className="text-right w-[90px]">Qty</TableHead>
-                        <TableHead className="text-right min-w-[110px]">Rate (PKR)</TableHead>
+                        <TableHead className="text-right min-w-[110px]">Rate ({currency})</TableHead>
                         <TableHead className="text-right min-w-[120px] pr-4">
-                          Amount (PKR)
+                          Amount ({currency})
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -535,7 +536,7 @@ function QuotationDetailPage() {
                     <div className="flex justify-between w-full sm:w-64 text-muted-foreground">
                       <span>Net Total:</span>
                       <strong className="text-foreground">
-                        PKR{" "}
+                        {currency}{" "}
                         {Number(quotation.net_total).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                         })}
@@ -545,7 +546,7 @@ function QuotationDetailPage() {
                   <div className="flex justify-between w-full sm:w-64 pt-2 border-t border-border/60 text-sm font-bold text-foreground">
                     <span>Grand Total:</span>
                     <span>
-                      PKR {grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      {currency} {grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

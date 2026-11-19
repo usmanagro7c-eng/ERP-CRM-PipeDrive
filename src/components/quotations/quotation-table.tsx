@@ -238,7 +238,7 @@ export function QuotationTable({
 
                 {/* Grand Total */}
                 <TableCell className="text-xs font-semibold text-foreground py-2 whitespace-nowrap">
-                  PKR {Number(row.grand_total || 0).toLocaleString()}
+                  {(row.currency as string) || "PKR"} {Number(row.grand_total || 0).toLocaleString()}
                 </TableCell>
 
                 {/* Valid Till */}

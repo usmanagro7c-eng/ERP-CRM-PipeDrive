@@ -113,6 +113,7 @@ export function RecordQuotationsTab({
         <div className="space-y-2 pb-8">
           {linkedQuotations.map((q: Quotation) => {
             const amount = Number(q.grand_total) || 0;
+            const currency = q.currency || "PKR";
             const dateStr = q.transaction_date || "";
             return (
               <div
@@ -136,7 +137,7 @@ export function RecordQuotationsTab({
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">
                       <span>
-                        PKR {amount.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        {currency} {amount.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                       </span>
                       {dateStr && <span className="ml-2">· {dateStr}</span>}
                     </div>

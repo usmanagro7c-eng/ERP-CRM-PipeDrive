@@ -277,6 +277,7 @@ export function QuotationKanban({
         const list = grouped.get(col.key) ?? [];
         const isOver = dragOverCol === col.key;
         const totalAmount = list.reduce((sum, q) => sum + (Number(q.grand_total) || 0), 0);
+        const laneCurrency = (list[0]?.currency as string) || "PKR";
 
         return (
           <div
@@ -322,7 +323,7 @@ export function QuotationKanban({
                   <Trash2 className="size-3.5" />
                 </Button>
                 <span className="text-[11px] font-semibold text-muted-foreground">
-                  PKR {totalAmount.toLocaleString()}
+                  {laneCurrency} {totalAmount.toLocaleString()}
                 </span>
                 {col.key === "Draft" && onAddQuotation && (
                   <Button
@@ -511,7 +512,7 @@ export function QuotationKanban({
                           <span>{q.transaction_date || "-"}</span>
                         </span>
                         <span className="font-bold text-xs text-foreground">
-                          PKR {Number(q.grand_total || 0).toLocaleString()}
+                          {(q.currency as string) || "PKR"} {Number(q.grand_total || 0).toLocaleString()}
                         </span>
                       </div>
 

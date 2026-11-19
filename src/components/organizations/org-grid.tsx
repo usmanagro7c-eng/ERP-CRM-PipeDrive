@@ -140,6 +140,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
         const employeesVal =
           typeof org["no_of_employees"] === "string" ? org["no_of_employees"] : null;
         const revenueVal = typeof org["annual_revenue"] === "number" ? org["annual_revenue"] : null;
+        const currency = String(org["currency"] || "PKR");
         const territoryVal = typeof org["territory"] === "string" ? org["territory"] : null;
         const website = typeof org["website"] === "string" ? org["website"] : null;
         const description =
@@ -307,7 +308,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
                 <div className="flex items-center justify-between text-xs pt-1">
                   <span className="text-muted-foreground">Annual Revenue</span>
                   <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                    PKR{" "}
+                    {currency}{" "}
                     {revenueVal >= 1_000_000
                       ? `${(revenueVal / 1_000_000).toFixed(1)}M`
                       : revenueVal.toLocaleString()}

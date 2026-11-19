@@ -15,9 +15,10 @@ import type { QuotationItem } from "@/lib/api";
 interface ItemRowPickerProps {
   items: QuotationItem[];
   onChange: (items: QuotationItem[]) => void;
+  currency?: string | undefined;
 }
 
-export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
+export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPickerProps) {
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
 
   function handleAddItem() {
@@ -97,8 +98,8 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
                   <th className="w-10 py-2.5 px-3 text-center">#</th>
                   <th className="py-2.5 px-3 text-left min-w-[200px]">Item</th>
                   <th className="w-24 py-2.5 px-3 text-center">Qty</th>
-                  <th className="w-32 py-2.5 px-3 text-right">Rate (PKR)</th>
-                  <th className="w-32 py-2.5 px-3 text-right">Amount (PKR)</th>
+                  <th className="w-32 py-2.5 px-3 text-right">Rate ({currency})</th>
+                  <th className="w-32 py-2.5 px-3 text-right">Amount ({currency})</th>
                   <th className="w-10 py-2.5 px-2 text-center"></th>
                 </tr>
               </thead>
@@ -158,7 +159,7 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
                         />
                       </td>
                       <td className="py-2.5 px-3 text-right font-semibold text-xs whitespace-nowrap text-foreground">
-                        PKR {Number(row.amount || row.qty * row.rate).toLocaleString()}
+                        {currency} {Number(row.amount || row.qty * row.rate).toLocaleString()}
                       </td>
                       <td className="py-2.5 px-2 text-center">
                         <Button
@@ -249,7 +250,7 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
 
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-muted-foreground">
-                        Rate (PKR)
+                        Rate ({currency})
                       </label>
                       <Input
                         type="number"
@@ -267,7 +268,7 @@ export function ItemRowPicker({ items, onChange }: ItemRowPickerProps) {
                   <div className="flex items-center justify-between pt-1.5 border-t border-border/40 text-xs">
                     <span className="text-muted-foreground">Amount:</span>
                     <span className="font-semibold text-foreground">
-                      PKR {Number(row.amount || row.qty * row.rate).toLocaleString()}
+                      {currency} {Number(row.amount || row.qty * row.rate).toLocaleString()}
                     </span>
                   </div>
                 </div>

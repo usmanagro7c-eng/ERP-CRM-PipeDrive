@@ -143,6 +143,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
         {SALES_ORDER_STAGES.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
         const list = grouped.get(col.key) ?? [];
         const totalAmount = list.reduce((sum, o) => sum + (Number(o.grand_total) || 0), 0);
+        const laneCurrency = (list[0]?.currency as string) || "PKR";
 
         return (
           <div
@@ -168,7 +169,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                   <Trash2 className="size-3.5" />
                 </Button>
                 <span className="text-[11px] font-semibold text-muted-foreground">
-                  PKR {totalAmount.toLocaleString()}
+                  {laneCurrency} {totalAmount.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -249,7 +250,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                           <span>{order.transaction_date}</span>
                         </span>
                         <span className="font-bold text-xs text-primary">
-                          PKR {Number(order.grand_total || 0).toLocaleString()}
+                          {(order.currency as string) || "PKR"} {Number(order.grand_total || 0).toLocaleString()}
                         </span>
                       </div>
                     </div>

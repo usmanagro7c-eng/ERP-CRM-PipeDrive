@@ -820,16 +820,23 @@ export interface SalesOrder {
   [key: string]: unknown;
 }
 
-export async function listItems(search?: string): Promise<Item[]> {
+export async function listItems(search?: string, limit = 500): Promise<Item[]> {
   const query = new URLSearchParams();
   query.set(
     "fields",
     JSON.stringify(["name", "item_name", "item_group", "stock_uom", "standard_rate", "image"]),
   );
-  query.set("limit_page_length", "50");
+  query.set("limit_page_length", String(limit));
   query.set("order_by", "name asc");
-  if (search) {
-    query.set("filters", JSON.stringify([["item_name", "like", `%${search}%`]]));
+  if (search && search.trim()) {
+    const term = search.trim();
+    query.set(
+      "or_filters",
+      JSON.stringify([
+        ["item_name", "like", `%${term}%`],
+        ["name", "like", `%${term}%`],
+      ]),
+    );
   }
   const payload = await proxyRequest(`api/resource/${ITEM_DOCTYPE}?${query.toString()}`);
   const data = unwrapResourceData<unknown>(payload);

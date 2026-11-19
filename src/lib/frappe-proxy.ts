@@ -165,7 +165,7 @@ export const UPLOAD_DOCTYPES = new Set([...RECORD_DOCTYPES, ITEM_DOCTYPE, CUSTOM
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_LINK_ROWS = 1000;
 /** Hard cap for any single list read of a main resource. */
-export const MAX_MAIN_ROWS = 200;
+export const MAX_MAIN_ROWS = 500;
 /** Hard cap for File / Comment / Communication list reads. */
 export const MAX_REFERENCE_ROWS = 100;
 /** Maximum length of a Frappe document name. */

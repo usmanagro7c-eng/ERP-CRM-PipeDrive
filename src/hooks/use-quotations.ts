@@ -43,10 +43,10 @@ export function quotationDetailOptions(name: string) {
   });
 }
 
-export function itemsListOptions(search?: string) {
+export function itemsListOptions(search?: string, limit = 500) {
   return queryOptions({
-    queryKey: ["items", "list", search],
-    queryFn: () => api.listItems(search),
+    queryKey: ["items", "list", search, limit],
+    queryFn: () => api.listItems(search, limit),
     staleTime: 5 * 60 * 1000,
   });
 }

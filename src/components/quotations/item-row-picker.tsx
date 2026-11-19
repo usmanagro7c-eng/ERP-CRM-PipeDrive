@@ -1,21 +1,119 @@
-import { Plus, Trash2, Package } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Trash2, Package, Check, ChevronsUpDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { itemsListOptions } from "@/hooks/use-quotations";
-import type { QuotationItem } from "@/lib/api";
+import type { QuotationItem, Item } from "@/lib/api";
 
 interface ItemRowPickerProps {
   items: QuotationItem[];
   onChange: (items: QuotationItem[]) => void;
   currency?: string | undefined;
+}
+
+function SearchableItemSelect({
+  value,
+  catalogItems,
+  onSelect,
+  placeholder = "Select item...",
+}: {
+  value: string;
+  catalogItems: Item[];
+  onSelect: (itemCode: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const selectedItem = catalogItems.find((c) => c.name === value);
+  const label = selectedItem
+    ? `${selectedItem.item_name || selectedItem.name} (${selectedItem.name})`
+    : value || placeholder;
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return catalogItems.slice(0, 100);
+    const q = query.toLowerCase();
+    return catalogItems
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          (c.item_name && c.item_name.toLowerCase().includes(q)) ||
+          (c.item_group && c.item_group.toLowerCase().includes(q)),
+      )
+      .slice(0, 100);
+  }, [catalogItems, query]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-8 w-full justify-between text-xs font-normal bg-background px-2.5 hover:bg-muted/30 border-muted-foreground/20 rounded-md cursor-pointer truncate"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronsUpDown className="ml-1 size-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] sm:w-[360px] p-0 shadow-lg" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search items by name or code..."
+            value={query}
+            onValueChange={setQuery}
+            className="h-8.5 text-xs"
+          />
+          <CommandList className="max-h-60 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <CommandEmpty className="py-3 text-center text-xs text-muted-foreground">
+                No matching items found.
+              </CommandEmpty>
+            ) : (
+              <CommandGroup heading={`Items (${filtered.length})`}>
+                {filtered.map((item) => {
+                  const isSelected = item.name === value;
+                  return (
+                    <CommandItem
+                      key={item.name}
+                      value={item.name}
+                      onSelect={() => {
+                        onSelect(item.name);
+                        setOpen(false);
+                      }}
+                      className="text-xs cursor-pointer flex items-center justify-between py-1.5 px-2"
+                    >
+                      <div className="flex flex-col min-w-0 pr-2">
+                        <span className="font-medium text-foreground truncate">
+                          {item.item_name || item.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {item.name}
+                          {item.standard_rate ? ` • PKR ${Number(item.standard_rate).toLocaleString()}` : ""}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPickerProps) {
@@ -112,21 +210,11 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="space-y-1">
-                          <Select
+                          <SearchableItemSelect
                             value={row.item_code}
-                            onValueChange={(val) => handleUpdateItem(index, { item_code: val })}
-                          >
-                            <SelectTrigger className="h-8 w-full text-xs bg-background">
-                              <SelectValue placeholder="Select item" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-56">
-                              {catalogItems.map((c) => (
-                                <SelectItem key={c.name} value={c.name} className="text-xs">
-                                  {c.item_name || c.name} ({c.name})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            catalogItems={catalogItems}
+                            onSelect={(val) => handleUpdateItem(index, { item_code: val })}
+                          />
                           {row.item_name && row.item_name !== row.item_code && (
                             <div className="text-[11px] text-muted-foreground truncate max-w-[240px] pl-0.5">
                               {row.item_name}
@@ -209,21 +297,11 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                     <label className="text-[11px] font-medium text-muted-foreground">
                       Select Product
                     </label>
-                    <Select
+                    <SearchableItemSelect
                       value={row.item_code}
-                      onValueChange={(val) => handleUpdateItem(index, { item_code: val })}
-                    >
-                      <SelectTrigger className="h-8 w-full text-xs bg-background">
-                        <SelectValue placeholder="Select item" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-56">
-                        {catalogItems.map((c) => (
-                          <SelectItem key={c.name} value={c.name} className="text-xs">
-                            {c.item_name || c.name} ({c.name})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      catalogItems={catalogItems}
+                      onSelect={(val) => handleUpdateItem(index, { item_code: val })}
+                    />
                     {row.item_name && row.item_name !== row.item_code && (
                       <div className="text-[11px] text-muted-foreground truncate pl-0.5">
                         {row.item_name}

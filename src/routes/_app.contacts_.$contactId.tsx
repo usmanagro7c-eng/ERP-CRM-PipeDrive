@@ -80,7 +80,7 @@ function ContactDetailPage() {
   const deleteMutation = useDeleteContact();
 
   // Query deals with a generous limit to catch all linked deals
-  const { data: dealsData = [] } = useQuery(
+  const { data: dealsData = [], refetch: refetchDeals } = useQuery(
     dealListOptions({ search: "", filters: [], start: 0, limit: 500, orderBy: "creation desc" }),
   );
 
@@ -274,6 +274,10 @@ function ContactDetailPage() {
       // Match 7: Deal title / deal_name mentions contact name
       const dealTitle = String(d["deal_name"] || "").trim().toLowerCase();
       if (dealTitle && contactName && dealTitle.includes(contactName.toLowerCase())) return true;
+
+      // Match 8: Deal owner or creator matches contact email or username/name
+      const dOwner = String(d["deal_owner"] || d["owner"] || "").trim().toLowerCase();
+      if (dOwner && (emails.has(dOwner) || names.has(dOwner))) return true;
 
       return false;
     });
@@ -702,7 +706,10 @@ function ContactDetailPage() {
           contact: contactId,
           organization: sidebarValues.organization,
         }}
-        onSuccess={() => void refetch()}
+        onSuccess={() => {
+          void refetch();
+          void refetchDeals();
+        }}
       />
     </div>
   );

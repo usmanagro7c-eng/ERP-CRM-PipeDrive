@@ -15,6 +15,7 @@ export interface StageChangeAlertArgs {
   toStage: string;
   organization?: string;
   dealValue?: number | string;
+  currency?: string;
   modifiedBy?: string;
 }
 
@@ -59,6 +60,7 @@ function formatStageChangeHtml(args: StageChangeAlertArgs): string {
     dateStyle: "medium",
     timeStyle: "short",
   });
+  const currency = args.currency || "PKR";
   const valStr = args.dealValue ? Number(args.dealValue).toLocaleString() : "0";
 
   return `
@@ -82,7 +84,7 @@ function formatStageChangeHtml(args: StageChangeAlertArgs): string {
     <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
       <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 140px;">Deal:</td><td style="color: #0f172a; font-weight: bold;">${args.dealTitle} (${args.dealId})</td></tr>
       ${args.organization ? `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Organization:</td><td style="color: #0f172a;">${args.organization}</td></tr>` : ""}
-      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Deal Value:</td><td style="color: #0f172a; font-weight: bold;">PKR ${valStr}</td></tr>
+      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Deal Value:</td><td style="color: #0f172a; font-weight: bold;">${currency} ${valStr}</td></tr>
       ${args.modifiedBy ? `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Modified By:</td><td style="color: #0f172a;">${args.modifiedBy}</td></tr>` : ""}
       <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Date & Time:</td><td style="color: #0f172a;">${now}</td></tr>
     </table>

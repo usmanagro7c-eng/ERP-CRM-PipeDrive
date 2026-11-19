@@ -68,8 +68,9 @@ export function useSaveSalesOrder() {
       invalidate();
       toast.success("Sales Order created");
       const itemsList = Array.isArray(order.items) ? order.items : [];
+      const cur = order.currency || "PKR";
       const itemsText = itemsList.length > 0
-        ? itemsList.map((it) => `${it.item_code || it.item_name} (x${it.qty || 1} @ PKR ${Number(it.rate || 0).toLocaleString()})`).join("; ")
+        ? itemsList.map((it) => `${it.item_code || it.item_name} (x${it.qty || 1} @ ${cur} ${Number(it.rate || 0).toLocaleString()})`).join("; ")
         : "";
 
       void notifyEntityChange({
@@ -135,8 +136,9 @@ export function useCreateSalesOrderFromQuotation() {
       invalidate();
       toast.success(`Sales Order ${order.name} created from Quotation!`);
       const itemsList = Array.isArray(order.items) ? order.items : (variables.quotation.items || []);
+      const cur = order.currency || variables.quotation.currency || "PKR";
       const itemsText = itemsList.length > 0
-        ? itemsList.map((it: any) => `${it.item_code || it.item_name} (x${it.qty || 1} @ PKR ${Number(it.rate || 0).toLocaleString()})`).join("; ")
+        ? itemsList.map((it: any) => `${it.item_code || it.item_name} (x${it.qty || 1} @ ${cur} ${Number(it.rate || 0).toLocaleString()})`).join("; ")
         : "";
 
       void notifyEntityChange({

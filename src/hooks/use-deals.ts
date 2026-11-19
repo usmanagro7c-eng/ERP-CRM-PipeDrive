@@ -153,6 +153,7 @@ export function useSaveDeal() {
             ...(variables.fromStage !== undefined ? { fromStage: variables.fromStage } : {}),
             toStage: String(variables.values["status"]),
             dealValue: (doc as Record<string, unknown>)?.["deal_value"] as number,
+            currency: String((doc as Record<string, unknown>)?.["currency"] || "PKR"),
             organization: String(
               (doc as Record<string, unknown>)?.["organization_name"] ||
                 (doc as Record<string, unknown>)?.["organization"] ||

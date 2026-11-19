@@ -46,7 +46,10 @@ function formatRelativeTime(dateStr: unknown): string {
     }
     if (diffDays === 1) return "yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? "week" : "weeks"} ago`;
+    }
     return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   } catch {
     return String(dateStr);

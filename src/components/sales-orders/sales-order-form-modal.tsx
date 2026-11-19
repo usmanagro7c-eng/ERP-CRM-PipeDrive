@@ -53,7 +53,7 @@ export function SalesOrderFormModal({
   onSuccess,
 }: SalesOrderFormModalProps) {
   const queryClient = useQueryClient();
-  const { data: customerOptions = [] } = useQuery(customersListOptions());
+  const { data: rawCustomerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
 
   const orderName = order?.name;
@@ -81,6 +81,18 @@ export function SalesOrderFormModal({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customer, setCustomer] = useState("");
+  const customerOptions = useMemo(() => {
+    const list = [...rawCustomerOptions];
+    const initialCust = initialValues?.customer?.trim();
+    if (initialCust && !list.some((c) => c.name.toLowerCase() === initialCust.toLowerCase())) {
+      list.unshift({ name: initialCust });
+    }
+    const currentCust = customer.trim();
+    if (currentCust && !list.some((c) => c.name.toLowerCase() === currentCust.toLowerCase())) {
+      list.unshift({ name: currentCust });
+    }
+    return list;
+  }, [rawCustomerOptions, initialValues?.customer, customer]);
   const [transactionDate, setTransactionDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [orderType, setOrderType] = useState("Sales");

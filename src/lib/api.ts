@@ -1139,7 +1139,66 @@ export async function getSalesOrder(name: string): Promise<SalesOrder> {
   return data as SalesOrder;
 }
 
+export async function ensureCustomer(customerName: string): Promise<string> {
+  const trimmed = customerName.trim();
+  if (!trimmed) return "";
+  try {
+    const existing = await getLinkOptions("Customer");
+    const match = existing.find(
+      (c) => c.name.trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (match) {
+      return match.name;
+    }
+  } catch {
+    // continue to create
+  }
+
+  try {
+    const payload = await proxyRequest("api/resource/Customer", {
+      method: "POST",
+      body: {
+        customer_name: trimmed,
+        customer_type: "Company",
+        customer_group: "All Customer Groups",
+        territory: "All Territories",
+      },
+    });
+    const data = unwrapResourceData<Record<string, unknown>>(payload);
+    if (data && data["name"]) {
+      return String(data["name"]);
+    }
+  } catch {
+    try {
+      const payload2 = await proxyRequest("api/resource/Customer", {
+        method: "POST",
+        body: {
+          customer_name: trimmed,
+        },
+      });
+      const data2 = unwrapResourceData<Record<string, unknown>>(payload2);
+      if (data2 && data2["name"]) {
+        return String(data2["name"]);
+      }
+    } catch (err2) {
+      console.warn("Could not auto-create Customer in ERPNext:", err2);
+    }
+  }
+
+  return trimmed;
+}
+
 export async function createSalesOrder(values: Record<string, unknown>): Promise<SalesOrder> {
+  const customerName = typeof values["customer"] === "string" ? values["customer"].trim() : "";
+  let finalCustomer = customerName;
+  if (customerName) {
+    try {
+      finalCustomer = await ensureCustomer(customerName);
+    } catch {
+      finalCustomer = customerName;
+    }
+  }
+
   const { company, currency } = await getDefaultCompany();
   const today = new Date().toISOString().split("T")[0];
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
@@ -1153,6 +1212,7 @@ export async function createSalesOrder(values: Record<string, unknown>): Promise
       transaction_date: today,
       delivery_date: nextWeek,
       ...values,
+      customer: finalCustomer || values["customer"],
     },
   });
   const data = unwrapResourceData<unknown>(payload);

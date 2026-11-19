@@ -49,6 +49,7 @@ function useInvalidateSalesOrders() {
   return () => {
     void queryClient.invalidateQueries({ queryKey: [SALES_ORDER_QUERY_ROOT] });
     void queryClient.invalidateQueries({ queryKey: [QUOTATION_QUERY_ROOT] });
+    void queryClient.invalidateQueries({ queryKey: ["customers"] });
   };
 }
 

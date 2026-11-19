@@ -440,6 +440,7 @@ export async function deleteLead(name: string): Promise<void> {
 export interface ConvertLeadToDealParams {
   leadName: string;
   dealValues: Record<string, unknown>;
+  lead?: Record<string, unknown>;
 }
 
 export async function ensureOrganization(orgName: string): Promise<string> {
@@ -482,6 +483,89 @@ export async function convertLeadToDeal(
       dealValues["organization"] = await ensureOrganization(rawOrg.trim());
     } catch {
       // Proceed with original string if auto-creation encounters issue
+    }
+  }
+
+  // Auto-link or auto-create Contact if not explicitly provided
+  let contactName = typeof dealValues["contact"] === "string" ? dealValues["contact"].trim() : "";
+  if (!contactName) {
+    let leadData: Record<string, unknown> | undefined = params.lead;
+    if (!leadData) {
+      try {
+        leadData = await getLead(params.leadName);
+      } catch {
+        leadData = undefined;
+      }
+    }
+
+    if (leadData) {
+      if (typeof leadData["contact"] === "string" && leadData["contact"].trim()) {
+        contactName = (leadData["contact"] as string).trim();
+      } else {
+        const email = String(leadData["email_id"] ?? leadData["email"] ?? "").trim();
+        const phone = String(leadData["mobile_no"] ?? leadData["phone"] ?? "").trim();
+        const firstName = String(leadData["first_name"] ?? leadData["lead_name"] ?? "").trim();
+        const lastName = String(leadData["last_name"] ?? "").trim();
+        const orgName = String(dealValues["organization"] ?? leadData["organization"] ?? "").trim();
+        const designation = String(leadData["job_title"] ?? leadData["designation"] ?? "").trim();
+
+        // 1. Search existing contact by email if present
+        if (email) {
+          try {
+            const matching = await listContacts({ search: email, limit: 5, start: 0 });
+            const found = matching.find(
+              (c) => String(c["email_id"] ?? "").toLowerCase() === email.toLowerCase(),
+            );
+            if (found && found["name"]) {
+              contactName = String(found["name"]);
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // 2. Search existing contact by phone if still not found
+        if (!contactName && phone) {
+          try {
+            const matching = await listContacts({ search: phone, limit: 5, start: 0 });
+            const found = matching.find(
+              (c) =>
+                String(c["mobile_no"] ?? "").trim() === phone ||
+                String(c["phone"] ?? "").trim() === phone,
+            );
+            if (found && found["name"]) {
+              contactName = String(found["name"]);
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // 3. Auto-create new Contact for this person if still not found
+        if (!contactName && (firstName || email || phone)) {
+          try {
+            const newContact = await createContact({
+              first_name: firstName || email || "Lead Contact",
+              last_name: lastName || undefined,
+              email_id: email || undefined,
+              mobile_no: phone || undefined,
+              company_name: orgName || undefined,
+              designation: designation || undefined,
+            });
+            if (newContact && newContact["name"]) {
+              contactName = String(newContact["name"]);
+              // Update lead record with contact
+              updateLead(params.leadName, { contact: contactName }).catch(() => {});
+            }
+          } catch (cErr) {
+            console.warn("Could not auto-create contact on lead conversion:", cErr);
+          }
+        }
+      }
+    }
+
+    if (contactName) {
+      dealValues["contact"] = contactName;
     }
   }
 

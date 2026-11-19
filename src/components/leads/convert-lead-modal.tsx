@@ -92,7 +92,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead }: ConvertLeadModalP
     return combined || String(lead["name"] ?? "");
   }, [lead]);
 
-  const leadEmail = String(lead?.["email"] ?? "");
+  const leadEmail = String(lead?.["email_id"] ?? lead?.["email"] ?? "");
   const leadPhone = String(lead?.["mobile_no"] ?? lead?.["phone"] ?? "");
   const leadOrg = String(lead?.["organization"] ?? "");
 
@@ -201,6 +201,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead }: ConvertLeadModalP
       const result = await convertMutation.mutateAsync({
         leadName: String(lead["name"]),
         dealValues,
+        lead,
       });
 
       const createdDealName = String(

@@ -152,6 +152,8 @@ export function useConvertLeadToDeal() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_ROOT] }),
         queryClient.invalidateQueries({ queryKey: ["deals"] }),
+        queryClient.invalidateQueries({ queryKey: ["contacts"] }),
+        queryClient.invalidateQueries({ queryKey: ["organizations"] }),
       ]);
     },
   });

@@ -89,21 +89,28 @@ const initialSidebarState: SidebarState = {
 };
 
 function OrganizationDetailPage() {
-  const { orgId } = Route.useParams();
+  const { orgId: rawOrgId } = Route.useParams();
+  const orgId = useMemo(() => {
+    try {
+      return decodeURIComponent(rawOrgId);
+    } catch {
+      return rawOrgId;
+    }
+  }, [rawOrgId]);
+
   const navigate = useNavigate();
 
   const { data: organization, isLoading, refetch } = useQuery(orgDetailOptions(orgId));
   const saveMutation = useSaveOrganization();
   const deleteMutation = useDeleteOrganization();
 
-  // Query all deals to link to this organization
+  // Query deals and contacts with a generous limit
   const { data: dealsData = [] } = useQuery(
-    dealListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
+    dealListOptions({ search: "", filters: [], start: 0, limit: 500, orderBy: "creation desc" }),
   );
 
-  // Query all contacts to link to this organization
   const { data: contactsData = [] } = useQuery(
-    contactListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
+    contactListOptions({ search: "", filters: [], start: 0, limit: 500, orderBy: "creation desc" }),
   );
 
   const [detailsOpen, setDetailsOpen] = useState(true);

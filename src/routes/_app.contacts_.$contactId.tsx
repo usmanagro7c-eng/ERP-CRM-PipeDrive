@@ -64,16 +64,24 @@ const initialSidebarState: SidebarState = {
 };
 
 function ContactDetailPage() {
-  const { contactId } = Route.useParams();
+  const { contactId: rawContactId } = Route.useParams();
+  const contactId = useMemo(() => {
+    try {
+      return decodeURIComponent(rawContactId);
+    } catch {
+      return rawContactId;
+    }
+  }, [rawContactId]);
+
   const navigate = useNavigate();
 
   const { data: contact, isLoading, refetch } = useQuery(contactDetailOptions(contactId));
   const saveMutation = useSaveContact();
   const deleteMutation = useDeleteContact();
 
-  // Query all deals to link to this contact
+  // Query deals with a generous limit to catch all linked deals
   const { data: dealsData = [] } = useQuery(
-    dealListOptions({ search: "", filters: [], start: 0, limit: 100, orderBy: "creation desc" }),
+    dealListOptions({ search: "", filters: [], start: 0, limit: 500, orderBy: "creation desc" }),
   );
 
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -98,8 +106,13 @@ function ContactDetailPage() {
 
       let company = String(contact["company_name"] || contact["organization"] || "");
       if (!company && Array.isArray(contact["links"])) {
-        const first = (contact["links"] as Array<Record<string, unknown>>)[0];
-        company = String(first?.["link_name"] || "");
+        const orgLink = (contact["links"] as Array<Record<string, unknown>>).find((l) => {
+          const dt = String(l["link_doctype"] || "").toLowerCase();
+          return dt === "crm organization" || dt === "customer" || dt === "organization";
+        });
+        if (orgLink) {
+          company = String(orgLink["link_name"] || "");
+        }
       }
 
       setSidebarValues({
@@ -124,33 +137,156 @@ function ContactDetailPage() {
     return combined || contactId;
   }, [contact, contactId, sidebarValues.first_name, sidebarValues.last_name]);
 
-  // Filter linked deals
+  // Robust multi-factor deal linking
   const linkedDeals = useMemo(() => {
     const allDeals = (dealsData as Array<Record<string, unknown>>) || [];
+
+    // 1. Deal names explicitly listed in contact's links child table
+    const directDealNames = new Set<string>();
+    if (contact && Array.isArray(contact["links"])) {
+      for (const link of contact["links"] as Array<Record<string, unknown>>) {
+        const dt = String(link["link_doctype"] || "").toLowerCase();
+        const nm = String(link["link_name"] || "").trim().toLowerCase();
+        if (dt === "crm deal" && nm) {
+          directDealNames.add(nm);
+        }
+      }
+    }
+
+    // 2. Organization names associated with contact
+    const orgNames = new Set<string>();
+    if (sidebarValues.organization?.trim()) {
+      orgNames.add(sidebarValues.organization.trim().toLowerCase());
+    }
+    if (contact) {
+      if (typeof contact["company_name"] === "string" && contact["company_name"].trim()) {
+        orgNames.add(contact["company_name"].trim().toLowerCase());
+      }
+      if (typeof contact["organization"] === "string" && contact["organization"].trim()) {
+        orgNames.add(contact["organization"].trim().toLowerCase());
+      }
+      if (Array.isArray(contact["links"])) {
+        for (const link of contact["links"] as Array<Record<string, unknown>>) {
+          const dt = String(link["link_doctype"] || "").toLowerCase();
+          const nm = String(link["link_name"] || "").trim().toLowerCase();
+          if ((dt === "crm organization" || dt === "customer" || dt === "organization") && nm) {
+            orgNames.add(nm);
+          }
+        }
+      }
+    }
+
+    // 3. Contact emails
+    const emails = new Set<string>();
+    if (sidebarValues.email?.trim()) {
+      emails.add(sidebarValues.email.trim().toLowerCase());
+    }
+    if (contact) {
+      if (typeof contact["email_id"] === "string" && contact["email_id"].trim()) {
+        emails.add(contact["email_id"].trim().toLowerCase());
+      }
+      if (typeof contact["email"] === "string" && contact["email"].trim()) {
+        emails.add(contact["email"].trim().toLowerCase());
+      }
+      if (Array.isArray(contact["email_ids"])) {
+        for (const em of contact["email_ids"] as Array<Record<string, unknown>>) {
+          const val = String(em["email_id"] || em["email"] || "").trim().toLowerCase();
+          if (val) emails.add(val);
+        }
+      }
+    }
+
+    // 4. Contact phones
+    const phones = new Set<string>();
+    if (sidebarValues.mobile_no?.trim()) {
+      const clean = sidebarValues.mobile_no.trim().replace(/\D/g, "");
+      if (clean) phones.add(clean);
+    }
+    if (contact) {
+      if (typeof contact["mobile_no"] === "string" && contact["mobile_no"].trim()) {
+        const clean = contact["mobile_no"].trim().replace(/\D/g, "");
+        if (clean) phones.add(clean);
+      }
+      if (typeof contact["phone"] === "string" && contact["phone"].trim()) {
+        const clean = contact["phone"].trim().replace(/\D/g, "");
+        if (clean) phones.add(clean);
+      }
+      if (Array.isArray(contact["phone_nos"])) {
+        for (const ph of contact["phone_nos"] as Array<Record<string, unknown>>) {
+          const clean = String(ph["phone"] || ph["mobile_no"] || "").trim().replace(/\D/g, "");
+          if (clean) phones.add(clean);
+        }
+      }
+    }
+
+    // 5. Contact names / IDs
+    const names = new Set<string>();
+    if (contactId?.trim()) names.add(contactId.trim().toLowerCase());
+    if (rawContactId?.trim()) names.add(rawContactId.trim().toLowerCase());
+    if (contactName?.trim()) names.add(contactName.trim().toLowerCase());
+    if (contact) {
+      if (typeof contact["name"] === "string" && contact["name"].trim()) {
+        names.add(contact["name"].trim().toLowerCase());
+      }
+      if (typeof contact["full_name"] === "string" && contact["full_name"].trim()) {
+        names.add(contact["full_name"].trim().toLowerCase());
+      }
+      if (typeof contact["first_name"] === "string" && contact["first_name"].trim()) {
+        names.add(contact["first_name"].trim().toLowerCase());
+        const combined = `${contact["first_name"]} ${contact["last_name"] || ""}`.trim().toLowerCase();
+        if (combined) names.add(combined);
+      }
+    }
+
     return allDeals.filter((d) => {
-      const dContact = String(d["contact"] || d["contact_person"] || "");
-      const dEmail = String(d["email"] || "");
-      const dOrg = String(d["organization"] || d["organization_name"] || "");
-      if (
-        dContact &&
-        (dContact === contactId || dContact.toLowerCase() === contactName.toLowerCase())
-      )
-        return true;
-      if (
-        sidebarValues.email &&
-        dEmail &&
-        dEmail.toLowerCase() === sidebarValues.email.toLowerCase()
-      )
-        return true;
-      if (
-        sidebarValues.organization &&
-        dOrg &&
-        dOrg.toLowerCase() === sidebarValues.organization.toLowerCase()
-      )
-        return true;
+      const dName = String(d["name"] || "").trim().toLowerCase();
+      // Match 1: Direct link
+      if (directDealNames.has(dName)) return true;
+
+      // Match 2: Deal contact link field
+      const dContact = String(
+        d["contact"] || d["contact_person"] || d["contact_name"] || "",
+      ).trim().toLowerCase();
+      if (dContact && names.has(dContact)) return true;
+
+      // Match 3: Deal child contacts table
+      if (Array.isArray(d["contacts"])) {
+        for (const c of d["contacts"] as Array<Record<string, unknown>>) {
+          const cName = String(c["contact"] || c["contact_name"] || "").trim().toLowerCase();
+          if (cName && names.has(cName)) return true;
+        }
+      }
+
+      // Match 4: Deal email
+      const dEmail = String(d["email"] || d["email_id"] || "").trim().toLowerCase();
+      if (dEmail && emails.has(dEmail)) return true;
+
+      // Match 5: Deal phone
+      const dPhone = String(d["mobile_no"] || d["phone"] || "").trim().replace(/\D/g, "");
+      if (dPhone && phones.has(dPhone)) return true;
+
+      // Match 6: Deal organization
+      const dOrg = String(d["organization"] || "").trim().toLowerCase();
+      const dOrgName = String(d["organization_name"] || "").trim().toLowerCase();
+      if (dOrg && orgNames.has(dOrg)) return true;
+      if (dOrgName && orgNames.has(dOrgName)) return true;
+
+      // Match 7: Deal title / deal_name mentions contact name
+      const dealTitle = String(d["deal_name"] || "").trim().toLowerCase();
+      if (dealTitle && contactName && dealTitle.includes(contactName.toLowerCase())) return true;
+
       return false;
     });
-  }, [dealsData, contactId, contactName, sidebarValues.email, sidebarValues.organization]);
+  }, [
+    dealsData,
+    contact,
+    contactId,
+    rawContactId,
+    contactName,
+    sidebarValues.email,
+    sidebarValues.mobile_no,
+    sidebarValues.organization,
+  ]);
 
   async function handleFieldSave(fieldname: string, val: string) {
     if (!contact) return;

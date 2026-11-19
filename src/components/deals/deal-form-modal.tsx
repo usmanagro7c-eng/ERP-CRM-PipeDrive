@@ -151,15 +151,31 @@ export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealF
       } else {
         const defaultOwner = users.find((u) => u.session_user)?.name || users[0]?.name || "";
         const defaultStatus = String(initialValues?.["status"] || "Qualification");
+        const initialContact = String(initialValues?.["contact"] || "");
+        const initialOrg = String(initialValues?.["organization"] || "");
+
         setFormData({
           ...defaultFormData,
           status: defaultStatus,
           deal_owner: defaultOwner,
+          organization: initialOrg,
         });
-        setChooseExistingOrg(false);
-        setChooseExistingContact(false);
-        setSelectedOrgName("");
-        setSelectedContactName("");
+
+        if (initialOrg) {
+          setChooseExistingOrg(true);
+          setSelectedOrgName(initialOrg);
+        } else {
+          setChooseExistingOrg(false);
+          setSelectedOrgName("");
+        }
+
+        if (initialContact) {
+          setChooseExistingContact(true);
+          setSelectedContactName(initialContact);
+        } else {
+          setChooseExistingContact(false);
+          setSelectedContactName("");
+        }
       }
     }
   }, [open, deal, initialValues, users]);

@@ -702,6 +702,7 @@ function ContactDetailPage() {
           contact: contactId,
           organization: sidebarValues.organization,
         }}
+        onSuccess={() => void refetch()}
       />
     </div>
   );

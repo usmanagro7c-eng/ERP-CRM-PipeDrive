@@ -50,8 +50,10 @@ import {
 } from "@/components/sales-orders/sales-order-form-modal";
 import { DealFormModal } from "@/components/deals/deal-form-modal";
 import { DealLostModal } from "@/components/deals/deal-lost-modal";
+import { ContactFormModal } from "@/components/contacts/contact-form-modal";
 import { TerritorySelect } from "@/components/territory-select";
 import { quotationListOptions } from "@/hooks/use-quotations";
+import { contactListOptions } from "@/hooks/use-contacts";
 import {
   dealDetailOptions,
   dealStatusesOptions,
@@ -147,7 +149,15 @@ const initialSidebarState: SidebarState = {
 };
 
 function DealDetailPage() {
-  const { dealId } = Route.useParams();
+  const { dealId: rawDealId } = Route.useParams();
+  const dealId = useMemo(() => {
+    try {
+      return decodeURIComponent(rawDealId);
+    } catch {
+      return rawDealId;
+    }
+  }, [rawDealId]);
+
   const navigate = useNavigate();
 
   const { data: deal, isLoading, refetch } = useQuery(dealDetailOptions(dealId));
@@ -158,7 +168,16 @@ function DealDetailPage() {
       search: "",
       filters: [],
       start: 0,
-      limit: 50,
+      limit: 500,
+      orderBy: "creation desc",
+    }),
+  );
+  const { data: contactsData = [], refetch: refetchContacts } = useQuery(
+    contactListOptions({
+      search: "",
+      filters: [],
+      start: 0,
+      limit: 500,
       orderBy: "creation desc",
     }),
   );
@@ -170,6 +189,7 @@ function DealDetailPage() {
   const [commentComposerOpen, setCommentComposerOpen] = useState(false);
   const [quotationModalOpen, setQuotationModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const [lostModalOpen, setLostModalOpen] = useState(false);
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
   const [salesOrderInitialValues, setSalesOrderInitialValues] =
@@ -233,6 +253,53 @@ function DealDetailPage() {
       return false;
     });
   }, [rawQuotations, dealId, sidebarValues.organization, deal]);
+
+  const linkedContacts = useMemo(() => {
+    const list = (contactsData as Array<Record<string, unknown>>) || [];
+    const directContact = String(
+      deal?.["contact"] || deal?.["contact_person"] || deal?.["contact_name"] || "",
+    )
+      .trim()
+      .toLowerCase();
+    const dealOrg = String(
+      sidebarValues.organization ||
+        deal?.["organization_name"] ||
+        deal?.["organization"] ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
+    const dealEmail = String(deal?.["email"] || "").trim().toLowerCase();
+
+    return list.filter((c) => {
+      const cName = String(c["name"] || "").trim().toLowerCase();
+      const cFullName = String(
+        c["full_name"] || `${c["first_name"] || ""} ${c["last_name"] || ""}`,
+      )
+        .trim()
+        .toLowerCase();
+      if (directContact && (cName === directContact || cFullName === directContact)) return true;
+
+      // Check if contact has this deal in links child table
+      if (Array.isArray(c["links"])) {
+        for (const l of c["links"] as Array<Record<string, unknown>>) {
+          const dt = String(l["link_doctype"] || "").toLowerCase();
+          const nm = String(l["link_name"] || "").trim().toLowerCase();
+          if (dt === "crm deal" && nm === dealId.toLowerCase()) return true;
+        }
+      }
+
+      // Check if contact belongs to this deal's organization
+      const cCompany = String(c["company_name"] || c["organization"] || "").trim().toLowerCase();
+      if (dealOrg && cCompany && cCompany === dealOrg) return true;
+
+      // Check if email matches
+      const cEmail = String(c["email_id"] || c["email"] || "").trim().toLowerCase();
+      if (dealEmail && cEmail && cEmail === dealEmail) return true;
+
+      return false;
+    });
+  }, [contactsData, deal, sidebarValues.organization, dealId]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function handleConvertToSalesOrder(quotation?: any) {
@@ -1007,16 +1074,51 @@ function DealDetailPage() {
                 variant="ghost"
                 size="icon"
                 className="size-5 text-muted-foreground hover:text-foreground cursor-pointer"
-                onClick={() => toast.info("Add Contact to Deal")}
+                onClick={() => setContactModalOpen(true)}
                 title="Add Contact"
               >
                 <Plus className="size-3" />
               </Button>
             </div>
             <CollapsibleContent className="pt-1 text-xs">
-              <div className="text-muted-foreground text-xs py-2 text-center bg-muted/20 rounded-md">
-                No Contacts Added
-              </div>
+              {linkedContacts.length === 0 ? (
+                <div className="text-muted-foreground text-xs py-2 text-center bg-muted/20 rounded-md">
+                  No Contacts Added
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {linkedContacts.map((c) => {
+                    const cId = String(c["name"] || "");
+                    const cName = String(
+                      c["first_name"] ? `${c["first_name"]} ${c["last_name"] || ""}` : cId,
+                    );
+                    const cEmail = String(c["email_id"] || c["email"] || "");
+                    const cPhone = String(c["mobile_no"] || c["phone"] || "");
+                    const cRole = String(c["designation"] || c["job_title"] || "");
+                    return (
+                      <Link
+                        key={cId}
+                        to="/contacts/$contactId"
+                        params={{ contactId: cId }}
+                        className="flex items-center justify-between p-2 rounded-md border border-border/60 bg-muted/30 hover:bg-muted/70 transition-colors group cursor-pointer"
+                      >
+                        <div className="min-w-0 pr-1">
+                          <div className="font-medium text-xs text-foreground group-hover:text-primary transition-colors truncate">
+                            {cName}
+                          </div>
+                          {(cRole || cEmail || cPhone) && (
+                            <div className="text-[10px] text-muted-foreground truncate">
+                              {cRole ? `${cRole} · ` : ""}
+                              {cEmail || cPhone}
+                            </div>
+                          )}
+                        </div>
+                        <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </CollapsibleContent>
           </Collapsible>
 
@@ -1283,6 +1385,18 @@ function DealDetailPage() {
           crm_deal: dealId,
           items: dealQuotationItems.length > 0 ? dealQuotationItems : undefined,
         }}
+      />
+
+      {/* Add Contact Modal */}
+      <ContactFormModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        initialValues={{
+          company_name:
+            sidebarValues.organization ||
+            String(deal?.["organization_name"] || deal?.["organization"] || ""),
+        }}
+        onSuccess={() => void refetchContacts()}
       />
 
       {/* Create / Convert to Sales Order Modal */}

@@ -158,16 +158,32 @@ function OrganizationDetailPage() {
     });
   }, [dealsData, orgId, orgName]);
 
-  // Linked Contacts: match by company_name or organization
+  // Linked Contacts: match by company_name, organization, or links child table
   const linkedContacts = useMemo(() => {
     const list = Array.isArray(contactsData) ? contactsData : [];
+    const currentId = orgId.trim().toLowerCase();
+    const currentName = orgName.trim().toLowerCase();
+
     return list.filter((c) => {
       const company = String(c["company_name"] || c["organization"] || "")
         .trim()
         .toLowerCase();
-      const currentId = orgId.trim().toLowerCase();
-      const currentName = orgName.trim().toLowerCase();
-      return company === currentId || company === currentName;
+      if (company === currentId || company === currentName) return true;
+
+      if (Array.isArray(c["links"])) {
+        for (const l of c["links"] as Array<Record<string, unknown>>) {
+          const dt = String(l["link_doctype"] || "").toLowerCase();
+          const nm = String(l["link_name"] || "").trim().toLowerCase();
+          if (
+            (dt === "crm organization" || dt === "customer" || dt === "organization") &&
+            (nm === currentId || nm === currentName)
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     });
   }, [contactsData, orgId, orgName]);
 
@@ -643,12 +659,14 @@ function OrganizationDetailPage() {
         open={dealModalOpen}
         onOpenChange={setDealModalOpen}
         initialValues={{ organization: orgName }}
+        onSuccess={() => void refetch()}
       />
 
       <ContactFormModal
         open={contactModalOpen}
         onOpenChange={setContactModalOpen}
         initialValues={{ company_name: orgName }}
+        onSuccess={() => void refetch()}
       />
     </div>
   );

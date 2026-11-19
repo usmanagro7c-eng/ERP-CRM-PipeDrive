@@ -26,11 +26,12 @@ import { type FrappeDocTypeMeta } from "@/lib/frappe-meta";
 interface DealFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meta?: FrappeDocTypeMeta;
+  meta?: FrappeDocTypeMeta | undefined;
   /** Existing doc when editing; null when creating. */
-  deal?: Record<string, unknown> | null;
+  deal?: Record<string, unknown> | null | undefined;
   /** Optional initial field values */
-  initialValues?: Record<string, unknown> | null;
+  initialValues?: Record<string, unknown> | null | undefined;
+  onSuccess?: ((savedDeal: Record<string, unknown>) => void) | undefined;
 }
 
 const SALUTATIONS = ["Mr", "Ms", "Mx", "Dr", "Mrs", "Madam", "Miss", "Master", "Prof"];
@@ -103,7 +104,13 @@ const defaultFormData: FormDataState = {
   deal_owner: "",
 };
 
-export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealFormModalProps) {
+export function DealFormModal({
+  open,
+  onOpenChange,
+  deal,
+  initialValues,
+  onSuccess,
+}: DealFormModalProps) {
   const isEdit = Boolean(deal);
   const saveMutation = useSaveDeal();
   const { data: users = [] } = useCrmUsers();
@@ -221,10 +228,11 @@ export function DealFormModal({ open, onOpenChange, deal, initialValues }: DealF
     }
 
     try {
-      await saveMutation.mutateAsync({
+      const saved = await saveMutation.mutateAsync({
         name: deal ? String(deal["name"]) : undefined,
         values: payload,
       });
+      onSuccess?.(saved);
       onOpenChange(false);
     } catch {
       // toast shown by hook

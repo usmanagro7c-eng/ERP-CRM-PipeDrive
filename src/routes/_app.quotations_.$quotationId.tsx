@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -81,7 +81,15 @@ function QuotationStatusBadge({ status }: { status?: string }) {
 }
 
 function QuotationDetailPage() {
-  const { quotationId } = Route.useParams();
+  const { quotationId: rawQuotationId } = Route.useParams();
+  const quotationId = useMemo(() => {
+    try {
+      return decodeURIComponent(rawQuotationId);
+    } catch {
+      return rawQuotationId;
+    }
+  }, [rawQuotationId]);
+
   const navigate = useNavigate();
 
   const {

@@ -144,7 +144,15 @@ const initialSidebarState: SidebarState = {
 };
 
 function LeadDetailPage() {
-  const { leadId } = Route.useParams();
+  const { leadId: rawLeadId } = Route.useParams();
+  const leadId = useMemo(() => {
+    try {
+      return decodeURIComponent(rawLeadId);
+    } catch {
+      return rawLeadId;
+    }
+  }, [rawLeadId]);
+
   const navigate = useNavigate();
 
   const { data: lead, isLoading } = useQuery(leadDetailOptions(leadId));

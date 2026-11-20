@@ -801,8 +801,8 @@ function DealDetailPage() {
       {/* Main 2-Column Content Layout (Feed Tabs + Right Side-Panel) */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left / Center Tab Canvas */}
-        <div className="flex-none lg:flex-1 flex flex-col min-w-0 lg:border-r border-border justify-between">
-          <div className="flex-1 flex flex-col">
+        <div className="flex-none lg:flex-1 flex flex-col min-w-0 lg:border-r border-border justify-between lg:h-full lg:min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col">
             {/* Horizontal Tabs List (All 9 Tabs) */}
             <div className="flex items-center gap-1 border-b px-4 overflow-x-auto scrollbar-none bg-card/30 shrink-0">
               {tabs.map((tab) => {
@@ -830,7 +830,7 @@ function DealDetailPage() {
             </div>
 
             {/* Tab Content Panel */}
-            <div className="p-4 sm:p-6 flex-1 flex flex-col overflow-y-auto">
+            <div className="p-4 sm:p-6 flex-1 min-h-0 flex flex-col overflow-visible lg:overflow-y-auto">
               {activeTab === "activity" && (
                 <RecordActivityFeed
                   referenceDoctype={api.DEAL_DOCTYPE}
@@ -955,7 +955,7 @@ function DealDetailPage() {
         </div>
 
         {/* Right Sidebar (Record Attributes & Details Panel) Matching Frappe CRM */}
-        <div className="order-first w-full lg:order-none lg:w-80 shrink-0 border-b lg:border-b-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+        <div className="order-first w-full lg:order-none lg:w-80 shrink-0 border-b lg:border-b-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0">
           {/* Top Identifier & Avatar */}
           <div>
             <div className="text-xs text-muted-foreground font-sans">{dealId}</div>

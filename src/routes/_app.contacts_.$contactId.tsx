@@ -382,7 +382,7 @@ function ContactDetailPage() {
       {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* LEFT COLUMN: Sidebar (Details & Contact Attributes) */}
-        <div className="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card/30 p-4 sm:p-5 flex flex-col gap-5 overflow-y-auto">
+        <div className="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card/30 p-4 sm:p-5 flex flex-col gap-5 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0">
           {/* Avatar & Contact Name & Delete */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -595,7 +595,7 @@ function ContactDetailPage() {
         </div>
 
         {/* RIGHT COLUMN: Canvas with "Deals {count}" Tab matching Frappe CRM */}
-        <div className="flex-none lg:flex-1 flex flex-col min-w-0 bg-background">
+        <div className="flex-none lg:flex-1 flex flex-col min-w-0 bg-background lg:h-full lg:min-h-0 lg:overflow-hidden">
           {/* Tab Header Bar */}
           <div className="flex items-center border-b border-border/70 bg-card/20 px-4 shrink-0 sm:px-6">
             <button className="flex items-center gap-2 px-3 py-3 text-xs font-semibold border-b-2 border-primary text-foreground -mb-px">
@@ -608,7 +608,7 @@ function ContactDetailPage() {
           </div>
 
           {/* Deals Tab Content */}
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+          <div className="p-4 sm:p-6 overflow-visible lg:overflow-y-auto flex-1 min-h-0">
             {linkedDeals.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-secondary/60 text-muted-foreground/50 mb-3">

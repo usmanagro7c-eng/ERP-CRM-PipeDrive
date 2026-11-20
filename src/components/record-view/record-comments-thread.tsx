@@ -73,7 +73,7 @@ export function RecordCommentsThread({
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[460px]">
+    <div className="flex flex-col min-h-full">
       {/* Top Header Row matching Frappe CRM: Title on left, + New Comment on right */}
       <div className="flex items-center justify-between pb-5">
         <h2 className="text-base font-semibold text-foreground">Comments</h2>

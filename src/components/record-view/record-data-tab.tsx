@@ -149,7 +149,7 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
     : [];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-1 sm:px-4 max-w-5xl">
+    <div className="flex flex-col min-h-full px-1 sm:px-4 max-w-5xl">
       {/* Top Header: Data on left, Edit icon + Save button on right matching Frappe CRM */}
       <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
         <h2 className="text-2xl font-semibold text-foreground">Data</h2>

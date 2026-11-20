@@ -374,7 +374,7 @@ function QuotationDetailPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header Banner Card */}
           <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs">

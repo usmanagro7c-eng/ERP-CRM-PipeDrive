@@ -292,7 +292,7 @@ function OrganizationDetailPage() {
       {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* LEFT COLUMN: Sidebar (Details & Organization Attributes) */}
-        <div className="flex w-full shrink-0 flex-col gap-5 overflow-y-auto border-b border-border bg-card/30 p-4 sm:p-5 lg:w-80 lg:border-b-0 lg:border-r">
+        <div className="flex w-full shrink-0 flex-col gap-5 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0 border-b border-border bg-card/30 p-4 sm:p-5 lg:w-80 lg:border-b-0 lg:border-r">
           {/* Avatar & Organization Name & Delete */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -476,7 +476,7 @@ function OrganizationDetailPage() {
         </div>
 
         {/* RIGHT COLUMN: Canvas with Deals & Contacts Tabs */}
-        <div className="flex-none lg:flex-1 flex flex-col overflow-y-auto p-4 sm:p-6">
+        <div className="flex-none lg:flex-1 flex flex-col overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0 p-4 sm:p-6">
           {/* Top Tabs: Deals {count} & Contacts {count} */}
           <div className="flex items-center gap-4 sm:gap-6 border-b border-border pb-3">
             <button

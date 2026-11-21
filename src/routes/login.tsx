@@ -88,7 +88,7 @@ export function LoginPage() {
       if (user.isDedicatedSystem) {
         await navigate({ to: "/settings", search: {} });
       } else {
-        await navigate({ to: "/organizations", search: {} });
+        await navigate({ to: "/dashboard", search: {} });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed. Check your credentials.");

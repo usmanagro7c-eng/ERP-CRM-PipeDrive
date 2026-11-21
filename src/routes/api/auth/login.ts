@@ -79,14 +79,8 @@ async function login(request: Request): Promise<Response> {
     loginResponse = new Response(null, { status: 502 });
   }
 
-  // If primary site fails with 401/403/502 and secondary is different, try secondary (ERPNext)
-  if (
-    (loginResponse.status === 401 ||
-      loginResponse.status === 403 ||
-      loginResponse.status === 502) &&
-    secondaryBase &&
-    secondaryBase !== primaryBase
-  ) {
+  // If primary site fails with any error and secondary is configured, try secondary (ERPNext)
+  if (!loginResponse.ok && secondaryBase && secondaryBase !== primaryBase) {
     try {
       const secondaryResponse = await fetch(`${secondaryBase}/api/method/login`, {
         method: "POST",
@@ -117,6 +111,15 @@ async function login(request: Request): Promise<Response> {
     return jsonResponse({ error: "Invalid username or password" }, 401);
   }
   if (!loginResponse.ok) {
+    if (loginResponse.status === 523) {
+      return jsonResponse(
+        {
+          error:
+            "Backend ERP/CRM server is currently unreachable (Cloudflare 523). Please check if your Frappe server is online.",
+        },
+        502,
+      );
+    }
     return jsonResponse({ error: `Login failed (${loginResponse.status})` }, 502);
   }
 

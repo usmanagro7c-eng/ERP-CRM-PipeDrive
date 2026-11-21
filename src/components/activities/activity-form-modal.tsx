@@ -127,6 +127,15 @@ export function ActivityFormModal({
       description: formData.description.trim() || null,
     };
 
+    const refDoc = (activity?.["reference_doctype"] || initialValues?.["reference_doctype"]) as
+      | string
+      | undefined;
+    if (refDoc) payload["reference_doctype"] = refDoc;
+    const refName = (activity?.["reference_docname"] || initialValues?.["reference_docname"]) as
+      | string
+      | undefined;
+    if (refName) payload["reference_docname"] = refName;
+
     try {
       const result = await saveMutation.mutateAsync({
         name: docName,

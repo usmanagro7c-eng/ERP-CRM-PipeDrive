@@ -61,12 +61,15 @@ export interface SaveSalesOrderInput {
 export function useSaveSalesOrder() {
   const invalidate = useInvalidateSalesOrders();
   return useMutation({
-    mutationFn: async ({ values }: SaveSalesOrderInput) => {
+    mutationFn: async ({ name, values }: SaveSalesOrderInput) => {
+      if (name) {
+        return api.updateSalesOrder(name, values);
+      }
       return api.createSalesOrder(values);
     },
-    onSuccess: async (order) => {
+    onSuccess: async (order, variables) => {
       invalidate();
-      toast.success("Sales Order created");
+      toast.success(variables.name ? "Sales Order updated" : "Sales Order created");
       const itemsList = Array.isArray(order.items) ? order.items : [];
       const cur = order.currency || "PKR";
       const itemsText = itemsList.length > 0
@@ -115,6 +118,20 @@ export function useSubmitSalesOrder() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not submit sales order");
+    },
+  });
+}
+
+export function useDeleteSalesOrder() {
+  const invalidate = useInvalidateSalesOrders();
+  return useMutation({
+    mutationFn: (name: string) => api.deleteSalesOrder(name),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Sales Order deleted");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Could not delete sales order");
     },
   });
 }

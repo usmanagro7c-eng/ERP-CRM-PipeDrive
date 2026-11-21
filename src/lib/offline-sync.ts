@@ -114,6 +114,10 @@ export async function syncOfflineOutbox(): Promise<{ success: number; failed: nu
           await api.createCallLog(item.payload);
         } else if (item.doctype === api.LEAD_DOCTYPE) {
           await api.createLead(item.payload);
+        } else if (item.doctype === api.QUOTATION_DOCTYPE) {
+          await api.createQuotation(item.payload);
+        } else if (item.doctype === api.SALES_ORDER_DOCTYPE) {
+          await api.createSalesOrder(item.payload);
         }
       } else if (item.action === "update" && item.name) {
         if (item.doctype === api.DEAL_DOCTYPE) {
@@ -130,6 +134,10 @@ export async function syncOfflineOutbox(): Promise<{ success: number; failed: nu
           await api.updateCallLog(item.name, item.payload);
         } else if (item.doctype === api.LEAD_DOCTYPE) {
           await api.updateLead(item.name, item.payload);
+        } else if (item.doctype === api.QUOTATION_DOCTYPE) {
+          await api.updateQuotation(item.name, item.payload);
+        } else if (item.doctype === api.SALES_ORDER_DOCTYPE) {
+          await api.updateSalesOrder(item.name, item.payload);
         }
       }
       successCount++;

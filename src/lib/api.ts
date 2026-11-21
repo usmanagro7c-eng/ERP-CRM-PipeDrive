@@ -311,11 +311,55 @@ export async function getDeal(name: string): Promise<Record<string, unknown>> {
 export async function createDeal(
   values: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}`, {
+  const payload: Record<string, unknown> = { ...values };
+
+  // Keep annual_revenue and deal_value synchronized across different Frappe CRM versions
+  if (payload["annual_revenue"] !== undefined && payload["deal_value"] === undefined) {
+    payload["deal_value"] = payload["annual_revenue"];
+  } else if (payload["deal_value"] !== undefined && payload["annual_revenue"] === undefined) {
+    payload["annual_revenue"] = payload["deal_value"];
+  }
+
+  // Ensure Organization exists in Frappe CRM so LinkValidationError never occurs
+  const rawOrg = payload["organization"];
+  if (typeof rawOrg === "string" && rawOrg.trim()) {
+    try {
+      const orgName = await ensureOrganization(rawOrg.trim());
+      if (orgName) {
+        payload["organization"] = orgName;
+        payload["organization_name"] = rawOrg.trim();
+      }
+    } catch {
+      // proceed
+    }
+  }
+
+  // Ensure Contact exists in Frappe CRM if person details are given without a link
+  if (
+    !payload["contact"] &&
+    (payload["first_name"] || payload["email"] || payload["mobile_no"])
+  ) {
+    try {
+      const contactName = await ensureContact({
+        first_name: String(payload["first_name"] || payload["email"] || "Contact"),
+        last_name: payload["last_name"] ? String(payload["last_name"]) : undefined,
+        email_id: payload["email"] ? String(payload["email"]) : undefined,
+        mobile_no: payload["mobile_no"] ? String(payload["mobile_no"]) : undefined,
+        company_name: typeof rawOrg === "string" ? rawOrg.trim() : undefined,
+      });
+      if (contactName) {
+        payload["contact"] = contactName;
+      }
+    } catch {
+      // proceed
+    }
+  }
+
+  const res = await proxyRequest(`api/resource/${DEAL_DOCTYPE}`, {
     method: "POST",
-    body: values,
+    body: payload,
   });
-  const data = unwrapResourceData<unknown>(payload);
+  const data = unwrapResourceData<unknown>(res);
   return (data ?? {}) as Record<string, unknown>;
 }
 
@@ -323,11 +367,34 @@ export async function updateDeal(
   name: string,
   values: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`, {
+  const payload: Record<string, unknown> = { ...values };
+
+  // Keep annual_revenue and deal_value synchronized across different Frappe CRM versions
+  if (payload["annual_revenue"] !== undefined && payload["deal_value"] === undefined) {
+    payload["deal_value"] = payload["annual_revenue"];
+  } else if (payload["deal_value"] !== undefined && payload["annual_revenue"] === undefined) {
+    payload["annual_revenue"] = payload["deal_value"];
+  }
+
+  // Ensure Organization exists in Frappe CRM so LinkValidationError never occurs
+  const rawOrg = payload["organization"];
+  if (typeof rawOrg === "string" && rawOrg.trim()) {
+    try {
+      const orgName = await ensureOrganization(rawOrg.trim());
+      if (orgName) {
+        payload["organization"] = orgName;
+        payload["organization_name"] = rawOrg.trim();
+      }
+    } catch {
+      // proceed
+    }
+  }
+
+  const res = await proxyRequest(`api/resource/${DEAL_DOCTYPE}/${encodeURIComponent(name)}`, {
     method: "PUT",
-    body: values,
+    body: payload,
   });
-  const data = unwrapResourceData<unknown>(payload);
+  const data = unwrapResourceData<unknown>(res);
   return (data ?? {}) as Record<string, unknown>;
 }
 
@@ -473,6 +540,87 @@ export async function ensureOrganization(orgName: string): Promise<string> {
   }
 }
 
+export async function ensureContact(args: {
+  first_name: string;
+  last_name?: string | undefined;
+  email_id?: string | undefined;
+  mobile_no?: string | undefined;
+  company_name?: string | undefined;
+  designation?: string | undefined;
+}): Promise<string> {
+  const email = (args.email_id || "").trim();
+  const phone = (args.mobile_no || "").trim();
+
+  // 1. Search existing contact by email if present
+  if (email) {
+    try {
+      const matching = await listContacts({
+        search: "",
+        filters: [["email_id", "=", email]],
+        limit: 5,
+        start: 0,
+      });
+      const found = matching.find(
+        (c) => String(c["email_id"] ?? "").toLowerCase() === email.toLowerCase(),
+      );
+      if (found && found["name"]) {
+        return String(found["name"]);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Search existing contact by phone if still not found
+  if (phone) {
+    try {
+      let matching = await listContacts({
+        search: "",
+        filters: [["mobile_no", "=", phone]],
+        limit: 5,
+        start: 0,
+      });
+      if (matching.length === 0) {
+        matching = await listContacts({
+          search: "",
+          filters: [["phone", "=", phone]],
+          limit: 5,
+          start: 0,
+        });
+      }
+      const found = matching.find(
+        (c) =>
+          String(c["mobile_no"] ?? "").trim() === phone ||
+          String(c["phone"] ?? "").trim() === phone,
+      );
+      if (found && found["name"]) {
+        return String(found["name"]);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Create new Contact if not found
+  try {
+    const newContact = await createContact({
+      first_name: args.first_name || email || "Contact",
+      last_name: args.last_name || undefined,
+      email_id: email || undefined,
+      mobile_no: phone || undefined,
+      company_name: args.company_name || undefined,
+      designation: args.designation || undefined,
+    });
+    if (newContact && newContact["name"]) {
+      return String(newContact["name"]);
+    }
+  } catch {
+    // ignore
+  }
+
+  return "";
+}
+
 export async function convertLeadToDeal(
   params: ConvertLeadToDealParams,
 ): Promise<{ deal: Record<string, unknown>; lead: Record<string, unknown> }> {
@@ -509,75 +657,16 @@ export async function convertLeadToDeal(
         const orgName = String(dealValues["organization"] ?? leadData["organization"] ?? "").trim();
         const designation = String(leadData["job_title"] ?? leadData["designation"] ?? "").trim();
 
-        // 1. Search existing contact by email if present
-        if (email) {
-          try {
-            const matching = await listContacts({
-              search: "",
-              filters: [["email_id", "=", email]],
-              limit: 5,
-              start: 0,
-            });
-            const found = matching.find(
-              (c) => String(c["email_id"] ?? "").toLowerCase() === email.toLowerCase(),
-            );
-            if (found && found["name"]) {
-              contactName = String(found["name"]);
-            }
-          } catch {
-            // ignore
-          }
-        }
-
-        // 2. Search existing contact by phone if still not found
-        if (!contactName && phone) {
-          try {
-            let matching = await listContacts({
-              search: "",
-              filters: [["mobile_no", "=", phone]],
-              limit: 5,
-              start: 0,
-            });
-            if (matching.length === 0) {
-              matching = await listContacts({
-                search: "",
-                filters: [["phone", "=", phone]],
-                limit: 5,
-                start: 0,
-              });
-            }
-            const found = matching.find(
-              (c) =>
-                String(c["mobile_no"] ?? "").trim() === phone ||
-                String(c["phone"] ?? "").trim() === phone,
-            );
-            if (found && found["name"]) {
-              contactName = String(found["name"]);
-            }
-          } catch {
-            // ignore
-          }
-        }
-
-        // 3. Auto-create new Contact for this person if still not found
-        if (!contactName && (firstName || email || phone)) {
-          try {
-            const newContact = await createContact({
-              first_name: firstName || email || "Lead Contact",
-              last_name: lastName || undefined,
-              email_id: email || undefined,
-              mobile_no: phone || undefined,
-              company_name: orgName || undefined,
-              designation: designation || undefined,
-            });
-            if (newContact && newContact["name"]) {
-              contactName = String(newContact["name"]);
-              // Update lead record with contact
-              updateLead(params.leadName, { contact: contactName }).catch(() => {});
-            }
-          } catch (cErr) {
-            console.warn("Could not auto-create contact on lead conversion:", cErr);
-          }
+        contactName = await ensureContact({
+          first_name: firstName || email || "Lead Contact",
+          last_name: lastName || undefined,
+          email_id: email || undefined,
+          mobile_no: phone || undefined,
+          company_name: orgName || undefined,
+          designation: designation || undefined,
+        });
+        if (contactName) {
+          updateLead(params.leadName, { contact: contactName }).catch(() => {});
         }
       }
     }
@@ -741,7 +830,9 @@ export async function getContact(name: string): Promise<Record<string, unknown>>
   return data as Record<string, unknown>;
 }
 
-function normalizeContactPayload(values: Record<string, unknown>): Record<string, unknown> {
+async function normalizeContactPayload(
+  values: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
   const payload: Record<string, unknown> = { ...values };
 
   const email = typeof payload["email_id"] === "string" ? payload["email_id"].trim() : "";
@@ -768,7 +859,13 @@ function normalizeContactPayload(values: Record<string, unknown>): Record<string
     company &&
     (!Array.isArray(payload["links"]) || (payload["links"] as unknown[]).length === 0)
   ) {
-    payload["links"] = [{ link_doctype: ORG_DOCTYPE, link_name: company }];
+    let orgDocName = company;
+    try {
+      orgDocName = await ensureOrganization(company);
+    } catch {
+      // ignore
+    }
+    payload["links"] = [{ link_doctype: ORG_DOCTYPE, link_name: orgDocName }];
   }
 
   return payload;
@@ -777,9 +874,10 @@ function normalizeContactPayload(values: Record<string, unknown>): Record<string
 export async function createContact(
   values: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
+  const normalized = await normalizeContactPayload(values);
   const payload = await proxyRequest(`api/resource/${CONTACT_DOCTYPE}`, {
     method: "POST",
-    body: normalizeContactPayload(values),
+    body: normalized,
   });
   const data = unwrapResourceData<unknown>(payload);
   return (data ?? {}) as Record<string, unknown>;
@@ -789,11 +887,12 @@ export async function updateContact(
   name: string,
   values: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
+  const normalized = await normalizeContactPayload(values);
   const payload = await proxyRequest(
     `api/resource/${CONTACT_DOCTYPE}/${encodeURIComponent(name)}`,
     {
       method: "PUT",
-      body: normalizeContactPayload(values),
+      body: normalized,
     },
   );
   const data = unwrapResourceData<unknown>(payload);
@@ -996,6 +1095,7 @@ export async function syncDealProductsFromQuotation(
     }));
     await updateDeal(dealName, {
       deal_value: total,
+      annual_revenue: total,
       products,
     });
   } catch (err) {
@@ -1026,6 +1126,16 @@ export async function getDefaultCompany(): Promise<{ company: string; currency: 
 }
 
 export async function createQuotation(values: Record<string, unknown>): Promise<Quotation> {
+  const partyName = typeof values["party_name"] === "string" ? values["party_name"].trim() : "";
+  let finalParty = partyName;
+  if (partyName && (!values["quotation_to"] || values["quotation_to"] === "Customer")) {
+    try {
+      finalParty = await ensureCustomer(partyName);
+    } catch {
+      finalParty = partyName;
+    }
+  }
+
   const { company, currency } = await getDefaultCompany();
   const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}`, {
     method: "POST",
@@ -1039,6 +1149,7 @@ export async function createQuotation(values: Record<string, unknown>): Promise<
       plc_conversion_rate: 1.0,
       transaction_date: new Date().toISOString().split("T")[0],
       ...values,
+      party_name: finalParty || values["party_name"],
     },
   });
   const data = unwrapResourceData<unknown>(payload);
@@ -1058,12 +1169,27 @@ export async function updateQuotation(
   name: string,
   values: Record<string, unknown>,
 ): Promise<Quotation> {
+  const partyName = typeof values["party_name"] === "string" ? values["party_name"].trim() : "";
+  let finalParty = partyName;
+  if (partyName && (!values["quotation_to"] || values["quotation_to"] === "Customer")) {
+    try {
+      finalParty = await ensureCustomer(partyName);
+    } catch {
+      finalParty = partyName;
+    }
+  }
+
+  const body = {
+    ...values,
+    ...(finalParty ? { party_name: finalParty } : {}),
+  };
+
   try {
     const payload = await proxyRequest(
       `api/resource/${QUOTATION_DOCTYPE}/${encodeURIComponent(name)}`,
       {
         method: "PUT",
-        body: values,
+        body,
       },
     );
     const data = unwrapResourceData<unknown>(payload);
@@ -1256,6 +1382,49 @@ export async function submitSalesOrder(name: string): Promise<SalesOrder> {
   );
   const data = unwrapResourceData<unknown>(payload);
   return (data ?? {}) as SalesOrder;
+}
+
+export async function updateSalesOrder(
+  name: string,
+  values: Record<string, unknown>,
+): Promise<SalesOrder> {
+  const customerName = typeof values["customer"] === "string" ? values["customer"].trim() : "";
+  let finalCustomer = customerName;
+  if (customerName) {
+    try {
+      finalCustomer = await ensureCustomer(customerName);
+    } catch {
+      finalCustomer = customerName;
+    }
+  }
+
+  const payload = await proxyRequest(
+    `api/resource/${SALES_ORDER_DOCTYPE}/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      body: {
+        ...values,
+        ...(finalCustomer ? { customer: finalCustomer } : {}),
+      },
+    },
+  );
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as SalesOrder;
+}
+
+export async function cancelSalesOrder(name: string): Promise<SalesOrder> {
+  const payload = await proxyRequest("api/method/frappe.client.cancel", {
+    method: "POST",
+    body: { doctype: SALES_ORDER_DOCTYPE, name },
+  });
+  const data = unwrapResourceData<unknown>(payload);
+  return (data ?? {}) as SalesOrder;
+}
+
+export async function deleteSalesOrder(name: string): Promise<void> {
+  await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function createSalesOrderFromQuotation(
@@ -1623,6 +1792,24 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
       caller = "";
     }
   }
+  const summaryText = (values.summary || values.note || "").trim();
+  let noteLink = values.note;
+  if (summaryText) {
+    try {
+      const createdNote = await createNote({
+        title: `Call Note (${values.type || "Call"} - ${to || from})`,
+        content: summaryText,
+        reference_doctype: values.reference_doctype || null,
+        reference_docname: values.reference_docname || null,
+      });
+      if (createdNote && createdNote.name) {
+        noteLink = createdNote.name;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const payload = await proxyRequest(`api/resource/${CALL_LOG_DOCTYPE}`, {
     method: "POST",
     body: {
@@ -1633,8 +1820,8 @@ export async function createCallLog(values: Partial<CrmCallLog>): Promise<CrmCal
       from,
       caller: caller || undefined,
       receiver: values.receiver || undefined,
-      // `note` is a Link to "FCRM Note" on the backend, not free text, so the
-      // summary is no longer sent as `note` (it would fail link validation).
+      note: noteLink || undefined,
+      summary: summaryText || undefined,
       reference_doctype: values.reference_doctype || null,
       reference_docname: values.reference_docname || null,
     },
@@ -1647,6 +1834,24 @@ export async function updateCallLog(
   name: string,
   values: Partial<CrmCallLog>,
 ): Promise<CrmCallLog> {
+  const summaryText = (values.summary || values.note || "").trim();
+  let noteLink = values.note;
+  if (summaryText && !noteLink) {
+    try {
+      const createdNote = await createNote({
+        title: `Call Note (${values.type || "Call"})`,
+        content: summaryText,
+        reference_doctype: values.reference_doctype || null,
+        reference_docname: values.reference_docname || null,
+      });
+      if (createdNote && createdNote.name) {
+        noteLink = createdNote.name;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const payload = await proxyRequest(
     `api/resource/${CALL_LOG_DOCTYPE}/${encodeURIComponent(name)}`,
     {
@@ -1657,7 +1862,8 @@ export async function updateCallLog(
         ...(values.duration !== undefined ? { duration: values.duration } : {}),
         ...(values.to !== undefined ? { to: values.to } : {}),
         ...(values.from !== undefined ? { from: values.from } : {}),
-        // `note` is a Link to "FCRM Note", not free text; summary is not persisted.
+        ...(noteLink ? { note: noteLink } : {}),
+        ...(summaryText ? { summary: summaryText } : {}),
         ...(values.reference_doctype !== undefined
           ? { reference_doctype: values.reference_doctype }
           : {}),

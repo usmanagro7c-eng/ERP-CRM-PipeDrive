@@ -1417,7 +1417,19 @@ function DealDetailPage() {
             sidebarValues.organization ||
             String(deal?.["organization_name"] || deal?.["organization"] || ""),
         }}
-        onSuccess={() => void refetchContacts()}
+        onSuccess={async (created) => {
+          void refetchContacts();
+          const cName = created ? String(created["name"] || "") : "";
+          if (cName && !deal?.["contact"]) {
+            try {
+              await api.updateDeal(dealId, { contact: cName });
+              void refetch();
+              toast.success(`Contact linked to deal`);
+            } catch {
+              // ignore
+            }
+          }
+        }}
       />
 
       {/* Create / Convert to Sales Order Modal */}

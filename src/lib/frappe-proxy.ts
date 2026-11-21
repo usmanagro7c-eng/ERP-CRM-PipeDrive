@@ -289,7 +289,7 @@ export function classifyRequest(
       return { kind: "org-write" };
     }
     if (
-      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status|CRM Territory)\/?$/.test(
+      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Customer|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status|CRM Territory)\/?$/.test(
         path,
       )
     )

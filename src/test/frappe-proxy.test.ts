@@ -111,6 +111,8 @@ describe("classifyRequest", () => {
     expect(
       classifyRequest("DELETE", "api/resource/CRM Territory/All Territories", none),
     ).toBeNull();
+    // Customer (create-only via ensureCustomer on ERPNext)
+    expect(classifyRequest("POST", "api/resource/Customer", none)?.kind).toBe("org-write");
   });
 
   it("only allows metadata and count for the allowed CRM doctypes", () => {

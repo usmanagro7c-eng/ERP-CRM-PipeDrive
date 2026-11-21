@@ -31,7 +31,7 @@ interface NoteFormModalProps {
 const LINK_DOCTYPES = [
   { value: "CRM Lead", label: "Lead" },
   { value: "CRM Deal", label: "Deal" },
-  { value: "CRM Contact", label: "Contact" },
+  { value: "Contact", label: "Contact" },
   { value: "CRM Organization", label: "Organization" },
 ];
 

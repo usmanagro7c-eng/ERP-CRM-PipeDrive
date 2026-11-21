@@ -53,7 +53,10 @@ export function activityDetailOptions(name: string) {
 
 function useInvalidateActivities() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: [ACTIVITY_QUERY_ROOT] });
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: [ACTIVITY_QUERY_ROOT] });
+    await queryClient.invalidateQueries({ queryKey: ["crm_tasks"] });
+  };
 }
 
 export interface SaveActivityInput {

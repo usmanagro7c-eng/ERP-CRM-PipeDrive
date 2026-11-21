@@ -226,10 +226,16 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                         <Input
                           type="number"
                           min={1}
-                          value={row.qty}
-                          onChange={(e) =>
-                            handleUpdateItem(index, { qty: Math.max(1, Number(e.target.value)) })
-                          }
+                          value={row.qty || ""}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : Number(e.target.value);
+                            handleUpdateItem(index, { qty: val });
+                          }}
+                          onBlur={() => {
+                            if (!row.qty || row.qty < 1) {
+                              handleUpdateItem(index, { qty: 1 });
+                            }
+                          }}
                           className="h-8 text-xs text-center font-medium bg-background"
                           aria-label="Quantity"
                         />
@@ -238,10 +244,11 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                         <Input
                           type="number"
                           min={0}
-                          value={row.rate}
-                          onChange={(e) =>
-                            handleUpdateItem(index, { rate: Math.max(0, Number(e.target.value)) })
-                          }
+                          value={row.rate || ""}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : Number(e.target.value);
+                            handleUpdateItem(index, { rate: Math.max(0, val) });
+                          }}
                           className="h-8 text-xs text-right font-medium bg-background"
                           aria-label="Rate"
                         />
@@ -318,10 +325,16 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                       <Input
                         type="number"
                         min={1}
-                        value={row.qty}
-                        onChange={(e) =>
-                          handleUpdateItem(index, { qty: Math.max(1, Number(e.target.value)) })
-                        }
+                        value={row.qty || ""}
+                        onChange={(e) => {
+                          const val = e.target.value === "" ? 0 : Number(e.target.value);
+                          handleUpdateItem(index, { qty: val });
+                        }}
+                        onBlur={() => {
+                          if (!row.qty || row.qty < 1) {
+                            handleUpdateItem(index, { qty: 1 });
+                          }
+                        }}
                         className="h-8 text-xs bg-background text-center font-medium"
                       />
                     </div>
@@ -333,10 +346,11 @@ export function ItemRowPicker({ items, onChange, currency = "PKR" }: ItemRowPick
                       <Input
                         type="number"
                         min={0}
-                        value={row.rate}
-                        onChange={(e) =>
-                          handleUpdateItem(index, { rate: Math.max(0, Number(e.target.value)) })
-                        }
+                        value={row.rate || ""}
+                        onChange={(e) => {
+                          const val = e.target.value === "" ? 0 : Number(e.target.value);
+                          handleUpdateItem(index, { rate: Math.max(0, val) });
+                        }}
                         className="h-8 text-xs bg-background text-right font-medium"
                       />
                     </div>

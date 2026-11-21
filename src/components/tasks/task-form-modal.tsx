@@ -78,8 +78,12 @@ export function TaskFormModal({ open, onOpenChange, task, initialValues }: TaskF
     const refName = task?.reference_docname || initialValues?.reference_docname;
     if (refName) payload["reference_docname"] = refName;
 
-    await saveMutation.mutateAsync(payload);
-    onOpenChange(false);
+    try {
+      await saveMutation.mutateAsync(payload);
+      onOpenChange(false);
+    } catch {
+      // Error handled by mutation onError
+    }
   }
 
   return (

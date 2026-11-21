@@ -438,7 +438,7 @@ function QuotationDetailPage() {
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                   <span className="text-xs font-semibold text-muted-foreground mr-1.5">{currency}</span>
-                  {grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                  {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <Button
                   size="sm"
@@ -554,7 +554,7 @@ function QuotationDetailPage() {
                   <div className="flex justify-between w-full sm:w-64 pt-2 border-t border-border/60 text-sm font-bold text-foreground">
                     <span>Grand Total:</span>
                     <span>
-                      {currency} {grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      {currency} {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

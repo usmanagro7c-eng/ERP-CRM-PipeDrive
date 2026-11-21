@@ -99,7 +99,7 @@ function SettingsPage() {
     selected_nodes: [],
     include_actor: 0,
     extra_emails: "",
-    app_base_url: typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://pipedrive-crm.usman-agro7c.workers.dev",
+    app_base_url: typeof window !== "undefined" && window.location?.origin ? window.location.origin : "",
     deal_stage_change: 1,
     deal_updates: 1,
     leads: 1,
@@ -756,7 +756,7 @@ function SettingsPage() {
                       </Label>
                       <Input
                         id="app-base-url"
-                        placeholder="https://pipedrive-crm.usman-agro7c.workers.dev"
+                        placeholder={typeof window !== "undefined" ? window.location.origin : "https://your-crm-domain.com"}
                         value={formState.app_base_url || ""}
                         onChange={(e) => {
                           setFormState((prev) => ({ ...prev, app_base_url: e.target.value }));

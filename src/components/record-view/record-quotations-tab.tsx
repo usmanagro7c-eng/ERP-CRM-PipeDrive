@@ -19,12 +19,18 @@ export function RecordQuotationsTab({
   onNewQuotation,
   onConvertToSalesOrder,
 }: RecordQuotationsTabProps) {
+  const queryFilters: Array<[string, string, string]> = dealId
+    ? [["crm_deal", "=", dealId]]
+    : customerName
+      ? [["party_name", "=", customerName]]
+      : [];
+
   const { data: quotations = [], isLoading } = useQuery(
     quotationListOptions({
       search: "",
-      filters: [],
+      filters: queryFilters,
       start: 0,
-      limit: 50,
+      limit: 100,
       orderBy: "creation desc",
     }),
   );
@@ -35,9 +41,9 @@ export function RecordQuotationsTab({
     const raw = q as Record<string, unknown>;
     const crmDeal = String(raw["crm_deal"] || "");
     const party = String(q.party_name || "");
-    if (crmDeal) return crmDeal === dealId;
+    if (crmDeal && dealId) return crmDeal === dealId;
     if (customerName && party && party.toLowerCase() === customerName.toLowerCase()) return true;
-    return false;
+    return !dealId;
   });
 
   function getStatusBadge(status?: string) {

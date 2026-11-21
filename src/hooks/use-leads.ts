@@ -155,6 +155,10 @@ export function useConvertLeadToDeal() {
         queryClient.invalidateQueries({ queryKey: ["contacts"] }),
         queryClient.invalidateQueries({ queryKey: ["organizations"] }),
       ]);
+      toast.success("Lead converted to deal successfully");
+    },
+    onError: (error) => {
+      toast.error(friendlyFrappeError(error, "Could not convert lead to deal"));
     },
   });
 }

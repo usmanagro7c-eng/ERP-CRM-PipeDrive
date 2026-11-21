@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Maximize2, Minimize2, X, ShoppingCart, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -100,8 +100,15 @@ export function SalesOrderFormModal({
   const [isSubmittingDirect, setIsSubmittingDirect] = useState(false);
   const currency = String(activeOrder?.currency || quotationData?.currency || "PKR");
 
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
 
     const today = new Date().toISOString().split("T")[0]!;
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]!;

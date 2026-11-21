@@ -10,6 +10,7 @@ import {
   Mail,
   Phone,
   Plus,
+  RefreshCw,
   Sparkles,
   Trash2,
   Users,
@@ -100,7 +101,7 @@ function OrganizationDetailPage() {
 
   const navigate = useNavigate();
 
-  const { data: organization, isLoading, refetch } = useQuery(orgDetailOptions(orgId));
+  const { data: organization, isLoading, isError, error, refetch } = useQuery(orgDetailOptions(orgId));
   const saveMutation = useSaveOrganization();
   const deleteMutation = useDeleteOrganization();
 
@@ -222,6 +223,26 @@ function OrganizationDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center max-w-md mx-auto space-y-4">
+        <h2 className="text-base font-semibold text-destructive">Failed to load organization</h2>
+        <p className="text-xs text-muted-foreground">
+          {error instanceof Error ? error.message : "A network error occurred while loading this organization."}
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <Button size="sm" onClick={() => refetch()} className="gap-1.5 cursor-pointer">
+            <RefreshCw className="size-3.5" />
+            Retry
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/organizations">Back to Organizations</Link>
+          </Button>
+        </div>
       </div>
     );
   }

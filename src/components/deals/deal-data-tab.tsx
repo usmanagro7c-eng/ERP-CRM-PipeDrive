@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ChevronDown, RotateCcw, ExternalLink, Loader2, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -159,9 +159,14 @@ export function DealDataTab({
     setProducts(initialProducts);
   }, [initialProducts]);
 
+  const onProductsChangeRef = useRef(onProductsChange);
   useEffect(() => {
-    onProductsChange?.(products);
-  }, [products, onProductsChange]);
+    onProductsChangeRef.current = onProductsChange;
+  }, [onProductsChange]);
+
+  useEffect(() => {
+    onProductsChangeRef.current?.(products);
+  }, [products]);
 
   // Check if dirty
   const isDirty = useMemo(() => {

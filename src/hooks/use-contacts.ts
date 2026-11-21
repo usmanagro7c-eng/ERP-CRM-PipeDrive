@@ -134,23 +134,32 @@ export function useBulkDeleteContacts() {
     mutationFn: async (names: string[]) => {
       let succeeded = 0;
       let failed = 0;
+      const errors: string[] = [];
       for (const name of names) {
         try {
           await api.deleteContact(name);
           succeeded += 1;
-        } catch {
+        } catch (err) {
           failed += 1;
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`${name}: ${msg}`);
+          console.error(`Failed to delete contact ${name}:`, err);
         }
       }
-      return { succeeded, failed };
+      return { succeeded, failed, errors };
     },
-    onSuccess: async ({ succeeded, failed }) => {
+    onSuccess: async ({ succeeded, failed, errors }) => {
       await invalidate();
       if (failed === 0) {
         toast.success(`Deleted ${succeeded} contact${succeeded === 1 ? "" : "s"}`);
       } else {
-        toast.warning(`Deleted ${succeeded} contact(s); ${failed} failed.`);
+        toast.warning(
+          `Deleted ${succeeded} contact(s); ${failed} failed.${errors.length > 0 ? ` (${errors[0]})` : ""}`,
+        );
       }
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Bulk delete failed");
     },
   });
 }
@@ -161,23 +170,32 @@ export function useBulkMoveContactStatus() {
     mutationFn: async ({ names, status }: { names: string[]; status: string }) => {
       let succeeded = 0;
       let failed = 0;
+      const errors: string[] = [];
       for (const name of names) {
         try {
           await api.updateContact(name, { status });
           succeeded += 1;
-        } catch {
+        } catch (err) {
           failed += 1;
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`${name}: ${msg}`);
+          console.error(`Failed to update status for contact ${name}:`, err);
         }
       }
-      return { succeeded, failed, status };
+      return { succeeded, failed, status, errors };
     },
-    onSuccess: async ({ succeeded, failed, status }) => {
+    onSuccess: async ({ succeeded, failed, status, errors }) => {
       await invalidate();
       if (failed === 0) {
         toast.success(`Moved ${succeeded} contact${succeeded === 1 ? "" : "s"} to ${status}`);
       } else {
-        toast.warning(`Updated ${succeeded} contact(s); ${failed} failed.`);
+        toast.warning(
+          `Updated ${succeeded} contact(s); ${failed} failed.${errors.length > 0 ? ` (${errors[0]})` : ""}`,
+        );
       }
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Bulk move failed");
     },
   });
 }

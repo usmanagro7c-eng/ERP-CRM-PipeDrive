@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,9 +65,10 @@ export function ActivityFormModal({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [formData, setFormData] = useState<FormDataState>(defaultFormData);
   const [errors, setErrors] = useState<{ title?: string }>({});
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       if (activity) {
         setFormData({
           title: String(activity["title"] || ""),
@@ -98,6 +99,7 @@ export function ActivityFormModal({
       }
       setErrors({});
     }
+    wasOpenRef.current = open;
   }, [open, activity, initialValues, users]);
 
   const handleChange = (field: keyof FormDataState, value: string) => {

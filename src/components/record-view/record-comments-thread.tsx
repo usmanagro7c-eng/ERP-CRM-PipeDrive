@@ -3,6 +3,7 @@ import { MessageSquare, Plus, Send, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Textarea } from "@/components/ui/textarea";
 import { commentsListOptions, useAddComment, useDeleteComment } from "@/hooks/use-comments";
 
@@ -161,7 +162,7 @@ export function RecordCommentsThread({
                   </div>
                   <div
                     className="mt-1 text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: c.content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
                   />
                 </div>
               </div>

@@ -768,48 +768,6 @@ export function DealKanban({
               <SelectTrigger className="h-7 text-xs ml-2 w-36" aria-label="Add stage">
                 <SelectValue placeholder="Add stage..." />
               </SelectTrigger>
-              {addStageDialogOpen && (
-                <Dialog open={addStageDialogOpen} onOpenChange={(open) => setAddStageDialogOpen(open)}>
-                  <DialogContent className="p-4">
-                    <DialogHeader>
-                      <DialogTitle>Add New Stage</DialogTitle>
-                    </DialogHeader>
-                    <DialogDescription>Enter a name for the new stage</DialogDescription>
-                    <Label className="block text-sm font-medium mb-2">Stage Name</Label>
-                    <Input
-                      value={newStageName}
-                      onChange={(event) => setNewStageName(event.target.value)}
-                      placeholder="e.g. Won"
-                      className="w-full mb-3"
-                    />
-                    <DialogFooter className="justify-end space-x-2">
-                      <Button variant="ghost" onClick={() => setAddStageDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          const trimmed = newStageName.trim();
-                          if (!trimmed) {
-                            setAddStageDialogOpen(false);
-                            return;
-                          }
-                          try {
-                            await api.createDealStatus({ deal_status: trimmed });
-                            toast.success(`Stage "${trimmed}" created`);
-                            await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : "Failed to create stage");
-                          }
-                          setAddStageDialogOpen(false);
-                        }}
-                        disabled={!newStageName.trim()}
-                      >
-                        Create
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
               <SelectContent>
                 {deletedStages.length === 0 && (
                   <SelectItem value="__none__" disabled>
@@ -824,6 +782,48 @@ export function DealKanban({
                 <SelectItem value="__custom__">Custom...</SelectItem>
               </SelectContent>
             </Select>
+          )}
+          {addStageDialogOpen && (
+            <Dialog open={addStageDialogOpen} onOpenChange={(open) => setAddStageDialogOpen(open)}>
+              <DialogContent className="p-4">
+                <DialogHeader>
+                  <DialogTitle>Add New Stage</DialogTitle>
+                </DialogHeader>
+                <DialogDescription>Enter a name for the new stage</DialogDescription>
+                <Label className="block text-sm font-medium mb-2">Stage Name</Label>
+                <Input
+                  value={newStageName}
+                  onChange={(event) => setNewStageName(event.target.value)}
+                  placeholder="e.g. Won"
+                  className="w-full mb-3"
+                />
+                <DialogFooter className="justify-end space-x-2">
+                  <Button variant="ghost" onClick={() => setAddStageDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const trimmed = newStageName.trim();
+                      if (!trimmed) {
+                        setAddStageDialogOpen(false);
+                        return;
+                      }
+                      try {
+                        await api.createDealStatus({ deal_status: trimmed });
+                        toast.success(`Stage "${trimmed}" created`);
+                        await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to create stage");
+                      }
+                      setAddStageDialogOpen(false);
+                    }}
+                    disabled={!newStageName.trim()}
+                  >
+                    Create
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 

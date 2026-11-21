@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Maximize2, Minimize2, X, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -132,16 +132,18 @@ export function DealFormModal({
   const [formData, setFormData] = useState<FormDataState>(defaultFormData);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const wasOpenRef = useRef(false);
+
   // Sync state whenever modal opens
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       if (deal) {
         setFormData({
           organization: String(deal["organization_name"] || deal["organization"] || ""),
           website: String(deal["website"] || ""),
           territory: String(deal["territory"] || ""),
           annual_revenue: deal["annual_revenue"]
-            ? `PKR ${Number(deal["annual_revenue"]).toLocaleString()}`
+            ? `${deal["currency"] || "PKR"} ${Number(deal["annual_revenue"]).toLocaleString()}`
             : "",
           company_description: String(deal["company_description"] || ""),
           no_of_employees: String(deal["no_of_employees"] || ""),
@@ -185,6 +187,7 @@ export function DealFormModal({
         }
       }
     }
+    wasOpenRef.current = open;
   }, [open, deal, initialValues, users]);
 
   const handleChange = (field: keyof FormDataState, value: string) => {

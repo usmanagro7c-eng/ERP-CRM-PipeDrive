@@ -280,7 +280,7 @@ export async function createTerritory(territoryName: string): Promise<void> {
 }
 
 export async function listDeals(params: ListParams): Promise<Record<string, unknown>[]> {
-  const query = buildListQuery(params, "organization_name");
+  const query = buildListQuery(params, "organization");
   const payload = await proxyRequest(`api/resource/${DEAL_DOCTYPE}?${query}`);
   const data = unwrapResourceData<unknown>(payload);
   return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
@@ -292,7 +292,7 @@ export async function countDeals(
 ): Promise<number> {
   const query = new URLSearchParams({ doctype: DEAL_DOCTYPE });
   const all = [...filters];
-  if (search) all.push(["organization_name", "like", `%${search}%`]);
+  if (search) all.push(["organization", "like", `%${search}%`]);
   if (all.length > 0) query.set("filters", JSON.stringify(all));
   const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
   const value = message(payload);
@@ -380,7 +380,7 @@ export async function createLeadStatus(values: {
 }
 
 export async function listLeads(params: ListParams): Promise<Record<string, unknown>[]> {
-  const query = buildListQuery(params, "first_name");
+  const query = buildListQuery(params, "lead_name");
   const payload = await proxyRequest(`api/resource/${LEAD_DOCTYPE}?${query}`);
   const data = unwrapResourceData<unknown>(payload);
   return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
@@ -392,7 +392,7 @@ export async function countLeads(
 ): Promise<number> {
   const query = new URLSearchParams({ doctype: LEAD_DOCTYPE });
   const all = [...filters];
-  if (search) all.push(["first_name", "like", `%${search}%`]);
+  if (search) all.push(["lead_name", "like", `%${search}%`]);
   if (all.length > 0) query.set("filters", JSON.stringify(all));
   const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
   const value = message(payload);
@@ -512,7 +512,12 @@ export async function convertLeadToDeal(
         // 1. Search existing contact by email if present
         if (email) {
           try {
-            const matching = await listContacts({ search: email, limit: 5, start: 0 });
+            const matching = await listContacts({
+              search: "",
+              filters: [["email_id", "=", email]],
+              limit: 5,
+              start: 0,
+            });
             const found = matching.find(
               (c) => String(c["email_id"] ?? "").toLowerCase() === email.toLowerCase(),
             );
@@ -527,7 +532,20 @@ export async function convertLeadToDeal(
         // 2. Search existing contact by phone if still not found
         if (!contactName && phone) {
           try {
-            const matching = await listContacts({ search: phone, limit: 5, start: 0 });
+            let matching = await listContacts({
+              search: "",
+              filters: [["mobile_no", "=", phone]],
+              limit: 5,
+              start: 0,
+            });
+            if (matching.length === 0) {
+              matching = await listContacts({
+                search: "",
+                filters: [["phone", "=", phone]],
+                limit: 5,
+                start: 0,
+              });
+            }
             const found = matching.find(
               (c) =>
                 String(c["mobile_no"] ?? "").trim() === phone ||
@@ -1143,12 +1161,21 @@ export async function ensureCustomer(customerName: string): Promise<string> {
   const trimmed = customerName.trim();
   if (!trimmed) return "";
   try {
-    const existing = await getLinkOptions("Customer");
-    const match = existing.find(
-      (c) => c.name.trim().toLowerCase() === trimmed.toLowerCase(),
-    );
-    if (match) {
-      return match.name;
+    const query = new URLSearchParams({
+      fields: JSON.stringify(["name", "customer_name"]),
+      limit_page_length: "500",
+    });
+    const payload = await proxyRequest(`api/resource/Customer?${query.toString()}`);
+    const existing = unwrapResourceData<Array<{ name: string; customer_name?: string }>>(payload);
+    if (Array.isArray(existing)) {
+      const match = existing.find(
+        (c) =>
+          c.name.trim().toLowerCase() === trimmed.toLowerCase() ||
+          (c.customer_name && c.customer_name.trim().toLowerCase() === trimmed.toLowerCase()),
+      );
+      if (match) {
+        return match.name;
+      }
     }
   } catch {
     // continue to create
@@ -1457,6 +1484,7 @@ export async function listNotes(
         "reference_doctype",
         "reference_docname",
         "owner",
+        "is_pinned",
         "creation",
         "modified",
       ]),
@@ -1548,6 +1576,8 @@ export async function listCallLogs(
         "duration",
         "from",
         "to",
+        "caller",
+        "receiver",
         "note",
         "reference_doctype",
         "reference_docname",

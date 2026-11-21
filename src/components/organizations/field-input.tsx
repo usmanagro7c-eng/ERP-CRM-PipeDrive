@@ -82,7 +82,15 @@ export function FieldInput({
           type="number"
           step={field.fieldtype === "Int" ? 1 : "any"}
           value={value == null ? "" : String(value)}
-          onChange={(event) => onValueChange(event.target.value)}
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw === "") {
+              onValueChange(null);
+            } else {
+              const num = field.fieldtype === "Int" ? parseInt(raw, 10) : parseFloat(raw);
+              onValueChange(Number.isNaN(num) ? null : num);
+            }
+          }}
           placeholder={label}
         />
       );

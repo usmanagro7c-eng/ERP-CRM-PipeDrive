@@ -53,6 +53,7 @@ export function useSaveTask() {
     },
     onSuccess: (doc, variables) => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast.success(variables.name ? "Task updated" : "Task created");
       const taskTitle = String(variables["title"] || doc?.["title"] || variables.name || "Task");
       void notifyEntityChange({
@@ -85,6 +86,7 @@ export function useToggleTaskComplete() {
     },
     onSuccess: (doc, variables) => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
       const status = String(doc["status"] ?? "");
       toast.success(status === "Done" ? "Task marked as completed" : "Task reopened");
       void notifyEntityChange({
@@ -111,6 +113,7 @@ export function useDeleteTask() {
     mutationFn: (name: string) => api.deleteTask(name),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_ROOT] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast.success("Task deleted");
     },
     onError: (err) => {

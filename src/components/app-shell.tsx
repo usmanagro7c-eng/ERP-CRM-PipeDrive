@@ -300,6 +300,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -353,6 +354,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <button
             type="button"
+            onClick={() => navigate({ to: "/settings" })}
             title={collapsed ? "Notifications" : undefined}
             className={cn(
               "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
@@ -375,14 +377,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="border-t border-sidebar-border p-3 space-y-1 shrink-0">
           <button
             type="button"
-            title={collapsed ? "Help" : undefined}
+            onClick={() => setCommandOpen(true)}
+            title={collapsed ? "Help & Shortcuts (Ctrl+K)" : undefined}
             className={cn(
               "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
               collapsed && "justify-center px-2",
             )}
           >
             <HelpCircle className="size-[18px] shrink-0" />
-            {!collapsed && <span>Help</span>}
+            {!collapsed && <span>Help & Shortcuts</span>}
           </button>
 
           <button

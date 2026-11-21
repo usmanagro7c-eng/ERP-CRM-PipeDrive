@@ -22,6 +22,7 @@ import {
   UserPlus,
   Zap,
   Plus,
+  RefreshCw,
   ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -160,7 +161,7 @@ function DealDetailPage() {
 
   const navigate = useNavigate();
 
-  const { data: deal, isLoading, refetch } = useQuery(dealDetailOptions(dealId));
+  const { data: deal, isLoading, isError, error, refetch } = useQuery(dealDetailOptions(dealId));
   const { data: stages = [] } = useQuery(dealStatusesOptions());
   const { data: users = [] } = useCrmUsers();
   const { data: rawQuotations = [] } = useQuery(
@@ -528,6 +529,26 @@ function DealDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center max-w-md mx-auto space-y-4">
+        <h2 className="text-base font-semibold text-destructive">Failed to load deal</h2>
+        <p className="text-xs text-muted-foreground">
+          {error instanceof Error ? error.message : "A network error occurred while loading this deal."}
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <Button size="sm" onClick={() => refetch()} className="gap-1.5 cursor-pointer">
+            <RefreshCw className="size-3.5" />
+            Retry
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/deals">Back to Deals</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -1030,7 +1051,7 @@ function DealDetailPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Deal Value</span>
               <span className="font-bold text-foreground">
-                {dealCurrency} {dealValue.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                {dealCurrency} {dealValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">

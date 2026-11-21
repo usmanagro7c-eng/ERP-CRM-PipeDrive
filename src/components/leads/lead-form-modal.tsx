@@ -214,7 +214,7 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
       organization: formData.organization.trim() || null,
       territory: formData.territory.trim() || null,
       website: formData.website.trim() || null,
-      annual_revenue: Number(formData.annual_revenue) || 0,
+      annual_revenue: formData.annual_revenue ? Number(formData.annual_revenue) || null : null,
       company_description: formData.company_description.trim() || null,
       no_of_employees: formData.no_of_employees || null,
       industry: formData.industry || null,

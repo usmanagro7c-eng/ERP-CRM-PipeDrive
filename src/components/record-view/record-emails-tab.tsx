@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { sanitizeHtml } from "@/lib/sanitize";
 import {
   emailsListOptions,
   useSendEmail,
@@ -290,7 +291,7 @@ export function RecordEmailsTab({
 
                 <div
                   className="text-xs text-muted-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words [&>p]:mb-1 [&>p:last-child]:mb-0"
-                  dangerouslySetInnerHTML={{ __html: email.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(email.content) }}
                 />
               </div>
             );

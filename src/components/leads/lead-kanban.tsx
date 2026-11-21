@@ -367,48 +367,6 @@ export function LeadKanban({
               <SelectTrigger className="h-7 text-xs ml-2 w-40" aria-label="Restore deleted status">
                 <SelectValue placeholder="Add status..." />
               </SelectTrigger>
-              {addStatusDialogOpen && (
-                <Dialog open={addStatusDialogOpen} onOpenChange={(open) => setAddStatusDialogOpen(open)}>
-                  <DialogContent className="p-4">
-                    <DialogHeader>
-                      <DialogTitle>Add New Status</DialogTitle>
-                    </DialogHeader>
-                    <DialogDescription>Enter a name for the new status</DialogDescription>
-                    <Label className="block text-sm font-medium mb-2">Status Name</Label>
-                    <Input
-                      value={newStatusName}
-                      onChange={(e) => setNewStatusName(e.target.value)}
-                      placeholder="e.g. Nurture"
-                      className="w-full mb-3"
-                    />
-                    <DialogFooter className="justify-end space-x-2">
-                      <Button variant="ghost" onClick={() => setAddStatusDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          const trimmed = newStatusName.trim();
-                          if (!trimmed) {
-                            setAddStatusDialogOpen(false);
-                            return;
-                          }
-                          try {
-                            await api.createLeadStatus({ lead_status: trimmed });
-                            toast.success(`Status "${trimmed}" created`);
-                            await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : "Failed to create status");
-                          }
-                          setAddStatusDialogOpen(false);
-                        }}
-                        disabled={!newStatusName.trim()}
-                      >
-                        Create
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
               <SelectContent>
                 {deletedStatuses.length === 0 && (
                   <SelectItem value="__none__" disabled>
@@ -423,6 +381,48 @@ export function LeadKanban({
                 <SelectItem value="__custom__">Custom...</SelectItem>
               </SelectContent>
             </Select>
+          )}
+          {addStatusDialogOpen && (
+            <Dialog open={addStatusDialogOpen} onOpenChange={(open) => setAddStatusDialogOpen(open)}>
+              <DialogContent className="p-4">
+                <DialogHeader>
+                  <DialogTitle>Add New Status</DialogTitle>
+                </DialogHeader>
+                <DialogDescription>Enter a name for the new status</DialogDescription>
+                <Label className="block text-sm font-medium mb-2">Status Name</Label>
+                <Input
+                  value={newStatusName}
+                  onChange={(e) => setNewStatusName(e.target.value)}
+                  placeholder="e.g. Nurture"
+                  className="w-full mb-3"
+                />
+                <DialogFooter className="justify-end space-x-2">
+                  <Button variant="ghost" onClick={() => setAddStatusDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const trimmed = newStatusName.trim();
+                      if (!trimmed) {
+                        setAddStatusDialogOpen(false);
+                        return;
+                      }
+                      try {
+                        await api.createLeadStatus({ lead_status: trimmed });
+                        toast.success(`Status "${trimmed}" created`);
+                        await queryClient.invalidateQueries({ queryKey: ["leads", "statuses"] });
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to create status");
+                      }
+                      setAddStatusDialogOpen(false);
+                    }}
+                    disabled={!newStatusName.trim()}
+                  >
+                    Create
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 

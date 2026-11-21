@@ -104,25 +104,39 @@ export function LeadLostModal({
     }
 
     setSubmitting(true);
+    let succeeded = 0;
+    let failed = 0;
     try {
       for (const name of leadNames) {
-        await saveMutation.mutateAsync({
-          name,
-          values: {
-            status: targetStatus,
-            lost_reason: reason,
-            lost_notes: notes.trim() || undefined,
-          },
-          silent: true,
-        });
+        try {
+          await saveMutation.mutateAsync({
+            name,
+            values: {
+              status: targetStatus,
+              lost_reason: reason,
+              lost_notes: notes.trim() || undefined,
+            },
+            silent: true,
+          });
+          succeeded += 1;
+        } catch {
+          failed += 1;
+        }
       }
       toast.dismiss();
-      toast.success(
-        leadNames.length > 1
-          ? `Marked ${leadNames.length} leads as ${targetStatus}`
-          : `Lead marked as ${targetStatus}`,
-        { id: "lead-lost-status" },
-      );
+      if (failed === 0) {
+        toast.success(
+          leadNames.length > 1
+            ? `Marked ${leadNames.length} leads as ${targetStatus}`
+            : `Lead marked as ${targetStatus}`,
+          { id: "lead-lost-status" },
+        );
+      } else {
+        toast.warning(
+          `Marked ${succeeded} lead(s) as ${targetStatus}; ${failed} failed.`,
+          { id: "lead-lost-status" },
+        );
+      }
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {

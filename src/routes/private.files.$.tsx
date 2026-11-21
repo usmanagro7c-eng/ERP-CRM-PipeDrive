@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { frappeApiKey, frappeApiSecret, frappeBaseUrl, jsonResponse } from "@/lib/server-auth";
+import { frappeApiKey, frappeApiSecret, frappeBaseUrl, getSession, jsonResponse } from "@/lib/server-auth";
 
 /**
  * Serves private files stored on the Frappe backend (e.g. attachments marked
@@ -12,6 +12,11 @@ export const Route = createFileRoute("/private/files/$")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const session = await getSession(request);
+        if (!session) {
+          return jsonResponse({ error: "Unauthorized" }, 401);
+        }
+
         const url = new URL(request.url);
         const splat = url.pathname.replace(/^\/private\/files\//, "");
         const target = `${frappeBaseUrl()}/private/files/${splat}${url.search}`;

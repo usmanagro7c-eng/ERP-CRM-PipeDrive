@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, CheckCircle2, Maximize2, Minimize2, X, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -73,9 +73,16 @@ export function QuotationFormModal({
   const [items, setItems] = useState<QuotationItem[]>([]);
   const currency = String(quotation?.currency || dealData?.["currency"] || "PKR");
 
+  const wasOpenRef = useRef(false);
+
   // Initialize or reset form state when modal opens
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
 
     const today = new Date().toISOString().split("T")[0]!;
     const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]!;

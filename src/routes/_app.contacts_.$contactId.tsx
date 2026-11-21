@@ -10,6 +10,7 @@ import {
   Mail,
   Phone,
   Plus,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -75,7 +76,7 @@ function ContactDetailPage() {
 
   const navigate = useNavigate();
 
-  const { data: contact, isLoading, refetch } = useQuery(contactDetailOptions(contactId));
+  const { data: contact, isLoading, isError, error, refetch } = useQuery(contactDetailOptions(contactId));
   const saveMutation = useSaveContact();
   const deleteMutation = useDeleteContact();
 
@@ -322,6 +323,26 @@ function ContactDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center max-w-md mx-auto space-y-4">
+        <h2 className="text-base font-semibold text-destructive">Failed to load contact</h2>
+        <p className="text-xs text-muted-foreground">
+          {error instanceof Error ? error.message : "A network error occurred while loading this contact."}
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <Button size="sm" onClick={() => refetch()} className="gap-1.5 cursor-pointer">
+            <RefreshCw className="size-3.5" />
+            Retry
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/contacts">Back to Contacts</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -665,7 +686,7 @@ function ContactDetailPage() {
                           <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
                             {value > 0 && (
                               <span className="font-medium text-foreground">
-                                {currency} {value.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                                {currency} {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
                             )}
                             {closeDate && <span>Closing: {closeDate}</span>}

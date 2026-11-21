@@ -100,35 +100,50 @@ function NavLinks({
   grouped?: boolean;
 }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { data: session } = useQuery(sessionQueryOptions());
+  const isDedicatedSystem = Boolean(session?.isDedicatedSystem);
 
-  const groups = grouped
+  const groups = isDedicatedSystem
     ? [
         {
-          label: "Overview",
-          items: NAV_ITEMS.filter((i) => ["/dashboard"].includes(i.to)),
-        },
-        {
-          label: "Sales",
-          items: NAV_ITEMS.filter((i) =>
-            ["/leads", "/deals", "/quotations", "/sales-orders"].includes(i.to),
-          ),
-        },
-        {
-          label: "Contacts",
-          items: NAV_ITEMS.filter((i) => ["/organizations", "/contacts"].includes(i.to)),
-        },
-        {
-          label: "Activity",
-          items: NAV_ITEMS.filter((i) =>
-            ["/notes", "/activities", "/calls"].includes(i.to),
-          ),
-        },
-        {
-          label: "System",
-          items: NAV_ITEMS.filter((i) => ["/settings"].includes(i.to)),
+          label: "Administration",
+          items: [
+            {
+              label: "Notification Settings",
+              to: "/settings",
+              icon: Settings,
+            },
+          ],
         },
       ]
-    : [{ label: "", items: NAV_ITEMS }];
+    : grouped
+      ? [
+          {
+            label: "Overview",
+            items: NAV_ITEMS.filter((i) => ["/dashboard"].includes(i.to)),
+          },
+          {
+            label: "Sales",
+            items: NAV_ITEMS.filter((i) =>
+              ["/leads", "/deals", "/quotations", "/sales-orders"].includes(i.to),
+            ),
+          },
+          {
+            label: "Contacts",
+            items: NAV_ITEMS.filter((i) => ["/organizations", "/contacts"].includes(i.to)),
+          },
+          {
+            label: "Activity",
+            items: NAV_ITEMS.filter((i) =>
+              ["/notes", "/activities", "/calls"].includes(i.to),
+            ),
+          },
+          {
+            label: "System",
+            items: NAV_ITEMS.filter((i) => ["/settings"].includes(i.to)),
+          },
+        ]
+      : [{ label: "", items: NAV_ITEMS }];
 
   const renderItem = (item: NavItem) => {
     if (item.disabled) {
@@ -306,13 +321,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  // Mobile bottom nav — 4 pinned + More sheet
-  const MOBILE_NAV = [
-    { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-    { label: "Deals", to: "/deals", icon: Columns3 },
-    { label: "Contacts", to: "/contacts", icon: Users },
-    { label: "Quotations", to: "/quotations", icon: FileText },
-  ] as const;
+  const { data: session } = useQuery(sessionQueryOptions());
+  const isSystemUser = Boolean(session?.isSystemUser);
+  const isDedicatedSystem = Boolean(session?.isDedicatedSystem);
+
+  // Mobile bottom nav
+  const MOBILE_NAV = isDedicatedSystem
+    ? ([{ label: "Settings", to: "/settings", icon: Settings }] as const)
+    : ([
+        { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+        { label: "Deals", to: "/deals", icon: Columns3 },
+        { label: "Contacts", to: "/contacts", icon: Users },
+        { label: "Quotations", to: "/quotations", icon: FileText },
+      ] as const);
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
@@ -352,18 +373,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/settings" })}
-            title={collapsed ? "Notifications" : undefined}
-            className={cn(
-              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
-              collapsed && "justify-center px-2",
-            )}
-          >
-            <Bell className="size-[18px] shrink-0" />
-            {!collapsed && <span>Notifications</span>}
-          </button>
+          {isSystemUser && (
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/settings" })}
+              title={collapsed ? "Notifications" : undefined}
+              className={cn(
+                "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 cursor-pointer",
+                collapsed && "justify-center px-2",
+              )}
+            >
+              <Bell className="size-[18px] shrink-0" />
+              {!collapsed && <span>Notifications</span>}
+            </button>
+          )}
         </div>
 
         <div className="h-px bg-sidebar-border mx-3 my-2" />
@@ -443,7 +466,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 min-h-0 overflow-hidden flex flex-col">{children}</main>
 
         {/* Mobile Quick Action Floating Action Button */}
-        <MobileQuickActionFab />
+        {!isDedicatedSystem && <MobileQuickActionFab />}
 
         {/* ── Mobile Bottom Nav ───────────────────────────────────── */}
         <nav

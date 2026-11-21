@@ -39,7 +39,11 @@ function LoginPage() {
     try {
       const user = await login(usr, pwd);
       queryClient.setQueryData(SESSION_QUERY_KEY, user);
-      await navigate({ to: "/organizations", search: {} });
+      if (user.isDedicatedSystem) {
+        await navigate({ to: "/settings", search: {} });
+      } else {
+        await navigate({ to: "/organizations", search: {} });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed. Check your credentials.");
       setShake(true);

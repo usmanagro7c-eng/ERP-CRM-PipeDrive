@@ -2,7 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ensureCloudflareEnv } from "@/lib/cloudflare-bindings";
 import { clientIp, loginAttemptKey, resolveLoginRateLimiter } from "@/lib/login-rate-limit";
-import { frappeBaseUrl, isUserAllowed, jsonResponse, sessionSecret } from "@/lib/server-auth";
+import {
+  erpnextBaseUrl,
+  frappeBaseUrl,
+  isDedicatedSystemUser,
+  isSystemUserRoles,
+  isUserAllowed,
+  jsonResponse,
+  sessionSecret,
+} from "@/lib/server-auth";
 import {
   SESSION_TTL_SECONDS,
   buildSessionCookie,
@@ -12,9 +20,9 @@ import {
 } from "@/lib/session";
 
 /**
- * Sign in with a Frappe username + password. The credentials are verified against the
- * Frappe site itself; we only keep a signed, HttpOnly session cookie (no password, no Frappe sid).
- * Access is further limited by the ALLOWED_USERS env var.
+ * Sign in with a Frappe / ERPNext username + password. The credentials are verified against
+ * the Frappe CRM site (dev03) with an automatic fallback to ERPNext (dev06); we keep a signed,
+ * HttpOnly session cookie carrying the user's id, display name, roles, and isSystemUser flag.
  *
  * Failed attempts are rate limited per IP + username (see lib/login-rate-limit.ts).
  */
@@ -41,8 +49,7 @@ async function login(request: Request): Promise<Response> {
     return jsonResponse({ error: "Enter your username and password" }, 400);
   }
 
-  // Pick up the Cloudflare bindings (KV namespace / rate limiter) when the app
-  // runs on Workers; falls back to the in-memory counter everywhere else.
+  // Pick up Cloudflare bindings
   await ensureCloudflareEnv();
   const limiter = resolveLoginRateLimiter();
   const attemptKey = loginAttemptKey(clientIp(request), usr);
@@ -55,17 +62,45 @@ async function login(request: Request): Promise<Response> {
     );
   }
 
-  const base = frappeBaseUrl();
+  const primaryBase = frappeBaseUrl();
+  const secondaryBase = erpnextBaseUrl();
+
+  let effectiveBase = primaryBase;
   let loginResponse: Response;
+
   try {
-    loginResponse = await fetch(`${base}/api/method/login`, {
+    loginResponse = await fetch(`${primaryBase}/api/method/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ usr, pwd }),
       signal: AbortSignal.timeout(20_000),
     });
   } catch {
-    return jsonResponse({ error: "Could not reach the Frappe site" }, 502);
+    loginResponse = new Response(null, { status: 502 });
+  }
+
+  // If primary site fails with 401/403/502 and secondary is different, try secondary (ERPNext)
+  if (
+    (loginResponse.status === 401 ||
+      loginResponse.status === 403 ||
+      loginResponse.status === 502) &&
+    secondaryBase &&
+    secondaryBase !== primaryBase
+  ) {
+    try {
+      const secondaryResponse = await fetch(`${secondaryBase}/api/method/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ usr, pwd }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (secondaryResponse.ok) {
+        loginResponse = secondaryResponse;
+        effectiveBase = secondaryBase;
+      }
+    } catch {
+      // keep primary response
+    }
   }
 
   if (loginResponse.status === 401 || loginResponse.status === 403) {
@@ -82,7 +117,7 @@ async function login(request: Request): Promise<Response> {
     return jsonResponse({ error: "Invalid username or password" }, 401);
   }
   if (!loginResponse.ok) {
-    return jsonResponse({ error: `Frappe login failed (${loginResponse.status})` }, 502);
+    return jsonResponse({ error: `Login failed (${loginResponse.status})` }, 502);
   }
 
   let fullName = usr;
@@ -93,13 +128,14 @@ async function login(request: Request): Promise<Response> {
     // keep typed name
   }
 
-  // Resolve the canonical user id (email) using the temporary Frappe session cookie.
+  // Resolve canonical user id & roles using temporary session cookie
   let userId = usr;
+  let roles: string[] = [];
   const setCookie = loginResponse.headers.get("set-cookie") ?? "";
   const sid = /(?:^|[,\s])sid=([^;,\s]+)/.exec(setCookie)?.[1];
   if (sid && sid !== "Guest") {
     try {
-      const who = await fetch(`${base}/api/method/frappe.auth.get_logged_user`, {
+      const who = await fetch(`${effectiveBase}/api/method/frappe.auth.get_logged_user`, {
         headers: { Cookie: `sid=${sid}`, Accept: "application/json" },
         signal: AbortSignal.timeout(15_000),
       });
@@ -108,7 +144,25 @@ async function login(request: Request): Promise<Response> {
         if (typeof data.message === "string" && data.message) userId = data.message;
       }
     } catch {
-      // fall back to the typed username
+      // fall back to typed username
+    }
+
+    try {
+      const rolesRes = await fetch(
+        `${effectiveBase}/api/method/frappe.core.doctype.user.user.get_roles`,
+        {
+          headers: { Cookie: `sid=${sid}`, Accept: "application/json" },
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+      if (rolesRes.ok) {
+        const rolesData = (await rolesRes.json()) as { message?: unknown };
+        if (Array.isArray(rolesData.message)) {
+          roles = rolesData.message.map((r) => String(r));
+        }
+      }
+    } catch {
+      // proceed with empty roles
     }
   }
 
@@ -118,16 +172,30 @@ async function login(request: Request): Promise<Response> {
 
   await limiter.reset(attemptKey);
 
+  const isSystemUser = isSystemUserRoles(roles);
+  const isDedicatedSystem = isDedicatedSystemUser(roles);
+
   const token = await signSession(
-    { u: userId, n: fullName, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS },
+    {
+      u: userId,
+      n: fullName,
+      roles,
+      isSystemUser,
+      isDedicatedSystem,
+      exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+    },
     secret,
   );
-  return jsonResponse({ user: userId, name: fullName }, 200, {
-    "Set-Cookie": buildSessionCookie(token, {
-      maxAge: SESSION_TTL_SECONDS,
-      secure: isSecureRequest(request),
-    }),
-  });
+  return jsonResponse(
+    { user: userId, name: fullName, roles, isSystemUser, isDedicatedSystem },
+    200,
+    {
+      "Set-Cookie": buildSessionCookie(token, {
+        maxAge: SESSION_TTL_SECONDS,
+        secure: isSecureRequest(request),
+      }),
+    },
+  );
 }
 
 export const Route = createFileRoute("/api/auth/login")({

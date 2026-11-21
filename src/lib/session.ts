@@ -12,6 +12,12 @@ export interface SessionPayload {
   u: string;
   /** Display name. */
   n: string;
+  /** User roles assigned in Frappe / ERPNext */
+  roles?: string[];
+  /** True when user has System Manager, System User, or Administrator role */
+  isSystemUser?: boolean;
+  /** True when user is strictly a system user with no sales access */
+  isDedicatedSystem?: boolean;
   /** Expiry, unix seconds. */
   exp: number;
 }
@@ -80,6 +86,11 @@ export async function verifySession(
     return {
       u: payload.u,
       n: typeof payload.n === "string" ? payload.n : payload.u,
+      ...(Array.isArray(payload.roles) ? { roles: payload.roles.map(String) } : {}),
+      ...(payload.isSystemUser !== undefined ? { isSystemUser: Boolean(payload.isSystemUser) } : {}),
+      ...(payload.isDedicatedSystem !== undefined
+        ? { isDedicatedSystem: Boolean(payload.isDedicatedSystem) }
+        : {}),
       exp: payload.exp,
     };
   } catch {

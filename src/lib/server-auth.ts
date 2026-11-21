@@ -43,11 +43,10 @@ export function sessionSecret(): string | undefined {
   return secret && secret.length >= 32 ? secret : undefined;
 }
 
-/** Comma-separated Frappe user ids allowed to sign in. "*" lets any valid Frappe user in. */
+/** Comma-separated Frappe user ids allowed to sign in. "*" or unset lets any valid Frappe/ERPNext user in. */
 export function allowedUsers(): "*" | string[] {
   const raw = readEnv("ALLOWED_USERS");
-  if (!raw) return [];
-  if (raw === "*") return "*";
+  if (!raw || raw === "*") return "*";
   return raw
     .split(",")
     .map((item) => item.trim().toLowerCase())
@@ -58,6 +57,32 @@ export function isUserAllowed(userId: string, typed: string): boolean {
   const allowed = allowedUsers();
   if (allowed === "*") return true;
   return allowed.includes(userId.toLowerCase()) || allowed.includes(typed.toLowerCase());
+}
+
+/** Check if user roles qualify as System User (System Manager, System User, or Administrator). */
+export function isSystemUserRoles(roles: string[] = []): boolean {
+  const normalized = roles.map((r) => r.trim().toLowerCase());
+  return (
+    normalized.includes("system manager") ||
+    normalized.includes("system user") ||
+    normalized.includes("administrator")
+  );
+}
+
+/** Check if user is strictly a system user (no sales roles, excluding Administrator). */
+export function isDedicatedSystemUser(roles: string[] = []): boolean {
+  const normalized = roles.map((r) => r.trim().toLowerCase());
+  const isSys =
+    normalized.includes("system manager") ||
+    normalized.includes("system user");
+  if (!isSys) return false;
+  // If user is Administrator or has sales roles, they retain full CRM access
+  if (normalized.includes("administrator")) return false;
+  const hasSales =
+    normalized.includes("sales user") ||
+    normalized.includes("sales manager") ||
+    normalized.includes("sales master manager");
+  return !hasSales;
 }
 
 export function jsonResponse(body: unknown, status = 200, headers?: HeadersInit): Response {

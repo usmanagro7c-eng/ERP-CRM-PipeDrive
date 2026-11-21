@@ -125,6 +125,16 @@ async function forward(request: Request): Promise<Response> {
     return jsonResponse({ _proxy_error: `Blocked ${request.method} ${rawPath}` }, 403);
   }
 
+  // Restrict custom notification hierarchy settings strictly to System Users
+  if (rawPath.startsWith("api/method/custom_crm_sync.api.notify.")) {
+    if (!session.isSystemUser) {
+      return jsonResponse(
+        { _proxy_error: "Forbidden: Notification settings are restricted to System Users only." },
+        403,
+      );
+    }
+  }
+
   let body: ArrayBuffer | undefined;
   let bodyDocType: string | undefined;
 

@@ -75,14 +75,23 @@ function SettingsPage() {
   const { data: session } = useQuery(sessionQueryOptions());
   const { data: crmUsers = [], isLoading: isLoadingUsers } = useCrmUsers();
 
+  const isSystemUser = Boolean(session?.isSystemUser);
+
   const [activeTab, setActiveTab] = useState<"appearance" | "notifications" | "account">(
-    "notifications",
+    isSystemUser ? "notifications" : "appearance",
   );
+
+  useEffect(() => {
+    if (session && !session.isSystemUser && activeTab === "notifications") {
+      setActiveTab("appearance");
+    }
+  }, [session, activeTab]);
+
   const [currentTheme, setCurrentTheme] = useState<Theme>("light");
   const [compactMode, setCompactMode] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
-  // Server-backed notification settings & hierarchy tree
+  // Server-backed notification settings & hierarchy tree (fetched ONLY for System Users)
   const {
     data: serverData,
     isLoading: isLoadingSettings,
@@ -91,6 +100,7 @@ function SettingsPage() {
   } = useQuery({
     queryKey: ["crm-notification-settings"],
     queryFn: api.getNotificationSettings,
+    enabled: isSystemUser,
   });
 
   const [formState, setFormState] = useState<api.ServerNotificationSettings>({
@@ -341,8 +351,8 @@ function SettingsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {activeTab === "notifications" && (
+          {isSystemUser && activeTab === "notifications" && (
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -357,27 +367,27 @@ function SettingsPage() {
                 )}
                 <span>Send Test Email</span>
               </Button>
-            )}
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saveMutation.isPending}
-              className="h-8 text-xs gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
-            >
-              {saveMutation.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Check className="size-3.5" />
-              )}
-              <span>Save Settings</span>
-            </Button>
-          </div>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saveMutation.isPending}
+                className="h-8 text-xs gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Check className="size-3.5" />
+                )}
+                <span>Save Settings</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Container */}
       <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full space-y-6">
-        {hasChanges && (
+        {isSystemUser && hasChanges && (
           <div className="flex items-center justify-between p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-600 dark:text-amber-400">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 shrink-0" />
@@ -391,11 +401,18 @@ function SettingsPage() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid grid-cols-3 max-w-md h-9 bg-muted/60 p-1">
-            <TabsTrigger value="notifications" className="text-xs gap-1.5 cursor-pointer">
-              <Bell className="size-3.5" />
-              <span>Notifications</span>
-            </TabsTrigger>
+          <TabsList
+            className={cn(
+              "grid max-w-md h-9 bg-muted/60 p-1",
+              isSystemUser ? "grid-cols-3" : "grid-cols-2",
+            )}
+          >
+            {isSystemUser && (
+              <TabsTrigger value="notifications" className="text-xs gap-1.5 cursor-pointer">
+                <Bell className="size-3.5" />
+                <span>Notifications</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="appearance" className="text-xs gap-1.5 cursor-pointer">
               <Palette className="size-3.5" />
               <span>Appearance</span>
@@ -406,8 +423,9 @@ function SettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: NOTIFICATIONS */}
-          <TabsContent value="notifications" className="space-y-6 mt-4">
+          {/* TAB 1: NOTIFICATIONS (System Users Only) */}
+          {isSystemUser && (
+            <TabsContent value="notifications" className="space-y-6 mt-4">
             {isLoadingSettings ? (
               <div className="rounded-xl border border-border bg-card p-12 text-center shadow-2xs space-y-3">
                 <Loader2 className="size-6 animate-spin mx-auto text-primary" />
@@ -982,6 +1000,7 @@ function SettingsPage() {
               </>
             )}
           </TabsContent>
+          )}
 
           {/* TAB 2: APPEARANCE & DARK MODE */}
           <TabsContent value="appearance" className="space-y-6 mt-4">

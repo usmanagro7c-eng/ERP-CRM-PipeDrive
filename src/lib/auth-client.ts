@@ -3,6 +3,9 @@ import { queryOptions } from "@tanstack/react-query";
 export interface SessionUser {
   user: string;
   name: string;
+  roles?: string[];
+  isSystemUser?: boolean;
+  isDedicatedSystem?: boolean;
 }
 
 export class AuthError extends Error {
@@ -29,7 +32,13 @@ export async function fetchSession(): Promise<SessionUser | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw new AuthError(response.status, "Could not check your session");
   const data = await readJson(response);
-  return { user: String(data["user"] ?? ""), name: String(data["name"] ?? data["user"] ?? "") };
+  return {
+    user: String(data["user"] ?? ""),
+    name: String(data["name"] ?? data["user"] ?? ""),
+    roles: Array.isArray(data["roles"]) ? (data["roles"] as string[]) : [],
+    isSystemUser: Boolean(data["isSystemUser"]),
+    isDedicatedSystem: Boolean(data["isDedicatedSystem"]),
+  };
 }
 
 export const sessionQueryOptions = () =>
@@ -54,7 +63,13 @@ export async function login(usr: string, pwd: string): Promise<SessionUser> {
       String(data["error"] ?? `Sign in failed (${response.status})`),
     );
   }
-  return { user: String(data["user"] ?? usr), name: String(data["name"] ?? usr) };
+  return {
+    user: String(data["user"] ?? usr),
+    name: String(data["name"] ?? usr),
+    roles: Array.isArray(data["roles"]) ? (data["roles"] as string[]) : [],
+    isSystemUser: Boolean(data["isSystemUser"]),
+    isDedicatedSystem: Boolean(data["isDedicatedSystem"]),
+  };
 }
 
 export async function logout(): Promise<void> {

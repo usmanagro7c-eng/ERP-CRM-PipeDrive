@@ -8,7 +8,13 @@ export const Route = createFileRoute("/api/auth/me")({
       GET: async ({ request }) => {
         const session = await getSession(request);
         if (!session) return jsonResponse({ error: "Not authenticated" }, 401);
-        return jsonResponse({ user: session.u, name: session.n });
+        return jsonResponse({
+          user: session.u,
+          name: session.n,
+          roles: session.roles ?? [],
+          isSystemUser: Boolean(session.isSystemUser),
+          isDedicatedSystem: Boolean(session.isDedicatedSystem),
+        });
       },
     },
   },

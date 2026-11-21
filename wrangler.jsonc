@@ -10,7 +10,7 @@
   "vars": {
     "FRAPPE_BASE_URL": "https://dev03.agrovisions.pk",
     "ERPNEXT_BASE_URL": "https://dev06.agrovisions.pk",
-    "ALLOWED_USERS": "usman.agro7c@gmail.com"
+    "ALLOWED_USERS": "*"
   },
   "observability": {
     "enabled": true

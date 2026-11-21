@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { isDedicatedSystemUser, isSystemUserRoles } from "@/lib/server-auth";
 import {
   buildSessionCookie,
   isSameOrigin,
@@ -12,10 +13,27 @@ const secret = "x".repeat(40);
 const now = 1_000_000;
 
 describe("session cookie", () => {
-  it("round-trips a valid session", async () => {
-    const token = await signSession({ u: "a@b.com", n: "A B", exp: now + 60 }, secret);
+  it("round-trips a valid session with roles and system user flags", async () => {
+    const token = await signSession(
+      {
+        u: "admin@agrovisions.pk",
+        n: "System Admin",
+        roles: ["System Manager"],
+        isSystemUser: true,
+        isDedicatedSystem: true,
+        exp: now + 60,
+      },
+      secret,
+    );
     const payload = await verifySession(token, secret, now);
-    expect(payload).toEqual({ u: "a@b.com", n: "A B", exp: now + 60 });
+    expect(payload).toEqual({
+      u: "admin@agrovisions.pk",
+      n: "System Admin",
+      roles: ["System Manager"],
+      isSystemUser: true,
+      isDedicatedSystem: true,
+      exp: now + 60,
+    });
   });
 
   it("rejects expired, tampered and wrong-secret tokens", async () => {
@@ -55,5 +73,23 @@ describe("session cookie", () => {
     });
     expect(isSameOrigin(same)).toBe(true);
     expect(isSameOrigin(other)).toBe(false);
+  });
+
+  it("accurately classifies system user and dedicated system user roles", () => {
+    // System User / Manager
+    expect(isSystemUserRoles(["System Manager"])).toBe(true);
+    expect(isSystemUserRoles(["System User"])).toBe(true);
+    expect(isSystemUserRoles(["Administrator"])).toBe(true);
+    expect(isSystemUserRoles(["Sales User"])).toBe(false);
+    expect(isSystemUserRoles(["Sales Manager"])).toBe(false);
+
+    // Dedicated System User (no sales access, excluding Administrator who is super-admin)
+    expect(isDedicatedSystemUser(["System Manager"])).toBe(true);
+    expect(isDedicatedSystemUser(["System User"])).toBe(true);
+    // Hybrid sales users retain full CRM access
+    expect(isDedicatedSystemUser(["System Manager", "Sales User"])).toBe(false);
+    expect(isDedicatedSystemUser(["System Manager", "Sales Manager"])).toBe(false);
+    // Administrator retains full CRM access
+    expect(isDedicatedSystemUser(["Administrator"])).toBe(false);
   });
 });

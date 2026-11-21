@@ -20,8 +20,14 @@ function AppLayout() {
   const { data: session, isPending, isError } = useQuery(sessionQueryOptions());
 
   useEffect(() => {
-    if (!isPending && !session) void navigate({ to: "/login" });
-  }, [isPending, session, navigate]);
+    if (!isPending && !session) {
+      void navigate({ to: "/login" });
+      return;
+    }
+    if (session?.isDedicatedSystem && location.pathname !== "/settings") {
+      void navigate({ to: "/settings" });
+    }
+  }, [isPending, session, location.pathname, navigate]);
 
   if (isPending || (!session && !isError)) {
     return <AppLoadingScreen message="Checking authorization & workspace session..." />;

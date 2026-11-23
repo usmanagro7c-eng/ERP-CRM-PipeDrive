@@ -4,10 +4,14 @@ import {
   formatBodyHtml,
   wrapInProfessionalEmailHtml,
 } from "@/lib/email-formatter";
+import {
+  formatStageChangeHtml,
+  formatEntityChangeHtml,
+} from "@/lib/change-notifications";
 
 describe("email-formatter", () => {
-  it("provides 5 professional templates with subjects and bodies", () => {
-    expect(PROFESSIONAL_EMAIL_TEMPLATES.length).toBe(5);
+  it("provides 6 professional templates with subjects and bodies", () => {
+    expect(PROFESSIONAL_EMAIL_TEMPLATES.length).toBe(6);
     for (const tpl of PROFESSIONAL_EMAIL_TEMPLATES) {
       expect(tpl.id).toBeDefined();
       expect(tpl.label).toBeDefined();
@@ -41,5 +45,58 @@ describe("email-formatter", () => {
     expect(wrapped).toContain("Commercial Team");
     expect(wrapped).toContain("Notice of Confidentiality");
     expect(wrapped).toContain("AgroCRM");
+  });
+
+  it("formats stage change emails with executive styling, transition pills and guidance", () => {
+    const htmlWon = formatStageChangeHtml({
+      dealId: "CRM-DEAL-2026-00007",
+      dealTitle: "Boom Boom Agro Corp",
+      fromStage: "Negotiation",
+      toStage: "Won",
+      organization: "Boom Boom Agro Corp",
+      dealValue: 160000,
+      modifiedBy: "Usman Aziz",
+    });
+
+    expect(htmlWon).toContain("Deal Stage Transition Notice");
+    expect(htmlWon).toContain("Dear Commercial Stakeholder");
+    expect(htmlWon).toContain("Previous Stage: Negotiation");
+    expect(htmlWon).toContain("Current Stage: Won");
+    expect(htmlWon).toContain("#059669"); // Emerald color for won
+    expect(htmlWon).toContain("PKR 160,000");
+    expect(htmlWon).toContain("Confidentiality & Compliance Notice");
+    expect(htmlWon).toContain("AgroCRM Commercial Pipeline & Sales Governance");
+
+    const htmlLost = formatStageChangeHtml({
+      dealId: "CRM-DEAL-2026-00008",
+      dealTitle: "Fertilizer Tender",
+      toStage: "Lost",
+      dealValue: 50000,
+    });
+    expect(htmlLost).toContain("#dc2626"); // Red color for lost
+    expect(htmlLost).toContain("Deal marked as closed lost");
+  });
+
+  it("formats entity change emails with executive advisory template", () => {
+    const htmlEntity = formatEntityChangeHtml({
+      doctype: "CRM Lead",
+      docname: "LEAD-2026-00012",
+      action: "Status Changed",
+      title: "Chaudhry Farm Supplies",
+      details: {
+        "Previous Status": "Open",
+        "Updated Status": "Opportunity",
+        "Mobile": "+92 300 1234567",
+      },
+      modifiedBy: "Sales Manager",
+    });
+
+    expect(htmlEntity).toContain("CRM Lead Status Changed Advisory");
+    expect(htmlEntity).toContain("Dear Commercial Stakeholder");
+    expect(htmlEntity).toContain("LEAD-2026-00012");
+    expect(htmlEntity).toContain("Chaudhry Farm Supplies");
+    expect(htmlEntity).toContain("Previous Status");
+    expect(htmlEntity).toContain("Updated Status");
+    expect(htmlEntity).toContain("AgroCRM Enterprise Governance");
   });
 });

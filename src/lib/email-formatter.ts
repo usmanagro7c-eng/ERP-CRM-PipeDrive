@@ -139,6 +139,32 @@ Sincerely,
 ${senderName || "Finance & Accounts Department"}
 AgroCRM`,
   },
+  {
+    id: "stage_progression",
+    label: "Deal Stage & Milestone Progression",
+    description: "Executive progress notification on deal milestone advancement",
+    subject: (recordName) =>
+      recordName
+        ? `Milestone Update: Commercial Stage Progression — ${recordName}`
+        : "Milestone Update: Commercial Stage Progression",
+    body: (clientName, recordName, senderName) =>
+      `Dear ${clientName || "Valued Stakeholder"},
+
+We are pleased to share an operational update regarding our commercial engagement${recordName ? ` for ${recordName}` : ""}.
+
+Following our latest collaboration and technical milestones, this engagement has officially advanced to the next pipeline stage.
+
+Key Progression Milestones:
+• Scope & Commercial Review: Requirements have been validated by our sales engineering team.
+• Operational Deliverables: All requisite documentation and stage criteria have been fulfilled.
+• Next Immediate Steps: Our fulfillment team is coordinating the subsequent workflow actions to ensure seamless delivery.
+
+Please let us know if you require any supplementary documentation or wish to coordinate a milestone review.
+
+Sincerely,
+${senderName || "Commercial Sales & Operations"}
+AgroCRM`,
+  },
 ];
 
 export interface FormatEmailOptions {

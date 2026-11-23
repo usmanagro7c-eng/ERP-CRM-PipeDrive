@@ -2133,6 +2133,8 @@ export interface HierarchyNode {
   email?: string;
 }
 
+export type NotificationDeliveryMode = "instant" | "scheduled" | "interval";
+
 export interface ServerNotificationSettings {
   enabled: boolean | number;
   mode: "Direct Parent" | "All Ancestors" | "Selected Nodes";
@@ -2147,6 +2149,10 @@ export interface ServerNotificationSettings {
   quotations?: boolean | number;
   sales_orders?: boolean | number;
   other_records?: boolean | number;
+  delivery_mode?: NotificationDeliveryMode;
+  scheduled_time?: string;
+  interval_minutes?: number;
+  delivery_schedule?: string;
 }
 
 export interface GetNotificationSettingsResponse {
@@ -2165,21 +2171,96 @@ export async function getNotificationSettings(): Promise<GetNotificationSettings
     { method: "POST", body: {} },
   );
   const data = (payload as { message?: GetNotificationSettingsResponse }).message ?? payload;
-  return data as GetNotificationSettingsResponse;
+  const res = (data ?? {}) as GetNotificationSettingsResponse;
+  if (!res.settings) {
+    res.settings = {
+      enabled: 1,
+      mode: "All Ancestors",
+      selected_nodes: [],
+      include_actor: 0,
+      delivery_mode: "instant",
+      scheduled_time: "09:00",
+      interval_minutes: 60,
+    };
+  }
+
+  // Also query CRM Notification Settings directly to pick up delivery_schedule
+  try {
+    const rawSettings = await proxyRequest(
+      "api/resource/CRM Notification Settings/CRM Notification Settings",
+    );
+    const rawData = unwrapResourceData<{ delivery_schedule?: string; delivery_mode?: string; scheduled_time?: string; interval_minutes?: number }>(rawSettings);
+    if (rawData?.delivery_schedule) {
+      res.settings.delivery_schedule = rawData.delivery_schedule;
+      try {
+        const parsed = JSON.parse(rawData.delivery_schedule);
+        if (parsed.delivery_mode) res.settings.delivery_mode = parsed.delivery_mode;
+        if (parsed.scheduled_time) res.settings.scheduled_time = parsed.scheduled_time;
+        if (parsed.interval_minutes) res.settings.interval_minutes = Number(parsed.interval_minutes);
+      } catch {}
+    } else if (rawData?.delivery_mode) {
+      const mode = rawData.delivery_mode.toLowerCase();
+      res.settings.delivery_mode = mode.includes("sched") ? "scheduled" : (mode.includes("interv") ? "interval" : "instant");
+      if (rawData.scheduled_time) res.settings.scheduled_time = String(rawData.scheduled_time).slice(0, 5);
+      if (rawData.interval_minutes) res.settings.interval_minutes = Number(rawData.interval_minutes);
+    }
+  } catch {
+    // Graceful fallback
+  }
+
+  if (!res.settings.delivery_mode) res.settings.delivery_mode = "instant";
+  if (!res.settings.scheduled_time) res.settings.scheduled_time = "09:00";
+  if (!res.settings.interval_minutes) res.settings.interval_minutes = 60;
+
+  return res;
 }
 
 export async function saveNotificationSettings(
   settings: Partial<ServerNotificationSettings>,
 ): Promise<{ success: boolean }> {
+  const schedulePayload = {
+    delivery_mode: settings.delivery_mode || "instant",
+    scheduled_time: settings.scheduled_time || "09:00",
+    interval_minutes: Number(settings.interval_minutes) || 60,
+  };
+  const stringifiedSchedule = JSON.stringify(schedulePayload);
+
+  const enrichedSettings = {
+    ...settings,
+    delivery_mode: schedulePayload.delivery_mode,
+    scheduled_time: schedulePayload.scheduled_time,
+    interval_minutes: schedulePayload.interval_minutes,
+    delivery_schedule: stringifiedSchedule,
+  };
+
   const payload = await proxyRequest(
     "api/method/custom_crm_sync.api.notify.save_notification_settings",
     {
       method: "POST",
-      body: { payload: settings },
+      body: { payload: enrichedSettings },
     },
   );
   const data = (payload as { message?: { success: boolean } }).message ?? payload;
-  return data as { success: boolean };
+
+  // Also persist delivery_schedule directly into CRM Notification Settings doc
+  try {
+    await proxyRequest(
+      "api/resource/CRM Notification Settings/CRM Notification Settings",
+      {
+        method: "PUT",
+        body: {
+          delivery_schedule: stringifiedSchedule,
+          delivery_mode: schedulePayload.delivery_mode === "scheduled" ? "Daily Scheduled" : (schedulePayload.delivery_mode === "interval" ? "Periodic Interval" : "Instant"),
+          scheduled_time: schedulePayload.scheduled_time,
+          interval_minutes: schedulePayload.interval_minutes,
+        },
+      },
+    );
+  } catch (err) {
+    console.warn("Could not persist delivery_schedule to CRM Notification Settings:", err);
+  }
+
+  return (data as { success: boolean }) || { success: true };
 }
 
 export async function previewNotificationRecipients(args: {

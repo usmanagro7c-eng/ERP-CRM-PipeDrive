@@ -30,6 +30,9 @@ import {
   GitBranch,
   Eye,
   ExternalLink,
+  Clock,
+  Timer,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,6 +66,12 @@ import * as api from "@/lib/api";
 import { HierarchyTreePicker } from "@/components/settings/hierarchy-tree-picker";
 import { readStoredTheme, setTheme, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+
+function formatInterval(minutes: number): string {
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""}`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} hour${hours > 1 ? "s" : ""}`;
+}
 
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({ meta: [{ title: "Settings · AgroCRM" }] }),
@@ -117,6 +126,9 @@ function SettingsPage() {
     quotations: 1,
     sales_orders: 1,
     other_records: 1,
+    delivery_mode: "instant",
+    scheduled_time: "09:00",
+    interval_minutes: 60,
   });
 
   const [hasChanges, setHasChanges] = useState(false);
@@ -130,6 +142,9 @@ function SettingsPage() {
         selected_nodes: Array.isArray(serverData.settings.selected_nodes)
           ? serverData.settings.selected_nodes
           : [],
+        delivery_mode: serverData.settings.delivery_mode || "instant",
+        scheduled_time: serverData.settings.scheduled_time || "09:00",
+        interval_minutes: serverData.settings.interval_minutes ? Number(serverData.settings.interval_minutes) : 60,
       });
     }
   }, [serverData]);
@@ -483,6 +498,260 @@ function SettingsPage() {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Email Delivery Schedule & Timing Card */}
+                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                    <div>
+                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Clock className="size-4 text-primary" />
+                        Email Delivery Timing &amp; Schedule
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Set when emails are dispatched: immediately on every update, once daily at a specific time, or periodically at regular intervals.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                      {(formState.delivery_mode || "instant") === "instant" && (
+                        <Badge variant="outline" className="text-[11px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-normal">
+                          <Zap className="size-3" />
+                          Real-Time (Instant)
+                        </Badge>
+                      )}
+                      {formState.delivery_mode === "scheduled" && (
+                        <Badge variant="outline" className="text-[11px] gap-1 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-normal">
+                          <Clock className="size-3" />
+                          Daily at {formState.scheduled_time || "09:00"}
+                        </Badge>
+                      )}
+                      {formState.delivery_mode === "interval" && (
+                        <Badge variant="outline" className="text-[11px] gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 font-normal">
+                          <Timer className="size-3" />
+                          Every {formatInterval(formState.interval_minutes || 60)}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <RadioGroup
+                    value={formState.delivery_mode || "instant"}
+                    onValueChange={(val) => {
+                      setFormState((prev) => ({
+                        ...prev,
+                        delivery_mode: val as api.NotificationDeliveryMode,
+                      }));
+                      setHasChanges(true);
+                    }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                  >
+                    {/* Mode 1: Instant / Real-Time */}
+                    <label
+                      htmlFor="timing-instant"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        (formState.delivery_mode || "instant") === "instant"
+                          ? "border-emerald-500/70 bg-emerald-500/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Zap className="size-3.5 text-emerald-500" />
+                            Instant (Real-Time)
+                          </span>
+                          <RadioGroupItem value="instant" id="timing-instant" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Foran kisi change par email dispatch ho. Har update ya stage tabdili par foran email alert jayegi.
+                        </p>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Zero delay dispatch
+                      </div>
+                    </label>
+
+                    {/* Mode 2: Daily Scheduled Time */}
+                    <label
+                      htmlFor="timing-scheduled"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        formState.delivery_mode === "scheduled"
+                          ? "border-blue-500/70 bg-blue-500/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Clock className="size-3.5 text-blue-500" />
+                            Daily Scheduled Time
+                          </span>
+                          <RadioGroupItem value="scheduled" id="timing-scheduled" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Time set karein k kis time par saari mails aayein. Din ka ek fix time muqarrar karein (Daily digest).
+                        </p>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                        <span>Fixed daily window</span>
+                      </div>
+                    </label>
+
+                    {/* Mode 3: Periodic Time Interval */}
+                    <label
+                      htmlFor="timing-interval"
+                      className={cn(
+                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                        formState.delivery_mode === "interval"
+                          ? "border-amber-500/70 bg-amber-500/5 shadow-2xs"
+                          : "border-border hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Timer className="size-3.5 text-amber-500" />
+                            Periodic Time Interval
+                          </span>
+                          <RadioGroupItem value="interval" id="timing-interval" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Time period set karein k kitne time k baad mails aayein (e.g. har 1 ghante ya 2 ghante baad).
+                        </p>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                        <span>Batched periodic window</span>
+                      </div>
+                    </label>
+                  </RadioGroup>
+
+                  {/* Sub-config Panel based on selected mode */}
+                  {formState.delivery_mode === "scheduled" && (
+                    <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-500/5 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="scheduled-time" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                            <Clock className="size-3.5 text-blue-500" />
+                            Set Daily Delivery Time (HH:MM)
+                          </Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            All accumulated updates will be bundled and emailed daily at this exact time.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="scheduled-time"
+                            type="time"
+                            value={formState.scheduled_time || "09:00"}
+                            onChange={(e) => {
+                              setFormState((prev) => ({ ...prev, scheduled_time: e.target.value }));
+                              setHasChanges(true);
+                            }}
+                            className="w-32 h-8 text-xs font-mono bg-background"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick time selection chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-blue-500/20">
+                        <span className="text-[11px] text-muted-foreground mr-1">Quick Select:</span>
+                        {[
+                          { label: "08:00 AM (Morning)", value: "08:00" },
+                          { label: "09:00 AM (Workday Start)", value: "09:00" },
+                          { label: "01:00 PM (Midday)", value: "13:00" },
+                          { label: "06:00 PM (EOD Wrap-up)", value: "18:00" },
+                          { label: "09:00 PM (Night Digest)", value: "21:00" },
+                        ].map((chip) => (
+                          <Button
+                            key={chip.value}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setFormState((prev) => ({ ...prev, scheduled_time: chip.value }));
+                              setHasChanges(true);
+                            }}
+                            className={cn(
+                              "h-6 text-[11px] px-2 py-0 border-border/80 bg-background cursor-pointer",
+                              formState.scheduled_time === chip.value && "border-blue-500 bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold",
+                            )}
+                          >
+                            {chip.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formState.delivery_mode === "interval" && (
+                    <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="interval-minutes" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                            <Timer className="size-3.5 text-amber-500" />
+                            Set Batch Interval Period
+                          </Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            Changes occurring within this duration will be batched into a summary and sent every elapsed cycle.
+                          </p>
+                        </div>
+                        <Select
+                          value={String(formState.interval_minutes || 60)}
+                          onValueChange={(val) => {
+                            setFormState((prev) => ({ ...prev, interval_minutes: Number(val) }));
+                            setHasChanges(true);
+                          }}
+                        >
+                          <SelectTrigger id="interval-minutes" className="w-48 h-8 text-xs bg-background cursor-pointer">
+                            <SelectValue placeholder="Select interval..." />
+                          </SelectTrigger>
+                          <SelectContent className="text-xs">
+                            <SelectItem value="15">Every 15 Minutes</SelectItem>
+                            <SelectItem value="30">Every 30 Minutes</SelectItem>
+                            <SelectItem value="60">Every 1 Hour (Recommended)</SelectItem>
+                            <SelectItem value="120">Every 2 Hours</SelectItem>
+                            <SelectItem value="240">Every 4 Hours</SelectItem>
+                            <SelectItem value="480">Every 8 Hours</SelectItem>
+                            <SelectItem value="720">Every 12 Hours</SelectItem>
+                            <SelectItem value="1440">Every 24 Hours (Daily)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Quick Interval Selection Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-amber-500/20">
+                        <span className="text-[11px] text-muted-foreground mr-1">Quick Presets:</span>
+                        {[
+                          { label: "15 min", value: 15 },
+                          { label: "30 min", value: 30 },
+                          { label: "1 hour", value: 60 },
+                          { label: "2 hours", value: 120 },
+                          { label: "4 hours", value: 240 },
+                          { label: "12 hours", value: 720 },
+                        ].map((chip) => (
+                          <Button
+                            key={chip.value}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setFormState((prev) => ({ ...prev, interval_minutes: chip.value }));
+                              setHasChanges(true);
+                            }}
+                            className={cn(
+                              "h-6 text-[11px] px-2 py-0 border-border/80 bg-background cursor-pointer",
+                              Number(formState.interval_minutes) === chip.value && "border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold",
+                            )}
+                          >
+                            {chip.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Hierarchy Routing Mode Card */}

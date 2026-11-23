@@ -28,6 +28,7 @@ export const COMMENT_DOCTYPE = "Comment";
 export const COMMUNICATION_DOCTYPE = "Communication";
 export const CRM_PRODUCTS_DOCTYPE = "CRM Products";
 export const CUSTOMER_DOCTYPE = "Customer";
+export const NOTIFICATION_SETTINGS_DOCTYPE = "CRM Notification Settings";
 
 export const MAIN_DOCTYPES = new Set([
   ORG_DOCTYPE,
@@ -44,6 +45,7 @@ export const MAIN_DOCTYPES = new Set([
   COMMENT_DOCTYPE,
   COMMUNICATION_DOCTYPE,
   CRM_PRODUCTS_DOCTYPE,
+  NOTIFICATION_SETTINGS_DOCTYPE,
 ]);
 
 /** DocTypes and transactions that live on the ERPNext instance (dev06) */
@@ -225,7 +227,7 @@ export function hasUnsafeSegments(path: string): boolean {
 }
 
 const MAIN_RESOURCE =
-  /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status)(?:\/([^/]+))?$/;
+  /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status|CRM Notification Settings)(?:\/([^/]+))?$/;
 const ANY_RESOURCE_LIST = /^api\/resource\/([^/]+)$/;
 const RESOURCE_DOCTYPE = /^api\/resource\/([^/]+)(?:\/[^/]*)?$/;
 
@@ -289,7 +291,7 @@ export function classifyRequest(
       return { kind: "org-write" };
     }
     if (
-      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Customer|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status|CRM Territory)\/?$/.test(
+      /^api\/resource\/(CRM Organization|CRM Deal|CRM Lead|CRM Task|Contact|Quotation|Sales Order|Item|Customer|Note|CRM Note|CRM Call Log|File|Comment|Communication|CRM Products|CRM Lead Status|CRM Deal Status|CRM Territory|CRM Notification Settings)\/?$/.test(
         path,
       )
     )
@@ -841,6 +843,55 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
         if (key in input) {
           sanitized[key] = Boolean(input[key]) ? 1 : 0;
         }
+      }
+
+      if (
+        "delivery_mode" in input &&
+        input["delivery_mode"] !== undefined &&
+        input["delivery_mode"] !== null
+      ) {
+        const dMode = String(input["delivery_mode"]).toLowerCase();
+        if (dMode !== "instant" && dMode !== "scheduled" && dMode !== "interval") {
+          return { ok: false, reason: "save_notification_settings: invalid delivery_mode" };
+        }
+        sanitized["delivery_mode"] = dMode;
+      }
+
+      if (
+        "scheduled_time" in input &&
+        input["scheduled_time"] !== undefined &&
+        input["scheduled_time"] !== null
+      ) {
+        if (typeof input["scheduled_time"] !== "string" || input["scheduled_time"].length > 10) {
+          return { ok: false, reason: "save_notification_settings: invalid scheduled_time" };
+        }
+        sanitized["scheduled_time"] = input["scheduled_time"].trim();
+      }
+
+      if (
+        "interval_minutes" in input &&
+        input["interval_minutes"] !== undefined &&
+        input["interval_minutes"] !== null
+      ) {
+        const mins = Number(input["interval_minutes"]);
+        if (isNaN(mins) || mins < 1 || mins > 10080) {
+          return { ok: false, reason: "save_notification_settings: invalid interval_minutes" };
+        }
+        sanitized["interval_minutes"] = mins;
+      }
+
+      if (
+        "delivery_schedule" in input &&
+        input["delivery_schedule"] !== undefined &&
+        input["delivery_schedule"] !== null
+      ) {
+        if (
+          typeof input["delivery_schedule"] !== "string" ||
+          input["delivery_schedule"].length > 2000
+        ) {
+          return { ok: false, reason: "save_notification_settings: invalid delivery_schedule" };
+        }
+        sanitized["delivery_schedule"] = input["delivery_schedule"].trim();
       }
 
       return { ok: true, body: { payload: sanitized } };

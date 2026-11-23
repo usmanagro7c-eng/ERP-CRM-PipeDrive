@@ -769,6 +769,10 @@ describe("validateMethodBody", () => {
             extra_emails: "audit@example.com",
             deal_stage_change: true,
             quotations: false,
+            delivery_mode: "scheduled",
+            scheduled_time: "09:00",
+            interval_minutes: 60,
+            delivery_schedule: '{"delivery_mode":"scheduled"}',
             injected_danger: "drop-me",
           },
         },
@@ -784,6 +788,10 @@ describe("validateMethodBody", () => {
             extra_emails: "audit@example.com",
             deal_stage_change: 1,
             quotations: 0,
+            delivery_mode: "scheduled",
+            scheduled_time: "09:00",
+            interval_minutes: 60,
+            delivery_schedule: '{"delivery_mode":"scheduled"}',
           },
         },
       });
@@ -792,6 +800,20 @@ describe("validateMethodBody", () => {
       expect(
         validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
           payload: { mode: "HackerMode" },
+        }).ok,
+      ).toBe(false);
+
+      // Rejects invalid delivery_mode
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
+          payload: { delivery_mode: "invalid-mode" },
+        }).ok,
+      ).toBe(false);
+
+      // Rejects invalid interval_minutes
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
+          payload: { interval_minutes: -10 },
         }).ok,
       ).toBe(false);
     });
@@ -983,8 +1005,18 @@ describe("main doctypes", () => {
       "Item",
       "Note",
       "CRM Call Log",
+      "CRM Notification Settings",
     ]) {
       expect(MAIN_DOCTYPES.has(doctype)).toBe(true);
     }
+  });
+
+  it("classifies CRM Notification Settings as org-read and org-write", () => {
+    expect(
+      classifyRequest("GET", "api/resource/CRM Notification Settings/CRM Notification Settings", none)?.kind,
+    ).toBe("org-read");
+    expect(
+      classifyRequest("PUT", "api/resource/CRM Notification Settings/CRM Notification Settings", none)?.kind,
+    ).toBe("org-write");
   });
 });

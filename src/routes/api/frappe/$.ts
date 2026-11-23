@@ -127,7 +127,10 @@ async function forward(request: Request): Promise<Response> {
   }
 
   // Restrict custom notification hierarchy settings strictly to System Users
-  if (rawPath.startsWith("api/method/custom_crm_sync.api.notify.")) {
+  if (
+    rawPath.startsWith("api/method/custom_crm_sync.api.notify.") ||
+    rawPath.startsWith("api/resource/CRM Notification Settings")
+  ) {
     let isAllowed = Boolean(session.isSystemUser);
     if (!isAllowed && session.roles && session.roles.length > 0) {
       isAllowed = isSystemUserRoles(session.roles);

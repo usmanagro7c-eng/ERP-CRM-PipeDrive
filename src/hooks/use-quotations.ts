@@ -133,7 +133,7 @@ export function useSubmitQuotation() {
         docname: name,
         action: "Submitted to ERP",
         eventCategory: "quotations",
-        summary: `Quotation ${name} was officially SUBMITTED to ERPNext for ${party || "customer"}.`,
+        summary: `Quotation ${name} was officially SUBMITTED to ERP Backend for ${party || "customer"}.`,
         details: {
           "Customer": party || undefined,
           "Grand Total": grandTotal ? `PKR ${Number(grandTotal).toLocaleString()}` : undefined,

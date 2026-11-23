@@ -103,14 +103,14 @@ export interface SaveDealInput {
   skipNotification?: boolean;
 }
 
-/** Add actionable guidance for the known Frappe CRM → ERPNext sync failure. */
+/** Add actionable guidance for the known CRM → ERP sync failure. */
 function dealSaveErrorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error ?? "");
-  if (/Error while creating customer in ERPNext/i.test(raw)) {
+  if (/Error while creating customer in ERP/i.test(raw)) {
     return (
-      "Customer creation in ERPNext failed. Open the ERPNext Error Log " +
-      '(search "Error while creating customer against Frappe CRM Deal") — most often the ' +
-      "CRM sync is not enabled in ERPNext CRM Settings, or Territory/Currency/Customer " +
+      "Customer creation in ERP Backend failed. Open the ERP Backend Error Log " +
+      '(search "Error while creating customer against CRM Deal") — most often the ' +
+      "CRM sync is not enabled in ERP Backend CRM Settings, or Territory/Currency/Customer " +
       "Group is missing there."
     );
   }

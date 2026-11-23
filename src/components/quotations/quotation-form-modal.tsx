@@ -212,7 +212,7 @@ export function QuotationFormModal({
             : "w-[96vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] rounded-xl",
         )}
       >
-        {/* Header Matching Frappe CRM */}
+        {/* Header Matching CRM Backend */}
         <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-2.5 border-b border-border/50">
           <DialogTitle className="text-base font-semibold text-foreground">
             {quotation ? `Edit Quotation ${quotation.name}` : "Create Quotation"}
@@ -355,7 +355,7 @@ export function QuotationFormModal({
           </div>
         </div>
 
-        {/* Footer Submit Buttons matching Frappe CRM */}
+        {/* Footer Submit Buttons matching CRM Backend */}
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-border/40 bg-card">
           {quotation && onConvertToSalesOrder ? (
             <Button

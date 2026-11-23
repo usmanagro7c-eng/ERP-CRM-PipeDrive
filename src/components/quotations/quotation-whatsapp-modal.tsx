@@ -7,7 +7,6 @@ import {
   Phone,
   Building2,
   FileText,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,7 +60,6 @@ export function QuotationWhatsAppModal({
   defaultPhone = "",
 }: QuotationWhatsAppModalProps) {
   const [phoneNumber, setPhoneNumber] = useState(defaultPhone);
-  const [template, setTemplate] = useState<"urdu" | "english">("urdu");
   const [customMessage, setCustomMessage] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -101,32 +99,18 @@ export function QuotationWhatsAppModal({
       })
       .join("\n");
 
-    if (template === "urdu") {
-      return (
-        `Assalam-o-Alaikum *${customerName}*,\n\n` +
-        `AgroCRM ki taraf se aapki Quotation *${qtnId}* tayyar hai:\n\n` +
-        `📋 *Total Items:* ${items.length}\n` +
-        `💰 *Grand Total:* ${currency} ${grandTotal}\n` +
-        `📅 *Valid Till:* ${validTill}\n\n` +
-        (itemsSummary ? `*Item Details:*\n${itemsSummary}\n\n` : "") +
-        `Aap apna order confirm karne ke liye is number par reply kar sakte hain.\n\n` +
-        `Shukriya!\n` +
-        `*AgroCRM Sales Team*`
-      );
-    } else {
-      return (
-        `Dear *${customerName}*,\n\n` +
-        `Please find below quotation *${qtnId}* from AgroCRM:\n\n` +
-        `📋 *Total Items:* ${items.length}\n` +
-        `💰 *Grand Total:* ${currency} ${grandTotal}\n` +
-        `📅 *Valid Until:* ${validTill}\n\n` +
-        (itemsSummary ? `*Item Summary:*\n${itemsSummary}\n\n` : "") +
-        `Please reply to this message to confirm your order.\n\n` +
-        `Thank you for your business,\n` +
-        `*AgroCRM Team*`
-      );
-    }
-  }, [quotation, template]);
+    return (
+      `Dear *${customerName}*,\n\n` +
+      `Please find below quotation *${qtnId}* from AgroCRM:\n\n` +
+      `📋 *Total Items:* ${items.length}\n` +
+      `💰 *Grand Total:* ${currency} ${grandTotal}\n` +
+      `📅 *Valid Until:* ${validTill}\n\n` +
+      (itemsSummary ? `*Item Summary:*\n${itemsSummary}\n\n` : "") +
+      `Please reply to this message to confirm your order.\n\n` +
+      `Thank you for your business,\n` +
+      `*AgroCRM Team*`
+    );
+  }, [quotation]);
 
   // Sync customMessage with generatedMessage whenever template or quotation changes
   useEffect(() => {
@@ -220,38 +204,6 @@ export function QuotationWhatsAppModal({
             <p className="text-[10px] text-muted-foreground">
               Pakistani numbers (03xx) automatically convert to international WhatsApp format (923xx).
             </p>
-          </div>
-
-          {/* Template Switcher */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
-            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <Sparkles className="size-3.5 text-primary" />
-              Language Template:
-            </span>
-            <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border/60">
-              <button
-                type="button"
-                onClick={() => setTemplate("urdu")}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  template === "urdu"
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Roman Urdu
-              </button>
-              <button
-                type="button"
-                onClick={() => setTemplate("english")}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  template === "english"
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                English
-              </button>
-            </div>
           </div>
 
           {/* Editable Live Message Preview */}

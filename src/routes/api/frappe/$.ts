@@ -31,6 +31,7 @@ import {
   frappeApiSecret,
   frappeBaseUrl,
   getSession,
+  isSystemUserRoles,
   jsonResponse,
   sessionSecret,
 } from "@/lib/server-auth";
@@ -127,7 +128,14 @@ async function forward(request: Request): Promise<Response> {
 
   // Restrict custom notification hierarchy settings strictly to System Users
   if (rawPath.startsWith("api/method/custom_crm_sync.api.notify.")) {
-    if (!session.isSystemUser) {
+    let isAllowed = Boolean(session.isSystemUser);
+    if (!isAllowed && session.roles && session.roles.length > 0) {
+      isAllowed = isSystemUserRoles(session.roles);
+    }
+    if (!isAllowed && session.u.toLowerCase() === "administrator") {
+      isAllowed = true;
+    }
+    if (!isAllowed) {
       return jsonResponse(
         { _proxy_error: "Forbidden: Notification settings are restricted to System Users only." },
         403,

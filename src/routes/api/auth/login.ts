@@ -151,21 +151,51 @@ async function login(request: Request): Promise<Response> {
     }
 
     try {
-      const rolesRes = await fetch(
-        `${effectiveBase}/api/method/frappe.core.doctype.user.user.get_roles`,
+      // Fetch user document to get assigned roles
+      const userRes = await fetch(
+        `${effectiveBase}/api/resource/User/${encodeURIComponent(userId)}`,
         {
           headers: { Cookie: `sid=${sid}`, Accept: "application/json" },
           signal: AbortSignal.timeout(10_000),
         },
       );
-      if (rolesRes.ok) {
-        const rolesData = (await rolesRes.json()) as { message?: unknown };
-        if (Array.isArray(rolesData.message)) {
-          roles = rolesData.message.map((r) => String(r));
+      if (userRes.ok) {
+        const userData = (await userRes.json()) as {
+          data?: { roles?: Array<{ role?: string } | string> };
+        };
+        const rawRoles = userData.data?.roles;
+        if (Array.isArray(rawRoles)) {
+          roles = rawRoles
+            .map((r) => (typeof r === "string" ? r : r.role ?? ""))
+            .filter(Boolean);
+        }
+      } else {
+        // Fallback: try desk form load getdoc
+        const docRes = await fetch(
+          `${effectiveBase}/api/method/frappe.desk.form.load.getdoc?doctype=User&name=${encodeURIComponent(userId)}`,
+          {
+            headers: { Cookie: `sid=${sid}`, Accept: "application/json" },
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+        if (docRes.ok) {
+          const docData = (await docRes.json()) as {
+            docs?: Array<{ roles?: Array<{ role?: string } | string> }>;
+          };
+          const rawRoles = docData.docs?.[0]?.roles;
+          if (Array.isArray(rawRoles)) {
+            roles = rawRoles
+              .map((r) => (typeof r === "string" ? r : r.role ?? ""))
+              .filter(Boolean);
+          }
         }
       }
     } catch {
-      // proceed with empty roles
+      // proceed with fallback or empty roles
+    }
+
+    if (userId.toLowerCase() === "administrator" && !roles.includes("Administrator")) {
+      roles.push("Administrator");
     }
   }
 

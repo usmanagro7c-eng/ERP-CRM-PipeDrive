@@ -94,7 +94,7 @@ export function AppLoadingScreen({ message }: { message?: string }) {
         </h2>
 
         <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-          {message || (elapsed > 3 ? "Connecting to live Frappe CRM..." : "Loading workspace...")}
+          {message || (elapsed > 3 ? "Connecting to live CRM Backend..." : "Loading workspace...")}
         </p>
 
         {/* Animated Progress Dots */}
@@ -156,7 +156,7 @@ export function LoadingState({
       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
         {description ||
           (seconds > 3
-            ? "Syncing live records with Frappe CRM backend..."
+            ? "Syncing live records with CRM Backend backend..."
             : "Please wait a moment while we fetch the latest records.")}
       </p>
 

@@ -187,7 +187,7 @@ export function OrgFormModal({
             : "sm:max-w-xl w-full rounded-xl max-h-[90vh]",
         )}
       >
-        {/* Header matching Frappe CRM: Title on left, Maximize + Single Close on right */}
+        {/* Header matching CRM Backend: Title on left, Maximize + Single Close on right */}
         <DialogHeader className="px-6 py-4 border-b border-border/60 flex flex-row items-center justify-between shrink-0 space-y-0">
           <DialogTitle className="text-base font-semibold text-foreground tracking-tight">
             {isEdit ? "Edit Organization" : "New Organization"}
@@ -220,7 +220,7 @@ export function OrgFormModal({
           </div>
         </DialogHeader>
 
-        {/* Modal Body Form matching Frappe CRM */}
+        {/* Modal Body Form matching CRM Backend */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="p-6 space-y-4 overflow-y-auto flex-1">
             {/* Organization Name */}
@@ -358,7 +358,7 @@ export function OrgFormModal({
             </div>
           </div>
 
-          {/* Footer with Solid Black Create Button matching Frappe CRM */}
+          {/* Footer with Solid Black Create Button matching CRM Backend */}
           <div className="px-6 py-3 border-t border-border/60 bg-muted/20 flex items-center justify-end shrink-0">
             <Button
               type="submit"

@@ -162,7 +162,7 @@ export function LeadLostModal({
             Mark Lead as {targetStatus}
           </DialogTitle>
           <DialogDescription>
-            Frappe CRM requires a reason when marking leads as unqualified or lost. Please specify why this lead was lost.
+            CRM Backend requires a reason when marking leads as unqualified or lost. Please specify why this lead was lost.
           </DialogDescription>
         </DialogHeader>
 

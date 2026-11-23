@@ -244,7 +244,7 @@ export function SalesOrderFormModal({
             : "w-[96vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] rounded-xl"
         }`}
       >
-        {/* Header Matching Frappe CRM */}
+        {/* Header Matching CRM Backend */}
         <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-border/60">
           <div className="flex items-center gap-2.5">
             <div className="flex size-7 items-center justify-center rounded-md bg-muted/60 text-foreground">
@@ -382,7 +382,7 @@ export function SalesOrderFormModal({
           </div>
         </div>
 
-        {/* Footer Actions Matching Frappe CRM */}
+        {/* Footer Actions Matching CRM Backend */}
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-border/60 bg-muted/20">
           <Button
             type="button"

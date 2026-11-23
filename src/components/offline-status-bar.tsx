@@ -145,7 +145,7 @@ export function OfflineStatusBar() {
             </div>
             <SheetDescription className="text-xs text-muted-foreground">
               These records were created or modified while offline. They will sync automatically
-              when connected to Frappe CRM.
+              when connected to CRM Backend.
             </SheetDescription>
           </SheetHeader>
 

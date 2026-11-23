@@ -34,7 +34,7 @@ export interface ConfirmDialogProps {
  * A single, consistent destructive-action confirmation dialog used across the
  * kanban boards (column delete, card delete, etc.). Replaces native
  * `window.confirm`, shows a warning icon, supports a disabled confirm with
- * explanatory copy and renders Frappe/ERPNext failures inline so the user
+ * explanatory copy and renders Frappe/ERP Backend failures inline so the user
  * never gets a raw HTML dump in a toast.
  */
 export function ConfirmDialog({

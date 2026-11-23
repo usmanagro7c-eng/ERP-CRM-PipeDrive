@@ -245,7 +245,7 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
             : "w-[95vw] sm:max-w-3xl max-h-[90vh] rounded-lg border border-border bg-card"
         }`}
       >
-        {/* Modal Header Matching Frappe CRM */}
+        {/* Modal Header Matching CRM Backend */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/20">
           <DialogTitle className="text-lg font-semibold text-foreground">
             {isEdit ? "Edit Lead" : "Create Lead"}
@@ -277,7 +277,7 @@ export function LeadFormModal({ open, onOpenChange, lead, initialValues }: LeadF
           </div>
         </div>
 
-        {/* Modal Form Body: Exact Frappe CRM 2-Column Grid */}
+        {/* Modal Form Body: Exact CRM Backend 2-Column Grid */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Row 1: Salutation | Email */}

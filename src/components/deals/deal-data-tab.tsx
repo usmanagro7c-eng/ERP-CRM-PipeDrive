@@ -294,7 +294,7 @@ export function DealDataTab({
 
   return (
     <div className="flex flex-col h-full overflow-y-auto px-1 sm:px-6 max-w-5xl">
-      {/* Top Header: Data on left, Reload & Save on right matching Frappe CRM */}
+      {/* Top Header: Data on left, Reload & Save on right matching CRM Backend */}
       <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
         <h2 className="text-2xl font-semibold text-foreground">Data</h2>
         <div className="flex items-center gap-2">
@@ -523,7 +523,7 @@ export function DealDataTab({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* SECTION 2: PRODUCTS (Collapsible Child Table matching Frappe CRM) */}
+        {/* SECTION 2: PRODUCTS (Collapsible Child Table matching CRM Backend) */}
         <Collapsible
           open={productsOpen}
           onOpenChange={setProductsOpen}
@@ -664,7 +664,7 @@ export function DealDataTab({
               </Button>
             </div>
 
-            {/* Section 3: Totals matching Frappe CRM */}
+            {/* Section 3: Totals matching CRM Backend */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border/40 max-w-xl">
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground block">Total</label>

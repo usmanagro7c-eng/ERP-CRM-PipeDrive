@@ -412,7 +412,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead }: ConvertLeadModalP
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
                 <AlertCircle className="size-4" />
-                <span>Deal Loss Details (Required by Frappe CRM)</span>
+                <span>Deal Loss Details (Required by CRM Backend)</span>
               </div>
 
               <div className="space-y-1.5">

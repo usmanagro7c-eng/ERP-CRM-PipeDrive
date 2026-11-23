@@ -90,7 +90,7 @@ export function RecordQuotationsTab({
 
   return (
     <div className="flex flex-col min-h-full max-w-4xl px-1 sm:px-4">
-      {/* Header matching Frappe CRM */}
+      {/* Header matching CRM Backend */}
       <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
         <h2 className="text-2xl font-semibold text-foreground">Quotations</h2>
         {onNewQuotation && (

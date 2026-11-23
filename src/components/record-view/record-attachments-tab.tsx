@@ -73,7 +73,7 @@ export function RecordAttachmentsTab({
 
   return (
     <div className="flex flex-col min-h-full max-w-4xl px-1 sm:px-4">
-      {/* Attachments Header matching Frappe CRM */}
+      {/* Attachments Header matching CRM Backend */}
       <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
         <h2 className="text-2xl font-semibold text-foreground">Attachments</h2>
         <Button

@@ -252,7 +252,7 @@ export function DealFormModal({
             : "w-[95vw] sm:max-w-3xl max-h-[92vh] rounded-lg border border-border bg-card"
         }`}
       >
-        {/* Header Matching Frappe CRM */}
+        {/* Header Matching CRM Backend */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <DialogTitle className="text-base font-semibold text-foreground">
             {isEdit ? "Edit Deal" : "Create Deal"}
@@ -284,7 +284,7 @@ export function DealFormModal({
           </div>
         </div>
 
-        {/* Modal Form Body matching Frappe CRM exact layout */}
+        {/* Modal Form Body matching CRM Backend exact layout */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-2 space-y-5">
           {/* Top Toggles Row */}
           {!isEdit && (

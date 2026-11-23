@@ -106,7 +106,7 @@ export function NoteFormModal({
             : "w-[95vw] sm:max-w-xl max-h-[90vh] rounded-xl",
         )}
       >
-        {/* Header matching Frappe CRM: Title on left, Maximize + Single Close on right */}
+        {/* Header matching CRM Backend: Title on left, Maximize + Single Close on right */}
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <DialogTitle className="text-base font-semibold text-foreground">
             {isEdit ? "Edit Note" : "Create Note"}
@@ -135,7 +135,7 @@ export function NoteFormModal({
           </div>
         </div>
 
-        {/* Modal Form Body matching Frappe CRM */}
+        {/* Modal Form Body matching CRM Backend */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {/* Title */}
           <div className="space-y-1.5">
@@ -210,7 +210,7 @@ export function NoteFormModal({
             />
           </div>
 
-          {/* Footer Button matching Frappe CRM */}
+          {/* Footer Button matching CRM Backend */}
           <div className="flex justify-end pt-3 pb-1 border-t border-border/40">
             <Button
               type="submit"

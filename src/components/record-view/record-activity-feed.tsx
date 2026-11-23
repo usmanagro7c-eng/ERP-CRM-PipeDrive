@@ -75,7 +75,7 @@ export function RecordActivityFeed({
 
   return (
     <div className="flex flex-col min-h-full max-w-4xl px-1 sm:px-4">
-      {/* Activity Header with "+ New ▾" button matching Frappe CRM */}
+      {/* Activity Header with "+ New ▾" button matching CRM Backend */}
       <div className="flex shrink-0 items-center justify-between pb-4 pt-2">
         <h2 className="text-2xl font-semibold text-foreground">Activity</h2>
 
@@ -113,7 +113,7 @@ export function RecordActivityFeed({
 
       {/* Timeline Stream */}
       <div className="relative pl-6 space-y-5 border-l-2 border-border/60 ml-3.5 mt-3 pb-8">
-        {/* Creation Event Node (Always shown matching Frappe CRM) */}
+        {/* Creation Event Node (Always shown matching CRM Backend) */}
         <div className="relative group p-1 -ml-1 rounded-xl transition-colors hover:bg-muted/20">
           <div className="absolute -left-[35px] top-0 ring-4 ring-background rounded-full">
             <AvatarGradient name={authorName(owner)} size="xs" />
@@ -180,7 +180,7 @@ export function RecordActivityFeed({
                   </span>
                 </div>
 
-                {/* Collapsible Changes Diff (matching Frappe CRM "Show changes") */}
+                {/* Collapsible Changes Diff (matching CRM Backend "Show changes") */}
                 {hasDiff && (
                   <div className="mt-1">
                     <button

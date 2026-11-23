@@ -131,7 +131,7 @@ export function CallFormModal({
             : "w-[95vw] sm:max-w-xl max-h-[90vh] rounded-xl",
         )}
       >
-        {/* Header matching Frappe CRM: Title on left, Maximize + Single Close on right */}
+        {/* Header matching CRM Backend: Title on left, Maximize + Single Close on right */}
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <DialogTitle className="text-base font-semibold text-foreground">
             {isEdit ? "Edit Call Log" : "Create Call Log"}
@@ -160,7 +160,7 @@ export function CallFormModal({
           </div>
         </div>
 
-        {/* Modal Form Body matching Frappe CRM 2-Column layout */}
+        {/* Modal Form Body matching CRM Backend 2-Column layout */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Column 1 */}
@@ -303,7 +303,7 @@ export function CallFormModal({
             />
           </div>
 
-          {/* Footer Submit Button matching Frappe CRM */}
+          {/* Footer Submit Button matching CRM Backend */}
           <div className="flex justify-end pt-3 pb-1 border-t border-border/40">
             <Button
               type="submit"

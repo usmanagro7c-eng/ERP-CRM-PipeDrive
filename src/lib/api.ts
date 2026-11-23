@@ -1939,6 +1939,8 @@ export async function getRecordEmails(
   return Array.isArray(data) ? (data as RecordEmail[]) : [];
 }
 
+import { wrapInProfessionalEmailHtml } from "./email-formatter";
+
 export async function sendEmail(args: {
   recipients: string;
   subject: string;
@@ -1947,13 +1949,23 @@ export async function sendEmail(args: {
   docname?: string;
   now?: boolean;
 }): Promise<void> {
+  const finalContent =
+    args.content.startsWith("<!DOCTYPE") || args.content.startsWith("<div style=")
+      ? args.content
+      : wrapInProfessionalEmailHtml({
+          subject: args.subject,
+          body: args.content,
+          referenceDoctype: args.doctype,
+          referenceName: args.docname,
+        });
+
   try {
     await proxyRequest("api/method/frappe.core.doctype.communication.email.make", {
       method: "POST",
       body: {
         recipients: args.recipients,
         subject: args.subject,
-        content: args.content,
+        content: finalContent,
         doctype: args.doctype,
         name: args.docname,
         send_email: 1,
@@ -1970,7 +1982,7 @@ export async function sendEmail(args: {
           communication_medium: "Email",
           recipients: args.recipients,
           subject: args.subject,
-          content: args.content,
+          content: finalContent,
           reference_doctype: args.doctype,
           reference_name: args.docname,
           sent_or_received: "Sent",

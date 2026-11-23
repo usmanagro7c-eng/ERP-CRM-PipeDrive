@@ -577,6 +577,7 @@ function LeadDetailPage() {
                   referenceDoctype={api.LEAD_DOCTYPE}
                   referenceName={leadId}
                   defaultRecipientEmail={email}
+                  recordTitle={leadName}
                 />
               )}
 

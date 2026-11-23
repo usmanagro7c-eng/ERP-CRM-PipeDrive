@@ -884,6 +884,10 @@ function DealDetailPage() {
                   referenceDoctype={api.DEAL_DOCTYPE}
                   referenceName={dealId}
                   defaultRecipientEmail={email}
+                  recordTitle={
+                    sidebarValues.organization ||
+                    String(deal?.["organization_name"] || deal?.["organization"] || dealId)
+                  }
                 />
               )}
 

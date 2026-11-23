@@ -20,8 +20,8 @@ import {
 } from "@/lib/session";
 
 /**
- * Sign in with a Frappe / ERPNext username + password. The credentials are verified against
- * the Frappe CRM site (dev03) with an automatic fallback to ERPNext (dev06); we keep a signed,
+ * Sign in with a Frappe / ERP Backend username + password. The credentials are verified against
+ * the CRM Backend site (dev03) with an automatic fallback to ERP Backend (dev06); we keep a signed,
  * HttpOnly session cookie carrying the user's id, display name, roles, and isSystemUser flag.
  *
  * Failed attempts are rate limited per IP + username (see lib/login-rate-limit.ts).
@@ -79,7 +79,7 @@ async function login(request: Request): Promise<Response> {
     loginResponse = new Response(null, { status: 502 });
   }
 
-  // If primary site fails with any error and secondary is configured, try secondary (ERPNext)
+  // If primary site fails with any error and secondary is configured, try secondary (ERP Backend)
   if (!loginResponse.ok && secondaryBase && secondaryBase !== primaryBase) {
     try {
       const secondaryResponse = await fetch(`${secondaryBase}/api/method/login`, {
@@ -115,7 +115,7 @@ async function login(request: Request): Promise<Response> {
       return jsonResponse(
         {
           error:
-            "Backend ERP/CRM server is currently unreachable (Cloudflare 523). Please check if your Frappe server is online.",
+            "Backend ERP/CRM server is currently unreachable (Cloudflare 523). Please check if your backend server is online.",
         },
         502,
       );

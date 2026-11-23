@@ -13,7 +13,7 @@
  *    inline event handlers, and no script may be loaded from another origin.
  */
 
-/** Extra origins that may serve images (the Frappe CRM / ERPNext sites). */
+/** Extra origins that may serve images (the CRM Backend / ERP Backend sites). */
 export interface SecurityHeaderOptions {
   imageOrigins?: string[] | undefined;
 }

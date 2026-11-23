@@ -12,7 +12,7 @@ export interface SessionPayload {
   u: string;
   /** Display name. */
   n: string;
-  /** User roles assigned in Frappe / ERPNext */
+  /** User roles assigned in Frappe / ERP Backend */
   roles?: string[];
   /** True when user has System Manager, System User, or Administrator role */
   isSystemUser?: boolean;

@@ -38,7 +38,7 @@ export const Route = createFileRoute("/files/$")({
           }
           return new Response(buf, { status: 200, headers: outHeaders });
         } catch {
-          return jsonResponse({ error: "Could not reach Frappe" }, 502);
+          return jsonResponse({ error: "Could not reach backend" }, 502);
         }
       },
     },

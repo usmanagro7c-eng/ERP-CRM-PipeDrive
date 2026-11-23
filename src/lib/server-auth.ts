@@ -1,20 +1,25 @@
 import { SESSION_COOKIE, parseCookies, verifySession, type SessionPayload } from "@/lib/session";
 
 /** Server-only configuration. Read inside handlers: on the deployed worker env is injected per request. */
-export const DEFAULT_FRAPPE_BASE_URL = "https://dev03.agrovisions.pk";
-export const DEFAULT_ERPNEXT_BASE_URL = "https://dev06.agrovisions.pk";
-
 export function readEnv(name: string): string | undefined {
   const value = process.env[name];
   return value && value.trim() ? value.trim() : undefined;
 }
 
 export function frappeBaseUrl(): string {
-  return (readEnv("FRAPPE_BASE_URL") ?? DEFAULT_FRAPPE_BASE_URL).replace(/\/$/, "");
+  const value = readEnv("FRAPPE_BASE_URL");
+  if (!value) {
+    throw new Error("FRAPPE_BASE_URL is not configured. Set it in your environment.");
+  }
+  return value.replace(/\/$/, "");
 }
 
 export function erpnextBaseUrl(): string {
-  return (readEnv("ERPNEXT_BASE_URL") ?? DEFAULT_ERPNEXT_BASE_URL).replace(/\/$/, "");
+  const value = readEnv("ERPNEXT_BASE_URL");
+  if (!value) {
+    throw new Error("ERPNEXT_BASE_URL is not configured. Set it in your environment.");
+  }
+  return value.replace(/\/$/, "");
 }
 
 export function frappeApiKey(): string | undefined {
@@ -26,7 +31,7 @@ export function frappeApiSecret(): string | undefined {
 }
 
 /**
- * ERPNext (dev06) credentials. There are deliberately no fallback values:
+ * ERP Backend (dev06) credentials. There are deliberately no fallback values:
  * a missing secret must break the request instead of silently using a
  * hard-coded key that is committed to the repository.
  */
@@ -43,7 +48,7 @@ export function sessionSecret(): string | undefined {
   return secret && secret.length >= 32 ? secret : undefined;
 }
 
-/** Comma-separated Frappe user ids allowed to sign in. "*" or unset lets any valid Frappe/ERPNext user in. */
+/** Comma-separated Frappe user ids allowed to sign in. "*" or unset lets any valid Frappe/ERP Backend user in. */
 export function allowedUsers(): "*" | string[] {
   const raw = readEnv("ALLOWED_USERS");
   if (!raw || raw === "*") return "*";

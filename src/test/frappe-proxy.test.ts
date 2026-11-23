@@ -111,7 +111,7 @@ describe("classifyRequest", () => {
     expect(
       classifyRequest("DELETE", "api/resource/CRM Territory/All Territories", none),
     ).toBeNull();
-    // Customer (create-only via ensureCustomer on ERPNext)
+    // Customer (create-only via ensureCustomer on ERP Backend)
     expect(classifyRequest("POST", "api/resource/Customer", none)?.kind).toBe("org-write");
   });
 
@@ -250,7 +250,7 @@ describe("link targets", () => {
 });
 
 describe("isErpNextRequest", () => {
-  it("routes Quotation, Sales Order, Item and Customer to ERPNext", () => {
+  it("routes Quotation, Sales Order, Item and Customer to ERP Backend", () => {
     expect(isErpNextRequest("api/resource/Quotation")).toBe(true);
     expect(isErpNextRequest("api/resource/Quotation/SAL-QTN-2026-00001")).toBe(true);
     expect(isErpNextRequest("api/resource/Sales Order")).toBe(true);
@@ -259,7 +259,7 @@ describe("isErpNextRequest", () => {
     expect(isErpNextRequest("api/resource/Company")).toBe(true);
   });
 
-  it("routes CRM entities to Frappe CRM (not ERPNext)", () => {
+  it("routes CRM entities to CRM Backend (not ERP Backend)", () => {
     expect(isErpNextRequest("api/resource/CRM Deal")).toBe(false);
     expect(isErpNextRequest("api/resource/CRM Lead")).toBe(false);
     expect(isErpNextRequest("api/resource/CRM Organization")).toBe(false);
@@ -292,7 +292,7 @@ describe("isErpNextRequest", () => {
     );
   });
 
-  it("routes erpnext.* method calls to ERPNext", () => {
+  it("routes erpnext.* method calls to ERP Backend", () => {
     expect(
       isErpNextRequest("api/method/erpnext.selling.doctype.quotation.quotation.declare_order_lost"),
     ).toBe(true);
@@ -868,7 +868,7 @@ describe("uploads", () => {
     expect(UPLOAD_DOCTYPES.has("Communication")).toBe(false);
   });
 
-  it("routes the ERPNext doctypes to ERPNext", () => {
+  it("routes the ERP Backend doctypes to ERP Backend", () => {
     for (const doctype of ["Quotation", "Sales Order", "Item", "Customer"]) {
       expect(ERPNEXT_DOCTYPES.has(doctype)).toBe(true);
     }
@@ -936,7 +936,7 @@ describe("uploads", () => {
     });
   });
 
-  it("routes an upload for a sales document to ERPNext", () => {
+  it("routes an upload for a sales document to ERP Backend", () => {
     for (const doctype of ["Quotation", "Sales Order", "Item", "Customer"]) {
       const form = new FormData();
       form.set("doctype", doctype);

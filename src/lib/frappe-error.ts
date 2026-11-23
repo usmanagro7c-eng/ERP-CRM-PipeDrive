@@ -1,5 +1,5 @@
 /**
- * Helpers for turning raw Frappe/ERPNext error payloads into text that is
+ * Helpers for turning raw Frappe/ERP Backend error payloads into text that is
  * safe and readable to render inside our UI (toasts, dialogs, etc.).
  *
  * Frappe messages often embed raw HTML (e.g. links to documents) which looks

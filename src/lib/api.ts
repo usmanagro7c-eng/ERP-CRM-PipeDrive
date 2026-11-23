@@ -62,7 +62,7 @@ export function extractFrappeErrorMessage(payload: unknown): string | undefined 
     if (/<html|<!doctype/i.test(payload)) {
       const titleMatch = payload.match(/<title>([^<]*)<\/title>/i);
       const title = titleMatch?.[1]?.trim() || "Internal Server Error";
-      return `Frappe server returned ${title} (500). Please check your Frappe CRM server.`;
+      return `Backend server returned ${title} (500). Please check your CRM Backend server.`;
     }
     return payload.slice(0, 300);
   }
@@ -313,14 +313,14 @@ export async function createDeal(
 ): Promise<Record<string, unknown>> {
   const payload: Record<string, unknown> = { ...values };
 
-  // Keep annual_revenue and deal_value synchronized across different Frappe CRM versions
+  // Keep annual_revenue and deal_value synchronized across different CRM Backend versions
   if (payload["annual_revenue"] !== undefined && payload["deal_value"] === undefined) {
     payload["deal_value"] = payload["annual_revenue"];
   } else if (payload["deal_value"] !== undefined && payload["annual_revenue"] === undefined) {
     payload["annual_revenue"] = payload["deal_value"];
   }
 
-  // Ensure Organization exists in Frappe CRM so LinkValidationError never occurs
+  // Ensure Organization exists in CRM Backend so LinkValidationError never occurs
   const rawOrg = payload["organization"];
   if (typeof rawOrg === "string" && rawOrg.trim()) {
     try {
@@ -334,7 +334,7 @@ export async function createDeal(
     }
   }
 
-  // Ensure Contact exists in Frappe CRM if person details are given without a link
+  // Ensure Contact exists in CRM Backend if person details are given without a link
   if (
     !payload["contact"] &&
     (payload["first_name"] || payload["email"] || payload["mobile_no"])
@@ -369,14 +369,14 @@ export async function updateDeal(
 ): Promise<Record<string, unknown>> {
   const payload: Record<string, unknown> = { ...values };
 
-  // Keep annual_revenue and deal_value synchronized across different Frappe CRM versions
+  // Keep annual_revenue and deal_value synchronized across different CRM Backend versions
   if (payload["annual_revenue"] !== undefined && payload["deal_value"] === undefined) {
     payload["deal_value"] = payload["annual_revenue"];
   } else if (payload["deal_value"] !== undefined && payload["annual_revenue"] === undefined) {
     payload["annual_revenue"] = payload["deal_value"];
   }
 
-  // Ensure Organization exists in Frappe CRM so LinkValidationError never occurs
+  // Ensure Organization exists in CRM Backend so LinkValidationError never occurs
   const rawOrg = payload["organization"];
   if (typeof rawOrg === "string" && rawOrg.trim()) {
     try {

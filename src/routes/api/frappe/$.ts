@@ -38,12 +38,12 @@ import {
 import { isSameOrigin } from "@/lib/session";
 
 /**
- * Authenticated, allow-listed proxy to Frappe CRM (dev03) and ERPNext (dev06).
+ * Authenticated, allow-listed proxy to CRM Backend (dev03) and ERP Backend (dev06).
  *
  * - Requires a signed-in session (cookie set by /api/auth/login).
  * - Holds integration credentials server-side; the browser never sees them.
- * - Routes Quotation, Sales Order, Item, and Customer directly to ERPNext (dev06).
- * - Routes CRM Leads, Deals, Tasks, Organizations, and Contacts to Frappe CRM (dev03).
+ * - Routes Quotation, Sales Order, Item, and Customer directly to ERP Backend (dev06).
+ * - Routes CRM Leads, Deals, Tasks, Organizations, and Contacts to CRM Backend (dev03).
  */
 
 const PROXY_PREFIX = "/api/frappe/";
@@ -250,7 +250,7 @@ async function forward(request: Request): Promise<Response> {
     }
   }
 
-  // Determine whether this request targets ERPNext (dev06) or Frappe CRM (dev03)
+  // Determine whether this request targets ERP Backend (dev06) or CRM Backend (dev03)
   const isErpNext = uploadInfo
     ? uploadInfo.isErpNext
     : (scope ? ERPNEXT_DOCTYPES.has(scope.doctype) : false) ||
@@ -323,7 +323,7 @@ async function forward(request: Request): Promise<Response> {
   } catch {
     return jsonResponse(
       {
-        _proxy_error: `Could not reach ${isErpNext ? "ERPNext (dev06)" : "Frappe CRM (dev03)"}. Check network or credentials.`,
+        _proxy_error: `Could not reach ${isErpNext ? "ERP Backend" : "CRM Backend"}. Check network or credentials.`,
       },
       502,
     );

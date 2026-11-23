@@ -4,7 +4,7 @@
  *
  * Rules:
  *  - Only CRM Organization, CRM Deal, CRM Lead, CRM Task, Contact, Note, etc. can be read/written on CRM site (dev03).
- *  - Quotation, Sales Order, Item, Customer, and related ERPNext DocTypes route to ERPNext site (dev06).
+ *  - Quotation, Sales Order, Item, Customer, and related ERP Backend DocTypes route to ERP Backend site (dev06).
  *  - Other DocTypes can only be read as a list of `name`s, and only when they are
  *    the target of a Link field on CRM Organization (resolved from its metadata).
  *  - File / Comment / Communication lists may only be read when the request is
@@ -48,7 +48,7 @@ export const MAIN_DOCTYPES = new Set([
   NOTIFICATION_SETTINGS_DOCTYPE,
 ]);
 
-/** DocTypes and transactions that live on the ERPNext instance (dev06) */
+/** DocTypes and transactions that live on the ERP Backend instance (dev06) */
 export const ERPNEXT_DOCTYPES = new Set([
   QUOTATION_DOCTYPE,
   SALES_ORDER_DOCTYPE,
@@ -159,7 +159,7 @@ export const REFERENCE_FILTERED_DOCTYPES = new Map<
 
 /**
  * DocTypes a file may be attached to (uploads): the CRM records, the sales
- * documents and the two ERPNext masters. Nothing else is a valid parent for
+ * documents and the two ERP Backend masters. Nothing else is a valid parent for
  * an attachment (File, Comment, Communication, ... are not).
  */
 export const UPLOAD_DOCTYPES = new Set([...RECORD_DOCTYPES, ITEM_DOCTYPE, CUSTOMER_DOCTYPE]);
@@ -309,7 +309,7 @@ export function classifyRequest(
   return null;
 }
 
-/** Check if a request belongs to ERPNext (dev06) instead of Frappe CRM (dev03) */
+/** Check if a request belongs to ERP Backend (dev06) instead of CRM Backend (dev03) */
 export function isErpNextRequest(
   path: string,
   searchParams?: URLSearchParams,
@@ -498,7 +498,7 @@ export function isAllowedUploadType(fileName: string, contentType?: string | nul
 export interface UploadInfo {
   doctype: string;
   docname: string;
-  /** True when the file must be uploaded to ERPNext (dev06). */
+  /** True when the file must be uploaded to ERP Backend (dev06). */
   isErpNext: boolean;
 }
 
@@ -508,7 +508,7 @@ export type UploadResult =
 /**
  * Validate a multipart upload form.
  *
- * The DocType decides the target site (ERPNext for Quotation, Sales Order,
+ * The DocType decides the target site (ERP Backend for Quotation, Sales Order,
  * Item and Customer), the docname must look like a document name and the file
  * must be on the type allow-list.
  */

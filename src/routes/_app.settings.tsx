@@ -133,6 +133,7 @@ function SettingsPage() {
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [previewActor, setPreviewActor] = useState<string>("");
 
   useEffect(() => {
@@ -316,6 +317,30 @@ function SettingsPage() {
     }
   };
 
+  const handleProcessQueue = async () => {
+    setIsProcessingQueue(true);
+    try {
+      const res = await api.processNotificationQueue();
+      if (res.status === "instant_mode") {
+        toast.info("Instant Mode is active — notifications are dispatched on-change without queueing.");
+      } else if (res.dispatched > 0) {
+        toast.success(`Queue processed: ${res.dispatched} pending notification(s) dispatched to Email Queue.`);
+      } else if (res.status === "not_due") {
+        toast.info("Queue checked: Scheduled time or interval has not arrived yet.");
+      } else if (res.status === "empty_queue") {
+        toast.info("Queue checked: No pending notifications waiting in queue.");
+      } else {
+        toast.info(`Queue checked: Status '${res.status}'.`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["notification-settings"] });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to process notification queue";
+      toast.error(msg);
+    } finally {
+      setIsProcessingQueue(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await logout();
     queryClient.setQueryData(SESSION_QUERY_KEY, null);
@@ -452,7 +477,7 @@ function SettingsPage() {
               <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2 text-destructive font-medium text-sm">
                   <AlertCircle className="size-4" />
-                  <span>Failed to load notification settings from Frappe CRM</span>
+                  <span>Failed to load notification settings from CRM Backend</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {settingsError instanceof Error ? settingsError.message : "Network error"}
@@ -564,7 +589,7 @@ function SettingsPage() {
                           <RadioGroupItem value="instant" id="timing-instant" />
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Foran kisi change par email dispatch ho. Har update ya stage tabdili par foran email alert jayegi.
+                          Email is dispatched immediately on any change. Every update or stage change triggers an instant email alert.
                         </p>
                       </div>
                       <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -592,7 +617,7 @@ function SettingsPage() {
                           <RadioGroupItem value="scheduled" id="timing-scheduled" />
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Time set karein k kis time par saari mails aayein. Din ka ek fix time muqarrar karein (Daily digest).
+                          Set the time at which all emails are sent. Pick a fixed daily time for the digest.
                         </p>
                       </div>
                       <div className="mt-3 flex items-center gap-1.5 text-[10px] text-blue-600 dark:text-blue-400 font-medium">
@@ -619,7 +644,7 @@ function SettingsPage() {
                           <RadioGroupItem value="interval" id="timing-interval" />
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Time period set karein k kitne time k baad mails aayein (e.g. har 1 ghante ya 2 ghante baad).
+                          Set the interval after which emails are sent (e.g. every 1 or 2 hours).
                         </p>
                       </div>
                       <div className="mt-3 flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
@@ -752,6 +777,54 @@ function SettingsPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Queue Status and Quick Actions inside card */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Delivery Queue Status:</span>
+                      <Badge variant="outline" className="text-[11px] font-normal">
+                        {formState.delivery_mode === "scheduled"
+                          ? `Scheduled (Daily at ${formState.scheduled_time || "09:00"})`
+                          : formState.delivery_mode === "interval"
+                            ? `Interval (${formatInterval(formState.interval_minutes || 60)})`
+                            : "Instant (Real-time)"}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleProcessQueue}
+                        disabled={isProcessingQueue}
+                        className="h-7 text-xs gap-1.5 cursor-pointer"
+                        title="Process accumulated pending notifications or check schedule status"
+                      >
+                        {isProcessingQueue ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="size-3 text-muted-foreground" />
+                        )}
+                        <span>Process / Flush Queue</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleSendTestEmail}
+                        disabled={isSendingTest || !formState.enabled}
+                        className="h-7 text-xs gap-1.5 cursor-pointer"
+                      >
+                        {isSendingTest ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <Send className="size-3 text-muted-foreground" />
+                        )}
+                        <span>Test Email Dispatch</span>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Hierarchy Routing Mode Card */}
@@ -1019,7 +1092,7 @@ function SettingsPage() {
                       </Label>
                       <Input
                         id="extra-emails"
-                        placeholder="e.g. notifications@agrovisions.pk, auditor@agrovisions.pk"
+                        placeholder="e.g. notifications@example.com, auditor@example.com"
                         value={formState.extra_emails || ""}
                         onChange={(e) => {
                           setFormState((prev) => ({ ...prev, extra_emails: e.target.value }));
@@ -1179,7 +1252,7 @@ function SettingsPage() {
                           Quotations Created &amp; Submitted
                         </Label>
                         <p className="text-[11px] text-muted-foreground">
-                          When a Quotation is created from a Deal or submitted in ERPNext.
+                          When a Quotation is created from a Deal or submitted in ERP Backend.
                         </p>
                       </div>
                     </div>
@@ -1488,7 +1561,7 @@ function SettingsPage() {
                   System & Integration Status
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Operational status of CRM and ERPNext multi-backend integrations.
+                  Operational status of CRM and ERP multi-backend integrations.
                 </p>
               </div>
 
@@ -1496,7 +1569,7 @@ function SettingsPage() {
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">
-                      Frappe CRM Backend
+                      CRM Backend
                     </span>
                     <Badge
                       variant="outline"
@@ -1513,7 +1586,7 @@ function SettingsPage() {
 
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">ERPNext Backend</span>
+                    <span className="text-xs font-semibold text-foreground">ERP Backend</span>
                     <Badge
                       variant="outline"
                       className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"

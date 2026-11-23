@@ -724,6 +724,14 @@ describe("validateMethodBody", () => {
           extra: "ignored",
         }),
       ).toEqual({ ok: true, body: {} });
+
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.get_queue_status", {}),
+      ).toEqual({ ok: true, body: {} });
+
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.process_notification_queue", {}),
+      ).toEqual({ ok: true, body: {} });
     });
 
     it("validates preview_recipients parameters", () => {

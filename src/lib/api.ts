@@ -1115,14 +1115,18 @@ export async function getDefaultCompany(): Promise<{ company: string; currency: 
     if (Array.isArray(data) && data[0]?.name) {
       defaultCompanyCache = {
         company: data[0].name,
-        currency: data[0].default_currency || "PKR",
+        currency: data[0].default_currency || "",
       };
+      if (!defaultCompanyCache.currency) {
+        throw new Error("Default company has no default_currency configured.");
+      }
       return defaultCompanyCache;
     }
-  } catch {
-    // fallback
+    throw new Error("No company found in backend.");
+  } catch (err) {
+    defaultCompanyCache = null;
+    throw err instanceof Error ? err : new Error(String(err));
   }
-  return { company: "AGROVISIONS", currency: "PKR" };
 }
 
 export async function createQuotation(values: Record<string, unknown>): Promise<Quotation> {
@@ -1334,7 +1338,7 @@ export async function ensureCustomer(customerName: string): Promise<string> {
         return String(data2["name"]);
       }
     } catch (err2) {
-      console.warn("Could not auto-create Customer in ERPNext:", err2);
+      console.warn("Could not auto-create Customer in ERP Backend:", err2);
     }
   }
 
@@ -2289,6 +2293,55 @@ export async function sendTestNotification(): Promise<{
     (payload as { message?: { success: boolean; recipients: string[]; count: number } }).message ??
     payload;
   return data as { success: boolean; recipients: string[]; count: number };
+}
+
+export interface NotificationQueueStatus {
+  delivery_mode: "instant" | "scheduled" | "interval";
+  scheduled_time: string;
+  interval_minutes: number;
+  last_dispatched: string;
+  pending_count: number;
+  dispatched_count: number;
+  pending_items: Array<{
+    name: string;
+    status: string;
+    reference_doctype: string;
+    reference_name: string;
+    recipients: string;
+    subject: string;
+    creation: string;
+  }>;
+  recent_emails: Array<{
+    name: string;
+    status: string;
+    sender: string;
+    creation: string;
+    modified: string;
+  }>;
+}
+
+export async function getNotificationQueueStatus(): Promise<NotificationQueueStatus> {
+  const payload = await proxyRequest("api/method/custom_crm_sync.api.notify.get_queue_status", {
+    method: "POST",
+    body: {},
+  });
+  const data = (payload as { message?: NotificationQueueStatus }).message ?? payload;
+  return data as NotificationQueueStatus;
+}
+
+export async function processNotificationQueue(): Promise<{
+  dispatched: number;
+  status: string;
+  error?: string;
+}> {
+  const payload = await proxyRequest(
+    "api/method/custom_crm_sync.api.notify.process_notification_queue",
+    { method: "POST", body: {} },
+  );
+  const data =
+    (payload as { message?: { dispatched: number; status: string; error?: string } }).message ??
+    payload;
+  return data as { dispatched: number; status: string; error?: string };
 }
 
 // Local type import to avoid a circular-looking import in editors.

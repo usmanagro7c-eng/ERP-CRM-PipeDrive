@@ -286,7 +286,9 @@ export function classifyRequest(
       path === "api/method/custom_crm_sync.api.notify.get_notification_settings" ||
       path === "api/method/custom_crm_sync.api.notify.save_notification_settings" ||
       path === "api/method/custom_crm_sync.api.notify.preview_recipients" ||
-      path === "api/method/custom_crm_sync.api.notify.send_test_notification"
+      path === "api/method/custom_crm_sync.api.notify.send_test_notification" ||
+      path === "api/method/custom_crm_sync.api.notify.get_queue_status" ||
+      path === "api/method/custom_crm_sync.api.notify.process_notification_queue"
     ) {
       return { kind: "org-write" };
     }
@@ -586,6 +588,8 @@ export const VALIDATED_METHODS = new Set([
   "api/method/custom_crm_sync.api.notify.save_notification_settings",
   "api/method/custom_crm_sync.api.notify.preview_recipients",
   "api/method/custom_crm_sync.api.notify.send_test_notification",
+  "api/method/custom_crm_sync.api.notify.get_queue_status",
+  "api/method/custom_crm_sync.api.notify.process_notification_queue",
 ]);
 
 /**
@@ -725,7 +729,9 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
     }
 
     case "api/method/custom_crm_sync.api.notify.get_notification_settings":
-    case "api/method/custom_crm_sync.api.notify.send_test_notification": {
+    case "api/method/custom_crm_sync.api.notify.send_test_notification":
+    case "api/method/custom_crm_sync.api.notify.get_queue_status":
+    case "api/method/custom_crm_sync.api.notify.process_notification_queue": {
       return { ok: true, body: {} };
     }
 

@@ -360,7 +360,7 @@ function ContactDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
+      {/* Top Header / Breadcrumbs & Action Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Contacts / ☰ List / {contactName} */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
@@ -386,7 +386,7 @@ function ContactDetailPage() {
           </span>
         </div>
 
-        {/* Top Right Action: Solid Black "+ New Deal" Button matching Frappe CRM */}
+        {/* Top Right Action: Solid Black "+ New Deal" Button matching CRM Backend */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
@@ -400,7 +400,7 @@ function ContactDetailPage() {
         </div>
       </div>
 
-      {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
+      {/* Main 2-Column Layout matching CRM Backend: Left Sidebar + Right Canvas */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* LEFT COLUMN: Sidebar (Details & Contact Attributes) */}
         <div className="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card/30 p-4 sm:p-5 flex flex-col gap-5 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0">
@@ -432,7 +432,7 @@ function ContactDetailPage() {
             </Button>
           </div>
 
-          {/* Collapsible Details Section with Key-Value Rows matching Frappe CRM */}
+          {/* Collapsible Details Section with Key-Value Rows matching CRM Backend */}
           <Collapsible
             open={detailsOpen}
             onOpenChange={setDetailsOpen}
@@ -615,7 +615,7 @@ function ContactDetailPage() {
           </Collapsible>
         </div>
 
-        {/* RIGHT COLUMN: Canvas with "Deals {count}" Tab matching Frappe CRM */}
+        {/* RIGHT COLUMN: Canvas with "Deals {count}" Tab matching CRM Backend */}
         <div className="flex-none lg:flex-1 flex flex-col min-w-0 bg-background lg:h-full lg:min-h-0 lg:overflow-hidden">
           {/* Tab Header Bar */}
           <div className="flex items-center border-b border-border/70 bg-card/20 px-4 shrink-0 sm:px-6">

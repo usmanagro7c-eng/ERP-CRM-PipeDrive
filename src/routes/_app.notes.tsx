@@ -102,7 +102,7 @@ function NotesPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
+      {/* Top Banner Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Notes / ☰ Notes View */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
@@ -119,7 +119,7 @@ function NotesPage() {
           </button>
         </div>
 
-        {/* Right Action: Solid Black "+ Create" Button matching Frappe CRM */}
+        {/* Right Action: Solid Black "+ Create" Button matching CRM Backend */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
@@ -132,7 +132,7 @@ function NotesPage() {
         </div>
       </div>
 
-      {/* Filter Bar Matching Frappe CRM */}
+      {/* Filter Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
         {/* Left Inputs */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -196,7 +196,7 @@ function NotesPage() {
             <Loader2 className="size-8 animate-spin text-primary" />
           </div>
         ) : filteredNotes.length === 0 ? (
-          /* Empty State Matching Frappe CRM */
+          /* Empty State Matching CRM Backend */
           <div className="flex flex-col items-center justify-center text-center py-20 max-w-md mx-auto">
             <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
               <StickyNote className="size-6" />
@@ -216,7 +216,7 @@ function NotesPage() {
             </Button>
           </div>
         ) : (
-          /* Notes Card Grid Matching Frappe CRM */
+          /* Notes Card Grid Matching CRM Backend */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredNotes.map((note) => {
               const author = note.owner || "User";

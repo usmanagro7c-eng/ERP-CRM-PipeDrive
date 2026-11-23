@@ -477,12 +477,12 @@ function OrganizationsPage() {
         {!meta && !error && (
           <LoadingState
             title="Loading Organizations..."
-            description="Fetching companies, territories, and industries from Frappe CRM..."
+            description="Fetching companies, territories, and industries from CRM Backend..."
           />
         )}
       </div>
 
-      {/* Footer Pagination matching Frappe CRM */}
+      {/* Footer Pagination matching CRM Backend */}
       {meta && activeView === "table" && total > 0 && (
         <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
           <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">

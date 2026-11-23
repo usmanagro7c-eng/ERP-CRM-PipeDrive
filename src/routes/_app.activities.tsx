@@ -94,7 +94,7 @@ function ActivitiesPage() {
   const page = search.page ?? 1;
   const q = search.q ?? "";
 
-  // Build filters matching Frappe CRM
+  // Build filters matching CRM Backend
   const filters: Array<[string, string, string]> = useMemo(() => {
     const list: Array<[string, string, string]> = [];
     if (search.priority && search.priority !== "all") {
@@ -167,7 +167,7 @@ function ActivitiesPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
+      {/* Top Banner Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Tasks / ☰ List */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
@@ -197,7 +197,7 @@ function ActivitiesPage() {
         </div>
       </div>
 
-      {/* Filter & Action Toolbar Matching Frappe CRM */}
+      {/* Filter & Action Toolbar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
         {/* Left Filters */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -385,7 +385,7 @@ function ActivitiesPage() {
           />
         </div>
 
-        {/* Footer Pagination matching Frappe CRM */}
+        {/* Footer Pagination matching CRM Backend */}
         <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
           {/* Page size toggle pills: 20 | 50 | 100 */}
           <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">

@@ -582,7 +582,7 @@ function DealDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
+      {/* Top Header / Breadcrumbs & Action Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Deals / ☰ List / {dealName} */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
@@ -975,7 +975,7 @@ function DealDetailPage() {
           </div>
         </div>
 
-        {/* Right Sidebar (Record Attributes & Details Panel) Matching Frappe CRM */}
+        {/* Right Sidebar (Record Attributes & Details Panel) Matching CRM Backend */}
         <div className="order-first w-full lg:order-none lg:w-80 shrink-0 border-b lg:border-b-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0">
           {/* Top Identifier & Avatar */}
           <div>
@@ -1077,7 +1077,7 @@ function DealDetailPage() {
             </div>
           </div>
 
-          {/* Section 1: Contacts (Collapsible) matching Frappe CRM */}
+          {/* Section 1: Contacts (Collapsible) matching CRM Backend */}
           <Collapsible
             open={contactsOpen}
             onOpenChange={setContactsOpen}
@@ -1143,7 +1143,7 @@ function DealDetailPage() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Section 2: Lost Reason (Collapsible) matching Frappe CRM */}
+          {/* Section 2: Lost Reason (Collapsible) matching CRM Backend */}
           <Collapsible
             open={lostReasonOpen}
             onOpenChange={setLostReasonOpen}
@@ -1180,7 +1180,7 @@ function DealDetailPage() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Section 3: Organization Details (Collapsible) matching Frappe CRM */}
+          {/* Section 3: Organization Details (Collapsible) matching CRM Backend */}
           <Collapsible
             open={orgDetailsOpen}
             onOpenChange={setOrgDetailsOpen}

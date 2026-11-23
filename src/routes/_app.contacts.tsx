@@ -287,7 +287,7 @@ function ContactsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
+      {/* Top Banner Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
           <span className="font-medium text-foreground">Contacts</span>
@@ -337,7 +337,7 @@ function ContactsPage() {
         </div>
       </div>
 
-      {/* Secondary Filter Toolbar Matching Frappe CRM */}
+      {/* Secondary Filter Toolbar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0">
         <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
           {/* Search Input */}
@@ -485,7 +485,7 @@ function ContactsPage() {
                 }
               />
 
-              {/* Pagination for Table view matching Frappe CRM */}
+              {/* Pagination for Table view matching CRM Backend */}
               {total > 0 && (
                 <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground px-2 pt-2">
                   <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">
@@ -546,7 +546,7 @@ function ContactsPage() {
         ) : (
           <LoadingState
             title="Loading Contacts..."
-            description="Fetching contacts directory and configuration from Frappe CRM..."
+            description="Fetching contacts directory and configuration from CRM Backend..."
           />
         )}
       </div>

@@ -177,7 +177,7 @@ function QuotationDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Breadcrumb & Action Bar matching Frappe CRM */}
+      {/* Top Breadcrumb & Action Bar */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Left: Breadcrumbs & Quotation ID */}
         <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground min-w-0 flex-1">
@@ -571,7 +571,7 @@ function QuotationDetailPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Ready to book this order? Transfer all line items and customer details directly
-                  into an ERPNext Sales Order with 1 click.
+                  into an ERP Backend Sales Order with 1 click.
                 </p>
                 <Button
                   size="sm"

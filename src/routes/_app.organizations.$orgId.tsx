@@ -260,7 +260,7 @@ function OrganizationDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
+      {/* Top Header / Breadcrumbs & Action Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Organizations / ☰ List / {orgName} */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
@@ -284,7 +284,7 @@ function OrganizationDetailPage() {
           </span>
         </div>
 
-        {/* Top Right Actions: Enrich + Solid Black "+ New Deal" Button matching Frappe CRM */}
+        {/* Top Right Actions: Enrich + Solid Black "+ New Deal" Button matching CRM Backend */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button
             size="sm"
@@ -310,7 +310,7 @@ function OrganizationDetailPage() {
         </div>
       </div>
 
-      {/* Main 2-Column Layout matching Frappe CRM: Left Sidebar + Right Canvas */}
+      {/* Main 2-Column Layout matching CRM Backend: Left Sidebar + Right Canvas */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* LEFT COLUMN: Sidebar (Details & Organization Attributes) */}
         <div className="flex w-full shrink-0 flex-col gap-5 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0 border-b border-border bg-card/30 p-4 sm:p-5 lg:w-80 lg:border-b-0 lg:border-r">
@@ -534,7 +534,7 @@ function OrganizationDetailPage() {
           {activeTab === "deals" && (
             <div className="pt-8">
               {linkedDeals.length === 0 ? (
-                /* Empty state matching Frappe CRM */
+                /* Empty state matching CRM Backend */
                 <div className="flex flex-col items-center justify-center text-center py-20">
                   <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
                     <Briefcase className="size-5" />
@@ -596,7 +596,7 @@ function OrganizationDetailPage() {
           {activeTab === "contacts" && (
             <div className="pt-8">
               {linkedContacts.length === 0 ? (
-                /* Empty state matching Frappe CRM */
+                /* Empty state matching CRM Backend */
                 <div className="flex flex-col items-center justify-center text-center py-20">
                   <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
                     <Users className="size-5" />

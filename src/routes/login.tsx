@@ -148,7 +148,7 @@ export function LoginPage() {
               </span>
             </h1>
             <p className="text-sm leading-relaxed text-emerald-100/70">
-              Integrated real-time synchronization between Frappe CRM and ERPNext. Built for agribusinesses, distributors, and field teams.
+              Integrated real-time synchronization between CRM Backend and ERP Backend. Built for agribusinesses, distributors, and field teams.
             </p>
           </div>
 
@@ -196,7 +196,7 @@ export function LoginPage() {
               {/* Footer item in card */}
               <div className="mt-3.5 flex items-center justify-between text-xs text-emerald-100/60 pt-2 border-t border-white/5">
                 <span>Quotation #QTN-2026-0042</span>
-                <span className="text-emerald-300 font-medium">Synced with ERPNext</span>
+                <span className="text-emerald-300 font-medium">Synced with ERP Backend</span>
               </div>
             </div>
 
@@ -212,9 +212,9 @@ export function LoginPage() {
         <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-emerald-100/50">
           <div className="flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-emerald-400" />
-            <span>ERP & Frappe Services Operational</span>
+            <span>ERP & CRM Backend Services Operational</span>
           </div>
-          <span>AgroCRM v2.4</span>
+          <span>AgroCRM v{import.meta.env["VITE_APP_VERSION"] ?? "2.4"}</span>
         </div>
       </div>
 
@@ -244,7 +244,7 @@ export function LoginPage() {
               Welcome back
             </h2>
             <p className="text-sm text-muted-foreground">
-              Sign in with your Frappe CRM or ERPNext account.
+              Sign in with your CRM Backend or ERP Backend account.
             </p>
           </div>
 
@@ -269,7 +269,7 @@ export function LoginPage() {
                   type="text"
                   autoComplete="username"
                   autoFocus
-                  placeholder="name@agrovisions.pk"
+                  placeholder="name@example.com"
                   disabled={pending}
                   className="h-11 w-full rounded-xl bg-transparent pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
@@ -367,10 +367,10 @@ export function LoginPage() {
           <div className="pt-2 text-center text-xs text-muted-foreground/80 space-y-2 border-t border-border/50">
             <div className="flex items-center justify-center gap-1.5 text-muted-foreground/70">
               <ShieldCheck className="size-3.5 text-primary" />
-              <span>Frappe CRM & ERPNext Authorized Access</span>
+              <span>CRM & ERP Backend Authorized Access</span>
             </div>
             <p className="text-[11px] text-muted-foreground/60 leading-normal">
-              Users with ERPNext or Frappe CRM credentials can log in directly. System users will have access to notification controls.
+              Users with ERP Backend or CRM Backend credentials can log in directly. System users will have access to notification controls.
             </p>
           </div>
         </div>

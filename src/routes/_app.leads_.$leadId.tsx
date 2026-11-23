@@ -343,7 +343,7 @@ function LeadDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Header / Breadcrumbs & Action Bar Matching Frappe CRM */}
+      {/* Top Header / Breadcrumbs & Action Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Leads / ☰ List / Zubair Khan */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
@@ -622,7 +622,7 @@ function LeadDetailPage() {
             </div>
           </div>
 
-          {/* Bottom Bar: Reply & Comment Actions (matching Frappe CRM bottom strip) */}
+          {/* Bottom Bar: Reply & Comment Actions (matching CRM Backend bottom strip) */}
           <div className="border-t px-4 py-2.5 bg-card/40 flex items-center gap-4 shrink-0">
             <button
               onClick={() => {
@@ -648,7 +648,7 @@ function LeadDetailPage() {
           </div>
         </div>
 
-        {/* Right Sidebar (Record Attributes & Details Panel) Matching Frappe CRM */}
+        {/* Right Sidebar (Record Attributes & Details Panel) Matching CRM Backend */}
         <div className="order-first w-full lg:order-none lg:w-80 shrink-0 border-b lg:border-b-0 bg-card/30 p-4 sm:p-5 flex flex-col gap-4 overflow-visible lg:overflow-y-auto lg:h-full lg:min-h-0">
           {/* Top Identifier & Avatar */}
           <div>
@@ -663,7 +663,7 @@ function LeadDetailPage() {
               <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-base text-foreground truncate">{leadName}</h2>
 
-                {/* 4 Action Icons Row Matching Frappe CRM: Mail, Link, Attachment, Delete */}
+                {/* 4 Action Icons Row Matching CRM Backend: Mail, Link, Attachment, Delete */}
                 <div className="flex items-center gap-1.5 mt-1.5">
                   {email ? (
                     <Button

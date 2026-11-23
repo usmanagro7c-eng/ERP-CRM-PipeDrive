@@ -182,7 +182,7 @@ function CallLogsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching Frappe CRM */}
+      {/* Top Banner Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
         {/* Breadcrumb: Call Logs / ☰ List */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
@@ -199,7 +199,7 @@ function CallLogsPage() {
           </button>
         </div>
 
-        {/* Right Action: Solid Black "+ Create" Button matching Frappe CRM */}
+        {/* Right Action: Solid Black "+ Create" Button matching CRM Backend */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
@@ -212,7 +212,7 @@ function CallLogsPage() {
         </div>
       </div>
 
-      {/* Filter Bar Matching Frappe CRM */}
+      {/* Filter Bar Matching CRM Backend */}
       <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
         {/* Left Inputs */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -328,7 +328,7 @@ function CallLogsPage() {
             <Loader2 className="size-8 animate-spin text-primary" />
           </div>
         ) : filteredCalls.length === 0 ? (
-          /* Empty State Matching Frappe CRM */
+          /* Empty State Matching CRM Backend */
           <div className="flex flex-col items-center justify-center text-center py-20 max-w-md mx-auto flex-1">
             <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
               <PhoneCall className="size-6" />
@@ -348,7 +348,7 @@ function CallLogsPage() {
             </Button>
           </div>
         ) : (
-          /* Call Logs Table Matching Frappe CRM */
+          /* Call Logs Table Matching CRM Backend */
           <div className="flex-1 overflow-y-auto">
             <Table className="min-w-[640px] md:min-w-[750px]">
               <TableHeader>
@@ -490,7 +490,7 @@ function CallLogsPage() {
           </div>
         )}
 
-        {/* Footer Pagination matching Frappe CRM */}
+        {/* Footer Pagination matching CRM Backend */}
         <div className="border-t border-border px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-xs text-muted-foreground bg-card/20 shrink-0">
           {/* Page size toggle pills: 20 | 50 | 100 */}
           <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-md border border-border/60">

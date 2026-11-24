@@ -307,8 +307,9 @@ export function CallFormModal({
           <div className="flex justify-end pt-3 pb-1 border-t border-border/40">
             <Button
               type="submit"
+              variant="contrast"
               disabled={saveMutation.isPending}
-              className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
+              className="h-8 text-xs px-4 font-medium"
             >
               {saveMutation.isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{isEdit ? "Save Changes" : "Create"}</span>

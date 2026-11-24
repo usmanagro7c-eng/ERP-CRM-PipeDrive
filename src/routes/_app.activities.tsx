@@ -2,17 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowUpDown,
-  Check,
-  ChevronDown,
-  Columns3,
-  Filter,
-  Folder,
-  List,
   Plus,
   RefreshCw,
   Search,
   TriangleAlert,
+  X,
 } from "lucide-react";
 
 import { ActivityFormModal } from "@/components/activities/activity-form-modal";
@@ -93,6 +87,12 @@ function ActivitiesPage() {
 
   const page = search.page ?? 1;
   const q = search.q ?? "";
+  const hasActiveFilters = Boolean(
+    q ||
+      (search.priority && search.priority !== "all") ||
+      (search.status && search.status !== "all") ||
+      (search.assigned_to && search.assigned_to !== "all"),
+  );
 
   // Build filters matching CRM Backend
   const filters: Array<[string, string, string]> = useMemo(() => {
@@ -167,177 +167,88 @@ function ActivitiesPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
-        {/* Breadcrumb: Tasks / ☰ List */}
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-          <Link to="/activities" className="hover:text-foreground transition-colors font-medium">
-            Tasks
-          </Link>
-          <span className="opacity-60">/</span>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-foreground font-semibold hover:text-foreground/80 cursor-pointer"
-          >
-            <List className="size-3.5" />
-            <span>List</span>
-          </button>
-        </div>
-
-        {/* Right Create Button: Solid Black "+ Create" */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreateModal}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors"
-          >
+      <div className="shrink-0 border-b border-border/70 bg-card/40 px-3 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Tasks</h1>
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">{total}</span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Track work, priorities, and owners.</p>
+          </div>
+          <Button size="sm" onClick={handleOpenCreateModal} className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold shrink-0">
             <Plus className="size-3.5" />
-            <span>Create</span>
+            <span>New</span>
           </Button>
         </div>
-      </div>
 
-      {/* Filter & Action Toolbar Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
-        {/* Left Filters */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Title Search Input */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative min-w-[90px] w-28 sm:w-48 shrink-0"
-          >
-            <Input
-              value={searchTitle}
-              onChange={(e) => setSearchTitle(e.target.value)}
-              placeholder="Title"
-              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
-            />
+        <div className="mt-3 flex flex-col gap-2">
+          <form onSubmit={handleSearchSubmit} className="w-full sm:max-w-[280px]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTitle}
+                onChange={(e) => setSearchTitle(e.target.value)}
+                placeholder="Search tasks"
+                aria-label="Search tasks by title"
+                className="h-9 sm:h-8 pl-8 text-sm sm:text-xs bg-background/70 border-border/70"
+              />
+            </div>
           </form>
 
-          {/* Priority Dropdown */}
-          <Select
-            value={search.priority ?? "all"}
-            onValueChange={(val) => handleFilterChange("priority", val)}
-          >
-            <SelectTrigger
-              aria-label="Filter by priority"
-              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
-            >
-              <SelectValue placeholder="Priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs cursor-pointer">
-                Priority: All
-              </SelectItem>
-              {PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p} className="text-xs cursor-pointer">
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <Select value={search.priority ?? "all"} onValueChange={(val) => handleFilterChange("priority", val)}>
+              <SelectTrigger aria-label="Filter by priority" className="h-9 sm:h-8 text-xs flex-1 sm:flex-none sm:w-[130px] bg-background/70 border-border/70">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All priorities</SelectItem>
+                {PRIORITIES.map((p) => <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          {/* Assigned To Dropdown */}
-          <Select
-            value={search.assigned_to ?? "all"}
-            onValueChange={(val) => handleFilterChange("assigned_to", val)}
-          >
-            <SelectTrigger
-              aria-label="Filter by assigned to"
-              className="h-7 text-xs w-24 sm:w-32 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
-            >
-              <SelectValue placeholder="Assigned To" />
-            </SelectTrigger>
-            <SelectContent className="max-h-56">
-              <SelectItem value="all" className="text-xs cursor-pointer">
-                Assigned: All
-              </SelectItem>
-              {users.map((u) => {
-                const name = u.full_name || u.name;
-                return (
-                  <SelectItem key={u.name} value={u.name} className="text-xs cursor-pointer">
-                    {name}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+            <Select value={search.assigned_to ?? "all"} onValueChange={(val) => handleFilterChange("assigned_to", val)}>
+              <SelectTrigger aria-label="Filter by assigned to" className="h-9 sm:h-8 text-xs flex-1 sm:flex-none sm:w-[150px] bg-background/70 border-border/70">
+                <SelectValue placeholder="Assigned" />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                <SelectItem value="all" className="text-xs">All assignees</SelectItem>
+                {users.map((u) => <SelectItem key={u.name} value={u.name} className="text-xs">{u.full_name || u.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          {/* Status Dropdown */}
-          <Select
-            value={search.status ?? "all"}
-            onValueChange={(val) => handleFilterChange("status", val)}
-          >
-            <SelectTrigger
-              aria-label="Filter by status"
-              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
-            >
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs cursor-pointer">
-                Status: All
-              </SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s} className="text-xs cursor-pointer">
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <Select value={search.status ?? "all"} onValueChange={(val) => handleFilterChange("status", val)}>
+              <SelectTrigger aria-label="Filter by status" className="h-9 sm:h-8 text-xs flex-1 sm:flex-none sm:w-[130px] bg-background/70 border-border/70">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All statuses</SelectItem>
+                {STATUSES.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-        {/* Right Toolbar Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => void listQuery.refetch()}
-            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Group"
-            aria-label="Group"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Folder className="size-3.5" />
-            <span className="hidden sm:inline">Group</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Filter"
-            aria-label="Filter"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Filter className="size-3.5" />
-            <span className="hidden sm:inline">Filter</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Sort"
-            aria-label="Sort"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <ArrowUpDown className="size-3.5" />
-            <span className="hidden sm:inline">Sort</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Columns"
-            aria-label="Columns"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Columns3 className="size-3.5" />
-            <span className="hidden sm:inline">Columns</span>
-          </Button>
+            <div className="flex items-center gap-1 ml-auto">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    void navigate({
+                      search: (prev) => ({ ...prev, q: undefined, priority: undefined, status: undefined, assigned_to: undefined, page: undefined }),
+                    }).then(() => setSearchTitle(""))
+                  }
+                  className="h-9 sm:h-8 px-2.5 text-xs text-muted-foreground"
+                  aria-label="Clear all task filters"
+                >
+                  <X className="size-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Clear</span>
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={() => void listQuery.refetch()} className="size-9 sm:size-8 text-muted-foreground" title="Refresh" aria-label="Refresh tasks">
+                <RefreshCw className="size-4 sm:size-3.5" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -375,8 +286,9 @@ function ActivitiesPage() {
             emptyAction={
               <Button
                 size="sm"
+                variant="contrast"
                 onClick={handleOpenCreateModal}
-                className="mt-2 h-7 text-xs font-medium px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5"
+                className="mt-2 h-7 text-xs font-medium px-3 gap-1.5"
               >
                 <Plus className="size-3.5" />
                 <span>Create Task</span>

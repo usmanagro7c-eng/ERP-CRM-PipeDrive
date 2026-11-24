@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,7 @@ export function ActivityGrid({
 }: ActivityGridProps) {
   const saveMutation = useSaveActivity();
   const deleteMutation = useDeleteActivity();
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
   if (loading && rows.length === 0) {
     return (
@@ -188,13 +190,7 @@ export function ActivityGrid({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (
-                            window.confirm(`Are you sure you want to delete activity #${name}?`)
-                          ) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget({ name, title })}
                       >
                         Delete Activity
                       </DropdownMenuItem>
@@ -258,6 +254,21 @@ export function ActivityGrid({
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete activity "${deleteTarget?.title || deleteTarget?.name || ""}"?`}
+        description="This activity will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
+      />
     </div>
   );
 }

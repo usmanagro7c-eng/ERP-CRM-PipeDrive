@@ -330,7 +330,9 @@ export function ActivityKanban({
                 ) : activities.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
                     <p className="italic">No tasks here</p>
-                    <p className="text-[10px] text-muted-foreground">Drag tasks to move</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Drag or use the actions menu to move
+                    </p>
                   </div>
                 ) : (
                   activities.map((act) => {
@@ -359,8 +361,18 @@ export function ActivityKanban({
                           setDragOverCol(null);
                         }}
                         onClick={() => onRowClick?.(name)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Activity: ${title} (${name})`}
+                        onKeyDown={(e) => {
+                          if (e.target !== e.currentTarget) return;
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onRowClick?.(name);
+                          }
+                        }}
                         className={cn(
-                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
+                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                           draggedActivityName === name
                             ? "opacity-40 border-dashed"
                             : "border-border",

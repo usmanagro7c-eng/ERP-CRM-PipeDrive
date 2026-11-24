@@ -3,25 +3,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownLeft,
-  ArrowUpDown,
   ArrowUpRight,
   Clock,
-  Columns3,
-  Filter,
-  List,
   Loader2,
   MoreVertical,
   PhoneCall,
   Plus,
   RefreshCw,
-  Search,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -134,7 +130,7 @@ function CallLogsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCall, setEditingCall] = useState<CrmCallLog | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<CrmCallLog | null>(null);
 
   // Filter call logs locally
   const filteredCalls = useMemo(() => {
@@ -154,21 +150,9 @@ function CallLogsPage() {
     });
   }, [calls, filterType, filterStatus, fromFilter, toFilter]);
 
-  const allIds = filteredCalls.map((c) => c.name);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(allIds);
-    }
-  };
-
-  const toggleSelectRow = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-  };
+  const hasActiveFilters = Boolean(
+    filterType !== "all" || filterStatus !== "all" || fromFilter.trim() || toFilter.trim(),
+  );
 
   function handleOpenCreate() {
     setEditingCall(null);
@@ -182,142 +166,58 @@ function CallLogsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
-        {/* Breadcrumb: Call Logs / ☰ List */}
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-          <Link to="/calls" className="hover:text-foreground transition-colors font-medium">
-            Call Logs
-          </Link>
-          <span className="opacity-60">/</span>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-foreground font-semibold hover:text-foreground/80 cursor-pointer"
-          >
-            <List className="size-3.5" />
-            <span>List</span>
-          </button>
-        </div>
-
-        {/* Right Action: Solid Black "+ Create" Button matching CRM Backend */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreate}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors"
-          >
+      <div className="shrink-0 border-b border-border/70 bg-card/40 px-3 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Call Logs</h1>
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">{filteredCalls.length}</span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Track inbound, outbound, and missed calls.</p>
+          </div>
+          <Button size="sm" onClick={handleOpenCreate} className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold shrink-0">
             <Plus className="size-3.5" />
-            <span>Create</span>
+            <span>New</span>
           </Button>
         </div>
-      </div>
 
-      {/* Filter Bar Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
-        {/* Left Inputs */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Type Dropdown */}
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger
-              aria-label="Filter by type"
-              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
-            >
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs cursor-pointer">
-                Type: All
-              </SelectItem>
-              {CALL_TYPES.map((t) => (
-                <SelectItem key={t} value={t} className="text-xs cursor-pointer">
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger aria-label="Filter by type" className="h-9 sm:h-8 text-xs sm:w-[120px] bg-background/70 border-border/70">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All types</SelectItem>
+                {CALL_TYPES.map((t) => <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          {/* Status Dropdown */}
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger
-              aria-label="Filter by status"
-              className="h-7 text-xs w-20 sm:w-28 bg-muted/30 border-border/60 cursor-pointer text-muted-foreground"
-            >
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs cursor-pointer">
-                Status: All
-              </SelectItem>
-              {CALL_STATUSES.map((s) => (
-                <SelectItem key={s} value={s} className="text-xs cursor-pointer">
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger aria-label="Filter by status" className="h-9 sm:h-8 text-xs sm:w-[130px] bg-background/70 border-border/70">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All statuses</SelectItem>
+                {CALL_STATUSES.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          {/* From Number Input */}
-          <div className="relative w-24 sm:w-44 shrink-0">
-            <Input
-              value={fromFilter}
-              onChange={(e) => setFromFilter(e.target.value)}
-              placeholder="From Number"
-              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
-            />
+            <Input value={fromFilter} onChange={(e) => setFromFilter(e.target.value)} placeholder="From number" className="h-9 sm:h-8 text-sm sm:text-xs sm:w-[150px] bg-background/70 border-border/70" />
+            <Input value={toFilter} onChange={(e) => setToFilter(e.target.value)} placeholder="To number" className="h-9 sm:h-8 text-sm sm:text-xs sm:w-[150px] bg-background/70 border-border/70" />
           </div>
 
-          {/* To Number Input */}
-          <div className="relative w-24 sm:w-44 shrink-0">
-            <Input
-              value={toFilter}
-              onChange={(e) => setToFilter(e.target.value)}
-              placeholder="To Number"
-              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
-            />
+          <div className="flex items-center gap-1 ml-auto">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={() => { setFilterType("all"); setFilterStatus("all"); setFromFilter(""); setToFilter(""); }} className="h-9 sm:h-8 px-2.5 text-xs text-muted-foreground" aria-label="Clear all call log filters">
+                <X className="size-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => void refetch()} className="size-9 sm:size-8 text-muted-foreground" title="Refresh" aria-label="Refresh call logs">
+              <RefreshCw className="size-4 sm:size-3.5" />
+            </Button>
           </div>
-        </div>
-
-        {/* Right Toolbar Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => void refetch()}
-            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Filter"
-            aria-label="Filter"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Filter className="size-3.5" />
-            <span className="hidden sm:inline">Filter</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Sort"
-            aria-label="Sort"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <ArrowUpDown className="size-3.5" />
-            <span className="hidden sm:inline">Sort</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Columns"
-            aria-label="Columns"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Columns3 className="size-3.5" />
-            <span className="hidden sm:inline">Columns</span>
-          </Button>
         </div>
       </div>
 
@@ -325,42 +225,27 @@ function CallLogsPage() {
       <div className="flex-1 flex flex-col min-h-0">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-primary" />
+            <Loader2 className="size-7 animate-spin text-muted-foreground" />
           </div>
         ) : filteredCalls.length === 0 ? (
-          /* Empty State Matching CRM Backend */
-          <div className="flex flex-col items-center justify-center text-center py-20 max-w-md mx-auto flex-1">
-            <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
-              <PhoneCall className="size-6" />
+          <div className="flex flex-col items-center justify-center text-center py-16 max-w-md mx-auto flex-1 px-4">
+            <div className="size-12 rounded-2xl bg-muted/60 border border-border/60 flex items-center justify-center text-muted-foreground mb-3">
+              <PhoneCall className="size-5" />
             </div>
-            <h3 className="text-base font-semibold text-foreground">No call logs yet</h3>
+            <h3 className="text-sm font-semibold text-foreground">No call logs found</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-              Calls made through Twilio or Exotel are logged here, along with calls you log by hand
-              on a lead or deal.
+              Log calls manually or sync them from your telephony provider.
             </p>
-            <Button
-              size="sm"
-              onClick={handleOpenCreate}
-              className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
-            >
+            <Button size="sm" onClick={handleOpenCreate} className="mt-4 h-9 sm:h-8 text-xs font-semibold px-4 gap-1.5">
               <Plus className="size-3.5" />
-              <span>Create</span>
+              <span>Create call log</span>
             </Button>
           </div>
         ) : (
-          /* Call Logs Table Matching CRM Backend */
           <div className="flex-1 overflow-y-auto">
             <Table className="min-w-[640px] md:min-w-[750px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
-                  {/* Checkbox */}
-                  <TableHead className="w-[40px] pl-4">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
                   <TableHead className="w-[12%]">ID</TableHead>
                   <TableHead className="w-[12%]">Type</TableHead>
                   <TableHead className="w-[14%]">Status</TableHead>
@@ -376,25 +261,13 @@ function CallLogsPage() {
 
               <TableBody>
                 {filteredCalls.map((c) => {
-                  const isSelected = selectedIds.includes(c.name);
                   const isOutbound = c.type === "Outbound";
                   return (
                     <TableRow
                       key={c.name}
                       onClick={() => handleOpenEdit(c)}
-                      className={cn(
-                        "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
-                        isSelected && "bg-muted/30",
-                      )}
+                      className="group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10"
                     >
-                      {/* Checkbox */}
-                      <TableCell
-                        className="w-[40px] pl-4 py-2"
-                        onClick={(e) => toggleSelectRow(c.name, e)}
-                      >
-                        <Checkbox checked={isSelected} aria-label={`Select ${c.name}`} />
-                      </TableCell>
-
                       {/* ID */}
                       <TableCell className="text-xs font-mono font-medium text-foreground py-2 truncate">
                         <span className="hover:underline">{c.name}</span>
@@ -466,15 +339,7 @@ function CallLogsPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Are you sure you want to delete call log "${c.name}"?`,
-                                  )
-                                ) {
-                                  void deleteMutation.mutate(c.name);
-                                }
-                              }}
+                              onClick={() => setDeleteTarget(c)}
                             >
                               <Trash2 className="size-3.5 mr-1.5" />
                               <span>Delete</span>
@@ -524,6 +389,21 @@ function CallLogsPage() {
         onOpenChange={setModalOpen}
         callLog={editingCall}
         onSuccess={() => void refetch()}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete call log ${deleteTarget?.name || ""}?`}
+        description="This call log will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          void deleteMutation.mutateAsync(name).finally(() => setDeleteTarget(null));
+        }}
       />
     </div>
   );

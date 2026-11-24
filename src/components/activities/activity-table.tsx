@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -157,24 +157,11 @@ export function ActivityTable({
 }: ActivityTableProps) {
   const saveMutation = useSaveActivity();
   const deleteMutation = useDeleteActivity();
-  const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
-  const allNames = rows.map((r) => String(r["name"]));
-  const allSelected = allNames.length > 0 && allNames.every((n) => selectedNames.includes(n));
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedNames([]);
-    } else {
-      setSelectedNames(allNames);
-    }
-  };
-
-  const toggleSelectRow = (name: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedNames((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    );
+  const ariaSort = (field: string): "ascending" | "descending" | "none" => {
+    if (sort?.field !== field) return "none";
+    return sort.direction === "asc" ? "ascending" : "descending";
   };
 
   if (loading && rows.length === 0) {
@@ -209,18 +196,8 @@ export function ActivityTable({
       <Table className="min-w-[640px] md:min-w-[800px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
-            {/* Checkbox */}
-            <TableHead className="w-[40px] pl-4">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={toggleSelectAll}
-                aria-label="Select all"
-                className="translate-y-[2px]"
-              />
-            </TableHead>
-
             {/* Title */}
-            <TableHead className="w-[40%]">
+            <TableHead className="w-[40%]" aria-sort={ariaSort("title")}>
               <button
                 type="button"
                 onClick={() =>
@@ -243,7 +220,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Status */}
-            <TableHead className="w-[12%]">
+            <TableHead className="w-[12%]" aria-sort={ariaSort("status")}>
               <button
                 type="button"
                 onClick={() =>
@@ -266,7 +243,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Priority */}
-            <TableHead className="hidden md:table-cell w-[12%]">
+            <TableHead className="hidden md:table-cell w-[12%]" aria-sort={ariaSort("priority")}>
               <button
                 type="button"
                 onClick={() =>
@@ -289,7 +266,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Due Date */}
-            <TableHead className="w-[15%]">
+            <TableHead className="w-[15%]" aria-sort={ariaSort("due_date")}>
               <button
                 type="button"
                 onClick={() =>
@@ -312,7 +289,7 @@ export function ActivityTable({
             </TableHead>
 
             {/* Assigned To */}
-            <TableHead className="hidden lg:table-cell w-[13%]">
+            <TableHead className="hidden lg:table-cell w-[13%]" aria-sort={ariaSort("assigned_to")}>
               <button
                 type="button"
                 onClick={() =>
@@ -335,7 +312,10 @@ export function ActivityTable({
             </TableHead>
 
             {/* Last Modified */}
-            <TableHead className="hidden md:table-cell w-[12%] text-right pr-4">
+            <TableHead
+              className="hidden md:table-cell w-[12%] text-right pr-4"
+              aria-sort={ariaSort("modified")}
+            >
               <button
                 type="button"
                 onClick={() =>
@@ -371,22 +351,13 @@ export function ActivityTable({
             const dueDate = row["due_date"];
             const assignedTo = String(row["assigned_to"] ?? "");
             const modified = row["modified"] || row["creation"];
-            const isSelected = selectedNames.includes(name);
 
             return (
               <TableRow
                 key={name}
                 onClick={() => (onEdit ? onEdit(row) : onRowClick?.(name))}
-                className={cn(
-                  "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
-                  isSelected && "bg-muted/30",
-                )}
+                className="group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10"
               >
-                {/* Checkbox */}
-                <TableCell className="w-[40px] pl-4 py-2" onClick={(e) => toggleSelectRow(name, e)}>
-                  <Checkbox checked={isSelected} aria-label={`Select ${title}`} />
-                </TableCell>
-
                 {/* Title */}
                 <TableCell className="text-xs font-medium text-foreground py-2 truncate max-w-[320px]">
                   <span className="hover:underline">{title}</span>
@@ -458,11 +429,7 @@ export function ActivityTable({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete task "${title}"?`)) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget({ name, title })}
                       >
                         Delete Task
                       </DropdownMenuItem>
@@ -474,6 +441,21 @@ export function ActivityTable({
           })}
         </TableBody>
       </Table>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete task "${deleteTarget?.title || "Untitled"}"?`}
+        description="This task will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          void deleteMutation.mutateAsync(name).finally(() => setDeleteTarget(null));
+        }}
+      />
     </div>
   );
 }

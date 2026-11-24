@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -65,7 +65,67 @@ import { sessionQueryOptions, logout, SESSION_QUERY_KEY } from "@/lib/auth-clien
 import * as api from "@/lib/api";
 import { HierarchyTreePicker } from "@/components/settings/hierarchy-tree-picker";
 import { readStoredTheme, setTheme, type Theme } from "@/lib/theme";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+
+function SettingsSection({
+  title,
+  description,
+  icon,
+  children,
+  defaultOpen = false,
+  badge,
+  className,
+  headerRight,
+}: {
+  title: string;
+  description?: string;
+  icon: ReactNode;
+  children: ReactNode;
+  defaultOpen?: boolean;
+  badge?: ReactNode;
+  className?: string;
+  headerRight?: ReactNode;
+}) {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    setOpen(!isMobile ? true : defaultOpen);
+  }, [defaultOpen, isMobile]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <section className={cn("rounded-xl border border-border/70 bg-card shadow-2xs", className)}>
+        <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
+          <CollapsibleTrigger asChild>
+            <button type="button" className="flex-1 min-w-0 text-left cursor-pointer">
+              <div className="flex items-center gap-2">
+                <span className="text-primary shrink-0">{icon}</span>
+                <h2 className="text-sm font-semibold text-foreground truncate">{title}</h2>
+                {badge}
+                <ChevronDown
+                  className={cn(
+                    "size-4 text-muted-foreground shrink-0 transition-transform sm:hidden ml-auto",
+                    open && "rotate-180",
+                  )}
+                />
+              </div>
+              {description ? (
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+              ) : null}
+            </button>
+          </CollapsibleTrigger>
+          {headerRight ? <div className="shrink-0">{headerRight}</div> : null}
+        </div>
+        <CollapsibleContent forceMount className="data-[state=closed]:hidden sm:!block">
+          <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0">{children}</div>
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
+  );
+}
 
 function formatInterval(minutes: number): string {
   if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""}`;
@@ -377,48 +437,47 @@ function SettingsPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card px-4 sm:px-8 py-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <SettingsIcon className="size-5" />
+      <div className="border-b border-border/70 bg-card/40 px-3 py-4 sm:px-8 sm:py-5 backdrop-blur-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-4xl mx-auto">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <SettingsIcon className="size-4.5" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Settings</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Customize appearance, manage automated notifications, and review system
-                configuration.
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Settings</h1>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Customize appearance, notifications, and account preferences.
               </p>
             </div>
           </div>
           {isSystemUser && activeTab === "notifications" && (
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleSendTestEmail}
                 disabled={isSendingTest || !formState.enabled}
-                className="h-8 text-xs gap-1.5 cursor-pointer"
+                className="h-9 sm:h-8 text-xs gap-1.5 cursor-pointer w-full sm:w-auto"
               >
                 {isSendingTest ? (
                   <Loader2 className="size-3.5 animate-spin" />
                 ) : (
                   <Send className="size-3.5 text-muted-foreground" />
                 )}
-                <span>Send Test Email</span>
+                <span>Test Email</span>
               </Button>
               <Button
                 size="sm"
                 onClick={handleSave}
                 disabled={saveMutation.isPending}
-                className="h-8 text-xs gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+                className="h-9 sm:h-8 text-xs gap-1.5 cursor-pointer shadow-xs w-full sm:w-auto font-semibold"
               >
                 {saveMutation.isPending ? (
                   <Loader2 className="size-3.5 animate-spin" />
                 ) : (
                   <Check className="size-3.5" />
                 )}
-                <span>Save Settings</span>
+                <span>Save</span>
               </Button>
             </div>
           )}
@@ -426,15 +485,15 @@ function SettingsPage() {
       </div>
 
       {/* Main Container */}
-      <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full space-y-6">
+      <div className="p-3 sm:p-8 max-w-4xl mx-auto w-full space-y-4 sm:space-y-6">
         {isSystemUser && hasChanges && (
-          <div className="flex items-center justify-between p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-600 dark:text-amber-400">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2 min-w-0">
               <AlertCircle className="size-4 shrink-0" />
-              <span>You have unsaved changes. Click &quot;Save Settings&quot; to apply.</span>
+              <span className="leading-relaxed">Unsaved changes. Save to apply.</span>
             </div>
-            <Button size="sm" onClick={handleSave} className="h-6 text-[11px] px-2.5">
-              Save Now
+            <Button size="sm" onClick={handleSave} className="h-8 text-[11px] px-3 shrink-0">
+              Save
             </Button>
           </div>
         )}
@@ -443,29 +502,29 @@ function SettingsPage() {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList
             className={cn(
-              "grid max-w-md h-9 bg-muted/60 p-1",
+              "grid w-full sm:max-w-md h-10 sm:h-9 bg-muted/50 p-1 rounded-lg",
               isSystemUser ? "grid-cols-3" : "grid-cols-2",
             )}
           >
             {isSystemUser && (
-              <TabsTrigger value="notifications" className="text-xs gap-1.5 cursor-pointer">
-                <Bell className="size-3.5" />
-                <span>Notifications</span>
+              <TabsTrigger value="notifications" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
+                <Bell className="size-3.5 shrink-0" />
+                <span className="truncate">Notifications</span>
               </TabsTrigger>
             )}
-            <TabsTrigger value="appearance" className="text-xs gap-1.5 cursor-pointer">
-              <Palette className="size-3.5" />
-              <span>Appearance</span>
+            <TabsTrigger value="appearance" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
+              <Palette className="size-3.5 shrink-0" />
+              <span className="truncate">Appearance</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="text-xs gap-1.5 cursor-pointer">
-              <User className="size-3.5" />
-              <span>Account</span>
+            <TabsTrigger value="account" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
+              <User className="size-3.5 shrink-0" />
+              <span className="truncate">Account</span>
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: NOTIFICATIONS (System Users Only) */}
           {isSystemUser && (
-            <TabsContent value="notifications" className="space-y-6 mt-4">
+            <TabsContent value="notifications" className="space-y-3 sm:space-y-4 mt-4">
             {isLoadingSettings ? (
               <div className="rounded-xl border border-border bg-card p-12 text-center shadow-2xs space-y-3">
                 <Loader2 className="size-6 animate-spin mx-auto text-primary" />
@@ -494,70 +553,38 @@ function SettingsPage() {
               </div>
             ) : (
               <>
-                {/* Master Toggle Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1">
+                <div className="rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-2xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <Bell className="size-4 text-primary" />
-                        <h2 className="text-sm font-semibold text-foreground">
-                          Hierarchy Email Notifications
-                        </h2>
-                        <Badge
-                          variant={formState.enabled ? "default" : "secondary"}
-                          className="text-[10px] h-4 font-normal"
-                        >
+                        <Bell className="size-4 text-primary shrink-0" />
+                        <h2 className="text-sm font-semibold text-foreground">Hierarchy Email Notifications</h2>
+                        <Badge variant={formState.enabled ? "default" : "secondary"} className="text-[10px] h-4 font-normal">
                           {formState.enabled ? "Active" : "Disabled"}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Automatically dispatch emails strictly to parent nodes in the CRM Sales
-                        Hierarchy when records are created, updated, or stage-shifted.
-                      </p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Dispatch emails to hierarchy recipients on record changes.</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="master-toggle"
-                        checked={Boolean(formState.enabled)}
-                        onCheckedChange={handleToggleMaster}
-                      />
-                    </div>
+                    <Switch id="master-toggle" checked={Boolean(formState.enabled)} onCheckedChange={handleToggleMaster} />
                   </div>
                 </div>
 
-                {/* Email Delivery Schedule & Timing Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Clock className="size-4 text-primary" />
-                        Email Delivery Timing &amp; Schedule
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Set when emails are dispatched: immediately on every update, once daily at a specific time, or periodically at regular intervals.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                      {(formState.delivery_mode || "instant") === "instant" && (
-                        <Badge variant="outline" className="text-[11px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-normal">
-                          <Zap className="size-3" />
-                          Real-Time (Instant)
-                        </Badge>
-                      )}
-                      {formState.delivery_mode === "scheduled" && (
-                        <Badge variant="outline" className="text-[11px] gap-1 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-normal">
-                          <Clock className="size-3" />
-                          Daily at {formState.scheduled_time || "09:00"}
-                        </Badge>
-                      )}
-                      {formState.delivery_mode === "interval" && (
-                        <Badge variant="outline" className="text-[11px] gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 font-normal">
-                          <Timer className="size-3" />
-                          Every {formatInterval(formState.interval_minutes || 60)}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+                <SettingsSection
+                  title="Delivery Timing"
+                  description="Choose instant, daily, or interval email dispatch."
+                  icon={<Clock className="size-4" />}
+                  defaultOpen
+                  badge={
+                    (formState.delivery_mode || "instant") === "instant" ? (
+                      <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-normal"><Zap className="size-3" />Instant</Badge>
+                    ) : formState.delivery_mode === "scheduled" ? (
+                      <Badge variant="outline" className="text-[10px] gap-1 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-normal"><Clock className="size-3" />{formState.scheduled_time || "09:00"}</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 font-normal"><Timer className="size-3" />{formatInterval(formState.interval_minutes || 60)}</Badge>
+                    )
+                  }
+                >
+                  <div className="space-y-4 pt-4">
 
                   <RadioGroup
                     value={formState.delivery_mode || "instant"}
@@ -778,67 +805,38 @@ function SettingsPage() {
                     </div>
                   )}
 
-                  {/* Queue Status and Quick Actions inside card */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">Delivery Queue Status:</span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Queue:</span>
                       <Badge variant="outline" className="text-[11px] font-normal">
                         {formState.delivery_mode === "scheduled"
-                          ? `Scheduled (Daily at ${formState.scheduled_time || "09:00"})`
+                          ? `Daily ${formState.scheduled_time || "09:00"}`
                           : formState.delivery_mode === "interval"
-                            ? `Interval (${formatInterval(formState.interval_minutes || 60)})`
-                            : "Instant (Real-time)"}
+                            ? `Every ${formatInterval(formState.interval_minutes || 60)}`
+                            : "Instant"}
                       </Badge>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleProcessQueue}
-                        disabled={isProcessingQueue}
-                        className="h-7 text-xs gap-1.5 cursor-pointer"
-                        title="Process accumulated pending notifications or check schedule status"
-                      >
-                        {isProcessingQueue ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <RotateCcw className="size-3 text-muted-foreground" />
-                        )}
-                        <span>Process / Flush Queue</span>
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+                      <Button type="button" variant="outline" size="sm" onClick={handleProcessQueue} disabled={isProcessingQueue} className="h-9 sm:h-8 text-xs gap-1.5 w-full sm:w-auto">
+                        {isProcessingQueue ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-3 text-muted-foreground" />}
+                        <span>Process Queue</span>
                       </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleSendTestEmail}
-                        disabled={isSendingTest || !formState.enabled}
-                        className="h-7 text-xs gap-1.5 cursor-pointer"
-                      >
-                        {isSendingTest ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <Send className="size-3 text-muted-foreground" />
-                        )}
-                        <span>Test Email Dispatch</span>
+                      <Button type="button" variant="secondary" size="sm" onClick={handleSendTestEmail} disabled={isSendingTest || !formState.enabled} className="h-9 sm:h-8 text-xs gap-1.5 w-full sm:w-auto">
+                        {isSendingTest ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3 text-muted-foreground" />}
+                        <span>Test Dispatch</span>
                       </Button>
                     </div>
                   </div>
-                </div>
-
-                {/* Hierarchy Routing Mode Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-                  <div className="border-b border-border/60 pb-3">
-                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Network className="size-4 text-primary" />
-                      Recipient Resolution Mode
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Choose how the CRM resolves recipients from the &quot;CRM Sales
-                      Hierarchy&quot; tree.
-                    </p>
                   </div>
+                </SettingsSection>
+
+                <SettingsSection
+                  title="Recipient Resolution"
+                  description="Choose how recipients are resolved from CRM Sales Hierarchy."
+                  icon={<Network className="size-4" />}
+                  defaultOpen
+                >
+                  <div className="space-y-4 pt-4">
 
                   <RadioGroup
                     value={formState.mode}
@@ -934,74 +932,51 @@ function SettingsPage() {
                       </Badge>
                     </label>
                   </RadioGroup>
-                </div>
-
-                {/* Tree Picker (shown only when Selected Nodes is chosen) */}
-                {formState.mode === "Selected Nodes" && (
-                  <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-                    <div className="border-b border-border/60 pb-3">
-                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Users className="size-4 text-primary" />
-                        Select Hierarchy Recipient Nodes
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Tick the hierarchy branches and individuals who will receive automated alert
-                        emails.
-                      </p>
-                    </div>
-
-                    <HierarchyTreePicker
-                      nodes={serverData?.tree || []}
-                      selectedNodes={formState.selected_nodes || []}
-                      onChange={(nodes) => {
-                        setFormState((prev) => ({ ...prev, selected_nodes: nodes }));
-                        setHasChanges(true);
-                      }}
-                    />
                   </div>
+                </SettingsSection>
+
+                {formState.mode === "Selected Nodes" && (
+                  <SettingsSection
+                    title="Selected Recipients"
+                    description="Pick specific hierarchy nodes to receive alerts."
+                    icon={<Users className="size-4" />}
+                    defaultOpen
+                  >
+                    <div className="pt-4">
+                      <HierarchyTreePicker
+                        nodes={serverData?.tree || []}
+                        selectedNodes={formState.selected_nodes || []}
+                        onChange={(nodes) => {
+                          setFormState((prev) => ({ ...prev, selected_nodes: nodes }));
+                          setHasChanges(true);
+                        }}
+                      />
+                    </div>
+                  </SettingsSection>
                 )}
 
-                {/* Live Recipient Preview Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Eye className="size-4 text-primary" />
-                        Live Recipient Preview
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Test and verify which emails will be dispatched under the current
-                        configuration.
-                      </p>
-                    </div>
-
-                    {/* Actor selector for All Ancestors / Direct Parent */}
+                <SettingsSection
+                  title="Recipient Preview"
+                  description="Verify who receives notifications for the current configuration."
+                  icon={<Eye className="size-4" />}
+                  defaultOpen={false}
+                >
+                  <div className="space-y-4 pt-4">
                     {formState.mode !== "Selected Nodes" && (
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <Label
-                          htmlFor="preview-actor"
-                          className="text-xs text-muted-foreground shrink-0"
-                        >
-                          Simulate Actor:
-                        </Label>
-                        <Select
-                          value={effectivePreviewActor}
-                          onValueChange={(val) => setPreviewActor(val)}
-                        >
-                          <SelectTrigger id="preview-actor" className="h-8 text-xs min-w-[200px]">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                        <Label htmlFor="preview-actor" className="text-xs text-muted-foreground shrink-0">Simulate Actor:</Label>
+                        <Select value={effectivePreviewActor} onValueChange={(val) => setPreviewActor(val)}>
+                          <SelectTrigger id="preview-actor" className="h-9 sm:h-8 text-xs w-full sm:w-auto sm:min-w-[220px]">
                             <SelectValue placeholder="Select user..." />
                           </SelectTrigger>
                           <SelectContent className="text-xs max-h-60">
                             {previewActorOptions.map((opt) => (
-                              <SelectItem key={opt.email} value={opt.email}>
-                                {opt.label}
-                              </SelectItem>
+                              <SelectItem key={opt.email} value={opt.email}>{opt.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                     )}
-                  </div>
 
                   <div className="p-4 rounded-lg border border-border/60 bg-muted/20 space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -1043,21 +1018,16 @@ function SettingsPage() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Additional Delivery Options Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-                  <div className="border-b border-border/60 pb-3">
-                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <SlidersHorizontal className="size-4 text-primary" />
-                      Delivery &amp; Link Settings
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Configure actor copies, fallback CC addresses, and application link domains.
-                    </p>
                   </div>
+                </SettingsSection>
 
-                  <div className="space-y-4">
+                <SettingsSection
+                  title="Delivery & Links"
+                  description="Configure actor copy, CCs, and AgroCRM base URL."
+                  icon={<SlidersHorizontal className="size-4" />}
+                  defaultOpen={false}
+                >
+                  <div className="space-y-4 pt-4">
                     {/* Include Actor Switch */}
                     <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60 bg-muted/10">
                       <div className="space-y-0.5">
@@ -1130,65 +1100,33 @@ function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </SettingsSection>
 
-                {/* Event Triggers Card */}
-                <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <ShieldCheck className="size-4 text-primary" />
-                        Event Triggers
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Select which system events automatically dispatch notifications.
-                      </p>
-                    </div>
-
-                    {/* Event Presets Dropdown */}
+                <SettingsSection
+                  title="Event Triggers"
+                  description="Select which events dispatch notifications."
+                  icon={<ShieldCheck className="size-4" />}
+                  defaultOpen={false}
+                  headerRight={
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1.5 self-start sm:self-auto cursor-pointer"
-                        >
+                        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 cursor-pointer">
                           <SlidersHorizontal className="size-3 text-muted-foreground" />
-                          <span>Event Presets</span>
+                          <span className="hidden sm:inline">Presets</span>
                           <ChevronDown className="size-3 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 text-xs">
-                        <DropdownMenuItem
-                          onClick={() => applyPreset("all")}
-                          className="cursor-pointer"
-                        >
-                          <span>Enable All Events</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => applyPreset("stageOnly")}
-                          className="cursor-pointer"
-                        >
-                          <span>Deal Stage Changes Only</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => applyPreset("salesPipeline")}
-                          className="cursor-pointer"
-                        >
-                          <span>Sales Pipeline (Deals &amp; Orders)</span>
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => applyPreset("all")} className="cursor-pointer">Enable All Events</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => applyPreset("stageOnly")} className="cursor-pointer">Deal Stage Changes Only</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => applyPreset("salesPipeline")} className="cursor-pointer">Sales Pipeline (Deals &amp; Orders)</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => applyPreset("none")}
-                          className="cursor-pointer text-muted-foreground"
-                        >
-                          <span>Disable All Events</span>
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => applyPreset("none")} className="cursor-pointer text-muted-foreground">Disable All Events</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </div>
-
-                  <div className="space-y-3 pt-1">
+                  }
+                >
+                  <div className="space-y-3 pt-4">
                     <div className="flex items-start gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
                       <Checkbox
                         id="event-stage"
@@ -1338,14 +1276,14 @@ function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </SettingsSection>
               </>
             )}
           </TabsContent>
           )}
 
           {/* TAB 2: APPEARANCE & DARK MODE */}
-          <TabsContent value="appearance" className="space-y-6 mt-4">
+          <TabsContent value="appearance" className="space-y-3 sm:space-y-4 mt-4">
             {/* Theme Selector Card */}
             <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
               <div>
@@ -1447,159 +1385,73 @@ function SettingsPage() {
               </div>
             </div>
 
-            {/* Display & Density Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Layers className="size-4 text-primary" />
-                  Display Preferences
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Adjust data density and visual feedback across tables and forms.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-1">
+            <SettingsSection title="Display Preferences" description="Adjust density and visual feedback." icon={<Layers className="size-4" />} defaultOpen={false}>
+              <div className="space-y-3 pt-4">
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60">
                   <div className="space-y-0.5">
-                    <Label
-                      htmlFor="compact-mode-toggle"
-                      className="text-xs font-semibold cursor-pointer"
-                    >
-                      Compact Table Density
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      Reduces vertical padding in tables to show more deals and quotations per
-                      screen.
-                    </p>
+                    <Label htmlFor="compact-mode-toggle" className="text-xs font-semibold cursor-pointer">Compact Table Density</Label>
+                    <p className="text-[11px] text-muted-foreground">Show more rows per screen in tables.</p>
                   </div>
-                  <Checkbox
-                    id="compact-mode-toggle"
-                    checked={compactMode}
-                    onCheckedChange={(c) => handleToggleCompact(Boolean(c))}
-                    className="size-5"
-                  />
+                  <Checkbox id="compact-mode-toggle" checked={compactMode} onCheckedChange={(c) => handleToggleCompact(Boolean(c))} className="size-5" />
                 </div>
-
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60">
                   <div className="space-y-0.5">
-                    <Label
-                      htmlFor="anim-toggle"
-                      className="text-xs font-semibold cursor-pointer flex items-center gap-1.5"
-                    >
+                    <Label htmlFor="anim-toggle" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5">
                       <Sparkles className="size-3 text-amber-500" />
                       <span>Confetti & Animations</span>
                     </Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      Play congratulatory animations when marking a deal as Won.
-                    </p>
+                    <p className="text-[11px] text-muted-foreground">Celebrate won deals with animations.</p>
                   </div>
-                  <Checkbox
-                    id="anim-toggle"
-                    checked={animationsEnabled}
-                    onCheckedChange={(c) => handleToggleAnimations(Boolean(c))}
-                    className="size-5"
-                  />
+                  <Checkbox id="anim-toggle" checked={animationsEnabled} onCheckedChange={(c) => handleToggleAnimations(Boolean(c))} className="size-5" />
                 </div>
               </div>
-            </div>
+            </SettingsSection>
           </TabsContent>
 
           {/* TAB 3: ACCOUNT & WORKSPACE */}
-          <TabsContent value="account" className="space-y-6 mt-4">
-            {/* User Profile Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <User className="size-4 text-primary" />
-                  Account Profile
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Your current active session and system user credentials.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/60 bg-muted/20">
-                <div className="flex items-center gap-3">
-                  <div className="size-11 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
-                    {userName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-foreground">{userName}</div>
-                    <div className="text-xs text-muted-foreground">{userEmail}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
-                      >
-                        ● Active Session
-                      </Badge>
-                      <Badge variant="secondary" className="text-[10px] h-4">
-                        System User
-                      </Badge>
+          <TabsContent value="account" className="space-y-3 sm:space-y-4 mt-4">
+            <SettingsSection title="Account Profile" description="Your active session and user credentials." icon={<User className="size-4" />} defaultOpen>
+              <div className="pt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/60 bg-muted/20">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-11 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20 shrink-0">
+                      {userName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-foreground truncate">{userName}</div>
+                      <div className="text-xs text-muted-foreground truncate">{userEmail}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">● Active Session</Badge>
+                        <Badge variant="secondary" className="text-[10px] h-4">System User</Badge>
+                      </div>
                     </div>
                   </div>
+                  <Button variant="outline" size="sm" onClick={handleSignOut} className="h-9 sm:h-8 text-xs gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer w-full sm:w-auto">
+                    <LogOut className="size-3.5" />
+                    <span>Sign Out</span>
+                  </Button>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer self-start sm:self-auto"
-                >
-                  <LogOut className="size-3.5" />
-                  <span>Sign Out</span>
-                </Button>
               </div>
-            </div>
+            </SettingsSection>
 
-            {/* System & Architecture Status Card */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Server className="size-4 text-primary" />
-                  System & Integration Status
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Operational status of CRM and ERP multi-backend integrations.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <SettingsSection title="System & Integration Status" description="Operational status of CRM and ERP integrations." icon={<Server className="size-4" />} defaultOpen={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">
-                      CRM Backend
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
-                    >
-                      Operational
-                    </Badge>
+                    <span className="text-xs font-semibold text-foreground">CRM Backend</span>
+                    <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">Operational</Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Hosts Deals, Leads, Organizations, Contacts, Activities, and Communication Email
-                    dispatcher.
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">Deals, leads, contacts, activities, and email dispatch.</p>
                 </div>
-
                 <div className="p-3.5 rounded-lg border border-border/60 bg-muted/10 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">ERP Backend</span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10"
-                    >
-                      Operational
-                    </Badge>
+                    <Badge variant="outline" className="text-[10px] h-4 text-emerald-500 border-emerald-500/20 bg-emerald-500/10">Operational</Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Hosts Quotations, Sales Orders, Item master catalog, and company accounts.
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">Quotations, sales orders, items, and company accounts.</p>
                 </div>
               </div>
-            </div>
+            </SettingsSection>
           </TabsContent>
         </Tabs>
       </div>

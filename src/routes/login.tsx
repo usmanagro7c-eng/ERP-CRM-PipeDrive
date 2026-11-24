@@ -100,7 +100,11 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-hidden bg-background">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="relative flex min-h-screen w-full overflow-hidden bg-background outline-none"
+    >
       {/* ── Left Hero Panel (Desktop) ────────────────────────── */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[#06140e] p-12 text-white select-none lg:flex xl:p-16 border-r border-emerald-950/40">
         {/* Animated Background Ambience */}
@@ -252,6 +256,7 @@ export function LoginPage() {
           <form
             onSubmit={onSubmit}
             onKeyDown={handleKeyDown}
+            aria-busy={pending}
             className={cn("space-y-4.5 transition-transform", shake && "animate-[shake_0.5s_ease]")}
           >
             {/* Username / Email field */}
@@ -268,9 +273,14 @@ export function LoginPage() {
                   ref={usrRef}
                   type="text"
                   autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   autoFocus
                   placeholder="name@example.com"
                   disabled={pending}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? "login-error" : undefined}
                   className="h-11 w-full rounded-xl bg-transparent pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
@@ -299,14 +309,17 @@ export function LoginPage() {
                   autoComplete="current-password"
                   placeholder="••••••••••••"
                   disabled={pending}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? "login-error" : undefined}
                   className="h-11 w-full rounded-xl bg-transparent pl-10 pr-11 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <button
                   type="button"
-                  tabIndex={-1}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                  aria-controls="pwd"
+                  aria-pressed={showPassword}
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground/70 hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card rounded-md"
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
@@ -332,6 +345,7 @@ export function LoginPage() {
             {/* Error Message Alert */}
             {error && (
               <div
+                id="login-error"
                 role="alert"
                 className="flex items-start gap-2.5 rounded-xl border border-destructive/25 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200"
               >

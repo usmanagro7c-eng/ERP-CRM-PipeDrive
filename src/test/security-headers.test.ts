@@ -15,12 +15,12 @@ describe("content security policy", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("connect-src 'self'");
-    expect(csp).toContain("font-src 'self' data:");
+    expect(csp).toContain("font-src 'self' data: https://fonts.gstatic.com");
   });
 
   it("allows the inline styles tailwind and radix need", () => {
     const csp = buildContentSecurityPolicy();
-    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+    expect(csp).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
   });
 
   it("does not allow scripts from other origins and blocks inline handlers", () => {

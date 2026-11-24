@@ -11,6 +11,7 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,7 @@ export function DealGrid({
   }>({ open: false, dealName: "", targetStatus: "Lost" });
 
   const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
@@ -154,8 +156,8 @@ export function DealGrid({
             key={name}
             onClick={() => onRowClick?.(name)}
             className={cn(
-              "group relative overflow-hidden flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer",
-              isMoving && "pointer-events-none ring-2 ring-primary/40",
+              "group relative overflow-hidden flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+              isMoving && "pointer-events-none ring-2 ring-primary/30",
             )}
           >
             {isMoving && (
@@ -170,11 +172,10 @@ export function DealGrid({
             <div>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 truncate">
-                  <div className="flex items-center gap-1.5 text-foreground font-semibold text-sm truncate group-hover:text-primary transition-colors">
-                    <Building2 className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">{orgName}</span>
+                  <div className="text-foreground font-semibold text-[13px] leading-5 truncate group-hover:text-primary transition-colors">
+                    {orgName}
                   </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">{name}</span>
+                  <span className="block font-mono text-[10px] leading-4 text-muted-foreground/80 mt-0.5 truncate">{name}</span>
                 </div>
 
                 <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -183,7 +184,7 @@ export function DealGrid({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                        className="size-7 -mr-1 -mt-1 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         aria-label="More actions"
                       >
                         <MoreVertical className="size-4" />
@@ -214,11 +215,7 @@ export function DealGrid({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete deal ${name}?`)) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget({ name, title: orgName })}
                       >
                         Delete Deal
                       </DropdownMenuItem>
@@ -228,9 +225,9 @@ export function DealGrid({
               </div>
 
               {/* Stage Badge & Value */}
-              <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="mt-3.5 flex items-end justify-between gap-2">
                 <StageBadge stage={stage} />
-                <span className="font-bold text-sm font-mono text-foreground">
+                <span className="font-semibold text-[15px] tracking-tight tabular-nums text-foreground">
                   {formatCurrency(dealValue, currency)}
                 </span>
               </div>
@@ -255,19 +252,19 @@ export function DealGrid({
 
               {/* Next step if present */}
               {Boolean(nextStep) && (
-                <div className="mt-2.5 rounded bg-muted/50 p-1.5 text-[11px] text-muted-foreground italic truncate">
-                  <span className="font-medium not-italic text-foreground">Next: </span>
-                  {String(nextStep)}
+                <div className="mt-3 text-[11px] text-muted-foreground truncate">
+                  <span className="font-medium text-foreground/80">Next </span>
+                  <span className="text-muted-foreground">{String(nextStep)}</span>
                 </div>
               )}
             </div>
 
             {/* Footer row: Close date & Owner */}
-            <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-2.5 text-xs text-muted-foreground">
+            <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
               {closeDate ? (
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="size-3.5 opacity-70" />
-                  <span>{String(closeDate)}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Calendar className="size-3.5 opacity-60 shrink-0" />
+                  <span className="truncate">{String(closeDate)}</span>
                 </div>
               ) : (
                 <span />
@@ -275,10 +272,10 @@ export function DealGrid({
 
               {Boolean(owner) && (
                 <div
-                  className="flex items-center gap-1.5 font-medium"
+                  className="flex items-center gap-1.5 min-w-0 ml-2"
                   title={`Owner: ${String(owner)}`}
                 >
-                  <User className="size-3.5 opacity-70" />
+                  <User className="size-3.5 opacity-60 shrink-0" />
                   <span className="truncate max-w-[110px]">{String(owner)}</span>
                 </div>
               )}
@@ -293,6 +290,21 @@ export function DealGrid({
         dealNames={lostModalState.dealName ? [lostModalState.dealName] : []}
         dealTitle={lostModalState.dealTitle}
         targetStatus={lostModalState.targetStatus}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete deal "${deleteTarget?.title || ""}"?`}
+        description="This deal will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
       />
     </div>
   );

@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -195,6 +196,7 @@ function DealDetailPage() {
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
   const [salesOrderInitialValues, setSalesOrderInitialValues] =
     useState<SalesOrderInitialValues | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Collapsible sections
   const [contactsOpen, setContactsOpen] = useState(true);
@@ -509,14 +511,16 @@ function DealDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete deal ${dealName}?`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await deleteMutation.mutateAsync(dealId);
+      await deleteMutation.mutateAsync(deleteTarget);
       toast.success("Deal deleted successfully");
       void navigate({ to: "/deals" });
     } catch {
       // toast handled
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -612,8 +616,9 @@ function DealDetailPage() {
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => setQuotationModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            className="h-7 text-xs font-semibold px-2 gap-1 shrink-0"
             title="Convert to Quotation"
           >
             <FileText className="size-3.5" />
@@ -790,8 +795,9 @@ function DealDetailPage() {
           {/* Convert to Quotation Button */}
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => setQuotationModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2.5 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 shrink-0"
+            className="h-7 text-xs font-semibold px-2.5 gap-1.5 shrink-0"
           >
             <FileText className="size-3.5" />
             <span className="hidden md:inline">Convert to Quotation</span>
@@ -1039,9 +1045,10 @@ function DealDetailPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handleDelete}
+                    onClick={() => setDeleteTarget(dealId)}
                     className="size-6 rounded-md text-red-400 bg-red-950/40 hover:bg-red-900/60 border-0 cursor-pointer"
                     title="Delete Deal"
+                    aria-label="Delete Deal"
                   >
                     <Trash2 className="size-3" />
                   </Button>
@@ -1442,6 +1449,17 @@ function DealDetailPage() {
         onOpenChange={setSalesOrderModalOpen}
         order={null}
         initialValues={salesOrderInitialValues}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete deal "${dealName}"?`}
+        description="This deal will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

@@ -526,14 +526,24 @@ export function DealKanban({
           setDragOverSwimlane(null);
         }}
         onClick={() => onRowClick?.(name)}
+        role="button"
+        tabIndex={0}
+        aria-label={`Deal: ${orgName} (${name})`}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onRowClick?.(name);
+          }
+        }}
         className={cn(
-          "group relative overflow-hidden rounded-xl border bg-card p-3 shadow-2xs transition-all duration-200 select-none shrink-0",
-          "hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 cursor-grab active:cursor-grabbing",
-          "active:scale-[1.02] active:rotate-2 active:shadow-xl",
+          "group relative overflow-hidden rounded-xl border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color,opacity] duration-200 select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:border-border cursor-grab active:cursor-grabbing",
+          "active:scale-[0.995] sm:active:scale-[1.01] sm:active:rotate-[1deg]",
           isDragged
-            ? "opacity-35 scale-95 border-dashed border-primary rotate-2 ring-2 ring-primary/30"
-            : "border-border/80",
-          isMoving && "pointer-events-none ring-2 ring-primary/40",
+            ? "opacity-40 scale-[0.98] border-dashed border-primary/60 ring-2 ring-primary/20 shadow-none"
+            : "border-border/70",
+          isMoving && "pointer-events-none ring-2 ring-primary/30",
         )}
       >
         {isMoving && (
@@ -548,29 +558,29 @@ export function DealKanban({
         )}
 
         {/* Top row: Organization Name & 3-dots */}
-        <div className="flex items-start justify-between gap-1.5">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <AvatarGradient name={orgName} size="xs" rounded="md" />
-            <div className="flex-1 truncate">
-              <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-[13px] leading-5 text-foreground truncate group-hover:text-primary transition-colors">
                 {orgName}
               </h4>
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="block font-mono text-[10px] leading-4 text-muted-foreground/80 truncate">
                 {name}
               </span>
             </div>
           </div>
 
-          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="shrink-0 -mr-1 -mt-1" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-6 text-muted-foreground opacity-90 sm:opacity-60 sm:group-hover:opacity-100"
+                  className="size-7 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                   aria-label="More actions"
                 >
-                  <MoreVertical className="size-3.5" />
+                  <MoreVertical className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 text-xs">
@@ -646,24 +656,21 @@ export function DealKanban({
         </div>
 
         {/* Middle row: Deal Value & Probability */}
-        <div className="mt-2.5 flex items-center justify-between">
-          <span className="font-bold text-xs text-foreground font-mono">
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <span className="font-semibold text-[15px] leading-none tracking-tight text-foreground tabular-nums">
             {formatCurrency(dealValue, dealCurrency)}
           </span>
 
           {probability !== undefined && probability !== null && (
-            <Badge
-              variant="secondary"
-              className="text-[10px] px-1.5 py-0 font-mono font-normal"
-            >
+            <span className="text-[11px] font-medium text-muted-foreground tabular-nums bg-muted/50 px-1.5 py-0.5 rounded">
               {Number(probability)}%
-            </Badge>
+            </span>
           )}
         </div>
 
         {/* Quick 1-click action shortcuts (Quote, Phone, Email) */}
         {(onCreateQuotation || phone || email) && (
-          <div className="mt-2 flex items-center justify-between gap-1.5">
+          <div className="mt-3 flex items-center justify-between gap-2">
             {onCreateQuotation ? (
               <button
                 type="button"
@@ -671,10 +678,10 @@ export function DealKanban({
                   e.stopPropagation();
                   onCreateQuotation(deal);
                 }}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-1.5 py-0.5 rounded transition-colors"
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-foreground/80 hover:text-foreground bg-transparent hover:bg-muted/70 px-2 py-1 -ml-2 rounded-md transition-colors"
                 title="Create Quotation"
               >
-                <FileText className="size-2.5" />
+                <FileText className="size-3 text-muted-foreground" />
                 <span>Quote</span>
               </button>
             ) : (
@@ -688,19 +695,19 @@ export function DealKanban({
               {phone && (
                 <a
                   href={`tel:${phone}`}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                  className="p-1.5 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/70 transition-colors"
                   title={`Call ${phone}`}
                 >
-                  <Phone className="size-3" />
+                  <Phone className="size-3.5" />
                 </a>
               )}
               {email && (
                 <a
                   href={`mailto:${email}`}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                  className="p-1.5 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/70 transition-colors"
                   title={`Email ${email}`}
                 >
-                  <Mail className="size-3" />
+                  <Mail className="size-3.5" />
                 </a>
               )}
             </div>
@@ -708,11 +715,11 @@ export function DealKanban({
         )}
 
         {/* Bottom row: Close date & Owner */}
-        <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
+        <div className="mt-2.5 flex items-center justify-between border-t border-border/50 pt-2.5 text-[11px] text-muted-foreground">
           {closeDate ? (
-            <div className="flex items-center gap-1">
-              <Calendar className="size-3 opacity-70" />
-              <span>{String(closeDate)}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Calendar className="size-3.5 opacity-60 shrink-0" />
+              <span className="truncate">{String(closeDate)}</span>
             </div>
           ) : (
             <span />
@@ -720,11 +727,11 @@ export function DealKanban({
 
           {Boolean(owner) && (
             <div
-              className="flex items-center gap-1 font-medium"
+              className="flex items-center gap-1.5 min-w-0 ml-2"
               title={`Owner: ${String(owner)}`}
             >
-              <AvatarGradient name={String(owner)} size="xs" />
-              <span className="truncate max-w-[90px]">{String(owner)}</span>
+              <span className="shrink-0 opacity-90"><AvatarGradient name={String(owner)} size="xs" /></span>
+              <span className="truncate max-w-[88px]">{String(owner)}</span>
             </div>
           )}
         </div>
@@ -735,20 +742,21 @@ export function DealKanban({
   return (
     <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
       {/* Top controls: Group By, Swimlane selector & Pipeline Summary */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1 shrink-0">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-          <span className="font-medium text-foreground">Pipeline View:</span>
-          <span>
-            Showing <AnimatedCounter value={rows.length} className="font-semibold text-foreground font-mono" /> deals
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 px-0 sm:px-1 shrink-0">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground hidden sm:inline">Pipeline View:</span>
+          <span className="inline-flex items-center gap-1">
+            <AnimatedCounter value={rows.length} className="font-semibold text-foreground font-mono" />
+            <span>deals</span>
           </span>
 
           {collapsedCols.length > 0 && (
             <button
               type="button"
               onClick={() => setCollapsedCols([])}
-              className="text-[11px] text-primary hover:underline font-medium cursor-pointer ml-1"
+              className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
             >
-              Expand all columns ({collapsedCols.length} collapsed)
+              Expand all ({collapsedCols.length})
             </button>
           )}
 
@@ -765,7 +773,7 @@ export function DealKanban({
                 await handleRestoreStage(val);
               }}
             >
-              <SelectTrigger className="h-7 text-xs ml-2 w-36" aria-label="Add stage">
+              <SelectTrigger className="h-8 text-xs w-full sm:w-36 sm:ml-2" aria-label="Add stage">
                 <SelectValue placeholder="Add stage..." />
               </SelectTrigger>
               <SelectContent>
@@ -827,15 +835,16 @@ export function DealKanban({
           )}
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Swimlane Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5 min-w-0">
+            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground flex items-center gap-1">
               <Layers className="size-3.5" />
-              Swimlanes:
+              <span className="sm:hidden">Swimlanes</span>
+              <span className="hidden sm:inline">Swimlanes:</span>
             </span>
             <Select value={swimlaneBy} onValueChange={(val) => setSwimlaneBy(val)}>
-              <SelectTrigger aria-label="Swimlane by" className="h-8 w-36 text-xs">
+              <SelectTrigger aria-label="Swimlane by" className="h-8 w-full sm:w-36 text-xs">
                 <SelectValue placeholder="Swimlanes..." />
               </SelectTrigger>
               <SelectContent>
@@ -859,10 +868,13 @@ export function DealKanban({
           </div>
 
           {/* Group By Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Group by:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5 min-w-0">
+            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground">
+              <span className="sm:hidden">Group</span>
+              <span className="hidden sm:inline">Group by:</span>
+            </span>
             <Select value={groupBy} onValueChange={onGroupByChange}>
-              <SelectTrigger aria-label="Group deals by" className="h-8 w-40 text-xs">
+              <SelectTrigger aria-label="Group deals by" className="h-8 w-full sm:w-40 text-xs">
                 <SelectValue placeholder="Group by field..." />
               </SelectTrigger>
               <SelectContent>
@@ -985,28 +997,27 @@ export function DealKanban({
                   setDraggedDealName(null);
                 }}
                 className={cn(
-                  "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
-                  isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
+                  "flex w-[84vw] max-w-[320px] sm:w-[272px] sm:max-w-none shrink-0 flex-col rounded-2xl border bg-muted/[0.35] transition-[border-color,box-shadow,background-color] duration-200 h-full max-h-full overflow-hidden",
+                  isOver ? "border-primary/50 ring-2 ring-primary/15 bg-primary/[0.03]" : "border-border/60",
                 )}
               >
                 {/* Column Header */}
-                <div className="border-b bg-card/70 p-3 rounded-t-xl backdrop-blur-xs shrink-0">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-2 truncate">
+                <div className="border-b border-border/50 bg-background/60 px-3.5 py-3 rounded-t-2xl backdrop-blur-sm shrink-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <span className={cn("size-2 rounded-full shrink-0", style.bar)} />
-                      <h3 className="font-semibold text-xs text-foreground truncate">{col.label}</h3>
-                      <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-mono">
+                      <h3 className="font-semibold text-[13px] text-foreground truncate tracking-tight">{col.label}</h3>
+                      <span className="text-[11px] font-medium text-muted-foreground tabular-nums shrink-0">
                         {deals.length}
-                      </Badge>
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-0.5 shrink-0">
-                      {/* Collapse Button */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => toggleColumnCollapse(col.key)}
-                        className="size-6 text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
+                        className="size-7 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60"
                         title={`Collapse ${col.label} column`}
                         aria-label="Collapse column"
                       >
@@ -1020,7 +1031,7 @@ export function DealKanban({
                               variant="ghost"
                               size="icon"
                               onClick={() => openStageDeleteDialog(col.key)}
-                              className="size-6 text-muted-foreground hover:text-destructive active:scale-95 transition-transform"
+                              className="size-7 rounded-md text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10"
                               title={`Delete stage ${col.label}`}
                             >
                               <Trash2 className="size-3.5" />
@@ -1031,8 +1042,9 @@ export function DealKanban({
                               variant="ghost"
                               size="icon"
                               onClick={() => onAddInStage(col.key)}
-                              className="size-6 text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
+                              className="size-7 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60"
                               title={`Add deal in ${col.label}`}
+                              aria-label={`Add deal in ${col.label}`}
                             >
                               <Plus className="size-3.5" />
                             </Button>
@@ -1042,30 +1054,30 @@ export function DealKanban({
                     </div>
                   </div>
 
-                  {/* Column Value & Probability */}
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-1.5">
-                    <span className="font-semibold text-foreground font-mono">
+                  <div className="mt-1.5 flex items-center justify-between gap-2 pl-4">
+                    <span className="text-[12px] font-medium text-muted-foreground tabular-nums tracking-tight">
                       {formatCurrency(totalValue, currency)}
                     </span>
                     {col.probability !== undefined && (
-                      <span className="text-[10px] bg-muted/80 px-1.5 py-0.5 rounded-full text-muted-foreground font-medium">
-                        {col.probability}% prob
+                      <span className="text-[10px] text-muted-foreground/80 tabular-nums">
+                        {col.probability}%
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Column Cards List */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 flex flex-col gap-2.5">
                   {loading && rows.length === 0 ? (
                     <div className="space-y-2">
                       <Skeleton className="h-24 w-full rounded-xl" />
                       <Skeleton className="h-24 w-full rounded-xl" />
                     </div>
                   ) : deals.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
-                      <p className="italic">No deals here</p>
-                      <p className="text-[10px] text-muted-foreground">Drag deals to move</p>
+                    <div className="flex flex-1 flex-col items-center justify-center py-10 px-4 text-center text-muted-foreground/70">
+                      <div className="size-8 rounded-full border border-dashed border-border/70 mb-2.5" />
+                      <p className="text-xs font-medium text-muted-foreground">No deals</p>
+                      <p className="text-[11px] mt-0.5">Drop a deal here</p>
                     </div>
                   ) : (
                     deals.map((deal) => renderCard(deal))
@@ -1338,7 +1350,7 @@ export function DealKanban({
                                   <div className="flex flex-1 flex-col items-center justify-center py-6 text-center text-[11px] text-muted-foreground border-2 border-dashed border-border/30 rounded-lg">
                                     <span className="italic">No deals</span>
                                     <span className="text-[10px] text-muted-foreground/80 mt-0.5">
-                                      Drop deal here
+                                      Drop deal here or use the actions menu to move
                                     </span>
                                   </div>
                                 ) : (

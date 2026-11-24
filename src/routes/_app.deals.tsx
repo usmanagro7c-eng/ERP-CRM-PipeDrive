@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Search,
   TriangleAlert,
-  Filter,
 } from "lucide-react";
 
 import { Page, PageHeader } from "@/components/page-header";
@@ -36,8 +35,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -455,23 +452,43 @@ function DealsPage() {
     <Page>
       <PageHeader
         title="Deals"
-        breadcrumbs={[
-          { label: "Sales" },
-          { label: "Deals" },
-        ]}
+        badge={
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">
+            {total}
+          </span>
+        }
         actions={
-          <>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden sm:flex items-center rounded-md border border-border/70 bg-muted/30 p-0.5">
+              {viewOptions.map((opt) => {
+                const Icon = opt.icon;
+                const active = activeView === opt.mode;
+                return (
+                  <Button
+                    key={opt.mode}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewChange(opt.mode)}
+                    className={cn(
+                      "h-7 px-2.5 text-xs gap-1.5 rounded-sm",
+                      active ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={active}
+                  >
+                    <Icon className="size-3.5" />
+                    <span>{opt.mode === "kanban" ? "Kanban" : opt.mode === "table" ? "Table" : "Cards"}</span>
+                  </Button>
+                );
+              })}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
-                  <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="max-w-[100px] truncate">{currentViewObj.label}</span>
-                  <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+                <Button variant="outline" size="icon" className="sm:hidden h-9 w-9" aria-label="Change view">
+                  <CurrentIcon className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 text-xs">
-                <DropdownMenuLabel>View</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent align="end" className="w-40 text-xs">
                 {viewOptions.map((opt) => {
                   const Icon = opt.icon;
                   const isSelected = activeView === opt.mode;
@@ -496,22 +513,24 @@ function DealsPage() {
               size="sm"
               onClick={handleOpenCreateModal}
               disabled={!meta}
-              className="h-8 px-3 gap-1.5 text-xs font-semibold"
+              aria-label="Create new deal"
+              className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold"
             >
               <Plus className="size-3.5" />
-              <span>New Deal</span>
+              <span>New</span>
             </Button>
-          </>
+          </div>
         }
         filters={
-          <div className="flex items-center gap-2 flex-1">
-            <form onSubmit={submitSearch} className="relative min-w-[180px] max-w-[240px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex items-center gap-2 w-full">
+            <form onSubmit={submitSearch} className="relative flex-1 min-w-0 sm:max-w-[260px]">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search deals..."
-                className="h-8 pl-9 pr-3 text-xs bg-muted/40 border-input"
+                placeholder="Search"
+                aria-label="Search deals"
+                className="h-9 sm:h-8 pl-8 pr-3 text-sm sm:text-xs bg-background/70 border-border/70 w-full"
               />
             </form>
 
@@ -519,14 +538,11 @@ function DealsPage() {
               value={statusFilter}
               onValueChange={(val) => setStatusFilter(val === "all" ? "" : val)}
             >
-              <SelectTrigger className="h-8 text-xs px-3 bg-muted/40 border-input w-auto min-w-[140px]">
-                <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
-                <SelectValue placeholder="All Statuses" />
+              <SelectTrigger aria-label="Filter by status" className="h-9 sm:h-8 text-xs px-2.5 bg-background/70 border-border/70 w-[116px] sm:w-[140px] shrink-0">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">
-                  All Statuses
-                </SelectItem>
+                <SelectItem value="all" className="text-xs">All statuses</SelectItem>
                 {stages.map((s) => (
                   <SelectItem key={s.name} value={s.name} className="text-xs">
                     {s.name}
@@ -535,32 +551,31 @@ function DealsPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-1 ml-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  void metaQuery.refetch();
-                  void listQuery.refetch();
-                  void countQuery.refetch();
-                }}
-                className="h-8 w-8 p-0"
-                title="Refresh"
-              >
-                <RefreshCw className="size-3.5" />
-              </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                void metaQuery.refetch();
+                void listQuery.refetch();
+                void countQuery.refetch();
+              }}
+              className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 text-muted-foreground"
+              title="Refresh"
+              aria-label="Refresh deals"
+            >
+              <RefreshCw className="size-4 sm:size-3.5" />
+            </Button>
 
-              {activeView === "table" && meta && (
-                <ColumnChooser
-                  meta={meta}
-                  selected={columns}
-                  onChange={(next) => {
-                    setSavedColumns(next);
-                    saveColumns(next);
-                  }}
-                />
-              )}
-            </div>
+            {activeView === "table" && meta && (
+              <ColumnChooser
+                meta={meta}
+                selected={columns}
+                onChange={(next) => {
+                  setSavedColumns(next);
+                  saveColumns(next);
+                }}
+              />
+            )}
           </div>
         }
       />
@@ -581,7 +596,7 @@ function DealsPage() {
       <div
         className={cn(
           "flex-1 min-h-0",
-          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6" : "overflow-auto p-4 sm:p-6",
+          activeView === "kanban" ? "overflow-hidden p-3 sm:p-6" : "overflow-auto p-3 sm:p-6",
         )}
       >
         {error ? (

@@ -616,8 +616,9 @@ export function DealFormModal({
           <div className="flex justify-end pt-3 pb-1">
             <Button
               type="submit"
+              variant="contrast"
               disabled={saveMutation.isPending}
-              className="h-8 text-xs px-5 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs"
+              className="h-8 text-xs px-5 rounded-md font-medium cursor-pointer shadow-xs"
             >
               {saveMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
               <span>{isEdit ? "Save Changes" : "Create"}</span>

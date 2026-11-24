@@ -15,6 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -215,6 +216,7 @@ export function DealTable({
   }>({ open: false, dealName: "", targetStatus: "Lost" });
 
   const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
   function isLostStage(stageKey: string): boolean {
     const stage = stages.find((s) => s.name === stageKey);
@@ -378,11 +380,7 @@ export function DealTable({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete deal ${name}?`)) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget({ name, title: orgName })}
                       >
                         Delete Deal
                       </DropdownMenuItem>
@@ -401,6 +399,21 @@ export function DealTable({
         dealNames={lostModalState.dealName ? [lostModalState.dealName] : []}
         dealTitle={lostModalState.dealTitle}
         targetStatus={lostModalState.targetStatus}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete deal "${deleteTarget?.title || ""}"?`}
+        description="This deal will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
       />
     </div>
   );

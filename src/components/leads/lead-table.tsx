@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { LeadLostModal, isLeadLostStatus } from "@/components/leads/lead-lost-modal";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,6 +223,7 @@ export function LeadTable({
     leadTitle: undefined,
     targetStatus: "Unqualified",
   });
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
   const activeFields = useMemo(() => fieldsByNames(meta, columns), [meta, columns]);
 
@@ -352,11 +354,12 @@ export function LeadTable({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete lead ${name}?`)) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() =>
+                          setDeleteTarget({
+                            name,
+                            title: (row["lead_name"] as string) || name,
+                          })
+                        }
                       >
                         Delete Lead
                       </DropdownMenuItem>
@@ -375,6 +378,21 @@ export function LeadTable({
         leadNames={lostModalState.leadNames}
         leadTitle={lostModalState.leadTitle}
         targetStatus={lostModalState.targetStatus}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete lead "${deleteTarget?.title || ""}"?`}
+        description="This lead will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
       />
     </div>
   );

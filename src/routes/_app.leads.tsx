@@ -360,9 +360,10 @@ function LeadsPage() {
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
+            variant="contrast"
             onClick={handleOpenCreateModal}
             disabled={!meta}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1 sm:gap-1.5"
+            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md cursor-pointer shadow-xs gap-1 sm:gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create</span>

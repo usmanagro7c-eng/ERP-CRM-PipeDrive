@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Briefcase, Building2, Mail, MoreVertical, Phone, User, CircleSlash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,7 @@ export function LeadGrid({
     leadTitle: undefined,
     targetStatus: "Unqualified",
   });
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; title: string } | null>(null);
 
   const statusOptions = useMemo(() => {
     return statuses.map((s) => ({
@@ -182,11 +184,7 @@ export function LeadGrid({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete lead ${name}?`)) {
-                            void deleteMutation.mutate(name);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget({ name, title: fullName })}
                       >
                         Delete Lead
                       </DropdownMenuItem>
@@ -248,6 +246,21 @@ export function LeadGrid({
         leadNames={lostModalState.leadNames}
         leadTitle={lostModalState.leadTitle}
         targetStatus={lostModalState.targetStatus}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete lead "${deleteTarget?.title || ""}"?`}
+        description="This lead will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
       />
     </div>
   );

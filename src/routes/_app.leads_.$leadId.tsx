@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -177,6 +178,7 @@ function LeadDetailPage() {
   const [commentComposerOpen, setCommentComposerOpen] = useState(false);
   const [lostModalOpen, setLostModalOpen] = useState(false);
   const [targetLostStatus, setTargetLostStatus] = useState("Unqualified");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Hash tab router sync
   const [activeTab, setActiveTab] = useState<TabKey>("activity");
@@ -288,14 +290,16 @@ function LeadDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete lead ${leadName}?`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await deleteMutation.mutateAsync(leadId);
+      await deleteMutation.mutateAsync(deleteTarget);
       toast.success("Lead deleted successfully");
       void navigate({ to: "/leads" });
     } catch {
       // toast shown by hook
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -712,9 +716,10 @@ function LeadDetailPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handleDelete}
+                    onClick={() => setDeleteTarget(leadId)}
                     className="size-6 rounded-md text-red-400 bg-red-950/40 hover:bg-red-900/60 border-0 cursor-pointer"
                     title="Delete Lead"
+                    aria-label="Delete Lead"
                   >
                     <Trash2 className="size-3" />
                   </Button>
@@ -1087,6 +1092,17 @@ function LeadDetailPage() {
         leadNames={[leadId]}
         leadTitle={leadName}
         targetStatus={targetLostStatus}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete lead "${leadName}"?`}
+        description="This lead will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

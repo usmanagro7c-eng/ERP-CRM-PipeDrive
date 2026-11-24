@@ -533,7 +533,9 @@ export function LeadKanban({
                 ) : leads.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
                     <p className="italic">No leads here</p>
-                    <p className="text-[10px] text-muted-foreground">Drag leads to move</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Drag or use the actions menu to move
+                    </p>
                   </div>
                 ) : (
                   leads.map((lead) => {
@@ -563,8 +565,18 @@ export function LeadKanban({
                           setDragOverCol(null);
                         }}
                         onClick={() => onRowClick?.(name)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Lead: ${fullName} (${name})`}
+                        onKeyDown={(e) => {
+                          if (e.target !== e.currentTarget) return;
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onRowClick?.(name);
+                          }
+                        }}
                         className={cn(
-                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing shrink-0",
+                          "group relative rounded-md border bg-card p-3 shadow-xs transition-all hover:shadow-md cursor-grab active:cursor-grabbing shrink-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                           draggedLeadName === name ? "opacity-40 border-dashed" : "border-border",
                         )}
                       >

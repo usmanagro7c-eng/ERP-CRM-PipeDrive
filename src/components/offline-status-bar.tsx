@@ -80,6 +80,8 @@ export function OfflineStatusBar() {
     <>
       {/* Top Banner Indicator */}
       <div
+        role="status"
+        aria-live="polite"
         className={cn(
           "w-full px-3 py-1.5 text-xs font-medium flex items-center justify-between gap-2 transition-colors z-40 border-b",
           !isOnline
@@ -170,6 +172,7 @@ export function OfflineStatusBar() {
                       onClick={() => removeOfflineAction(item.id)}
                       className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
                       title="Discard local change"
+                      aria-label={`Discard local change: ${item.description}`}
                     >
                       <Trash2 className="size-3.5" />
                     </button>

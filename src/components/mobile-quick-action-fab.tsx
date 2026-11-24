@@ -48,7 +48,7 @@ export function MobileQuickActionFab() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="md:hidden fixed bottom-18 right-4 z-40 flex flex-col items-end">
+    <div className="md:hidden fixed right-4 z-40 flex flex-col items-end bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
       {/* Dimmed backdrop when speed-dial is expanded */}
       {open && (
         <div

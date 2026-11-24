@@ -29,16 +29,16 @@ export function PageHeader({
   return (
     <div className={cn("shrink-0", className)}>
       {/* Top bar - title and primary actions */}
-      <div className="flex items-center justify-between border-b border-border bg-card/50 px-4 sm:px-6 py-3 sm:py-3.5 backdrop-blur-sm">
-        <div className="flex min-w-0 items-center gap-3">
-          {/* Breadcrumbs if provided */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card/50 px-4 sm:px-6 py-3 backdrop-blur-sm">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {breadcrumbs && breadcrumbs.length > 0 ? (
+            <nav className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground overflow-hidden">
               {breadcrumbs.map((crumb, i) => (
-                <div key={i} className="flex items-center gap-1.5">
+                <div key={i} className="flex min-w-0 items-center gap-1.5">
                   {i > 0 && <span className="text-muted-foreground/50">/</span>}
                   <span
                     className={cn(
+                      "truncate",
                       i === breadcrumbs.length - 1
                         ? "font-semibold text-foreground"
                         : "font-medium hover:text-foreground transition-colors",
@@ -49,20 +49,14 @@ export function PageHeader({
                 </div>
               ))}
             </nav>
-          )}
-
-          {/* Title */}
-          {!breadcrumbs && (
-            <h1 className="text-display text-xl sm:text-2xl font-bold text-foreground tracking-tight truncate">
+          ) : (
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground tracking-tight truncate">
               {title}
             </h1>
           )}
-
-          {/* Optional badge */}
           {badge && <div className="shrink-0">{badge}</div>}
         </div>
 
-        {/* Actions */}
         {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
       </div>
 

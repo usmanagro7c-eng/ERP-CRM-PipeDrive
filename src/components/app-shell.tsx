@@ -463,7 +463,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <OfflineStatusBar />
 
         {/* Page Content */}
-        <main className="min-w-0 flex-1 min-h-0 overflow-hidden flex flex-col">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-w-0 flex-1 min-h-0 overflow-hidden flex flex-col outline-none"
+        >
+          {children}
+        </main>
 
         {/* Mobile Quick Action Floating Action Button */}
         {!isDedicatedSystem && <MobileQuickActionFab />}

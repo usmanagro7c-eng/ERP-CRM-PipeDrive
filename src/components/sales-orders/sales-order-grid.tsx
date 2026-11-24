@@ -104,8 +104,9 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
         {onCreate && (
           <Button
             size="sm"
+            variant="contrast"
             onClick={onCreate}
-            className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+            className="mt-4 h-8 text-xs font-medium px-4 rounded-md cursor-pointer shadow-xs gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create Sales Order</span>
@@ -116,7 +117,7 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {rows.map((row) => {
         const isRowBusy = activeActionId === row.name;
         const isDraft = row.docstatus === 0;
@@ -125,20 +126,19 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
           <div
             key={row.name}
             onClick={() => onEdit?.(row)}
-            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs hover:shadow-md transition-all border-border hover:border-primary/40 relative cursor-pointer"
+            className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] relative cursor-pointer"
           >
             {/* Header: Title, ID & Actions */}
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
-                <div>
-                  <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
-                    <Building2 className="size-4 text-primary shrink-0" />
-                    <span className="truncate max-w-[200px]">{row.customer}</span>
+                <div className="min-w-0">
+                  <div className="font-semibold text-[13px] leading-5 text-foreground truncate group-hover:text-primary transition-colors max-w-[220px]">
+                    {row.customer}
                   </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">{row.name}</span>
+                  <span className="font-mono text-[10px] leading-4 text-muted-foreground/80 block mt-0.5">{row.name}</span>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <SalesOrderStatusBadge status={row.status} />
                   {isDraft && (
                     <DropdownMenu>
@@ -146,14 +146,14 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-7 text-muted-foreground"
+                          className="size-7 -mr-1 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                           disabled={isRowBusy}
                           aria-label={`Actions for sales order ${row.name}`}
                         >
                           {isRowBusy ? (
                             <Loader2 className="size-3.5 animate-spin" />
                           ) : (
-                            <MoreVertical className="size-3.5" />
+                            <MoreVertical className="size-4" />
                           )}
                         </Button>
                       </DropdownMenuTrigger>
@@ -177,18 +177,18 @@ export function SalesOrderGrid({ rows, loading, onEdit, onCreate }: SalesOrderGr
             </div>
 
             {/* Bottom details: Dates & Grand Total */}
-            <div className="border-t pt-3 mt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="size-3" />
-                  <span>{row.transaction_date}</span>
+            <div className="border-t border-border/50 pt-3 mt-3 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <Calendar className="size-3.5 opacity-60 shrink-0" />
+                  <span className="truncate">{row.transaction_date}</span>
                 </span>
-                {row.delivery_date && <span>Delivery: {row.delivery_date}</span>}
+                {row.delivery_date && <span className="shrink-0">Delivery {row.delivery_date}</span>}
               </div>
 
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-[11px] font-medium text-muted-foreground">Grand Total:</span>
-                <span className="text-base font-bold text-primary">
+              <div className="flex items-end justify-between gap-2">
+                <span className="text-[11px] font-medium text-muted-foreground">Total</span>
+                <span className="text-[15px] font-semibold tracking-tight tabular-nums text-foreground">
                   {(row.currency as string) || "PKR"} {Number(row.grand_total || 0).toLocaleString()}
                 </span>
               </div>

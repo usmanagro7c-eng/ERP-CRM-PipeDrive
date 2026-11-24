@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,23 +82,6 @@ export function SalesOrderStatusBadge({ status }: { status: string }) {
 export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderTableProps) {
   const submitMutation = useSubmitSalesOrder();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-
-  const allSelected = rows.length > 0 && selectedRows.length === rows.length;
-
-  function toggleSelectAll(checked: boolean) {
-    if (checked) {
-      setSelectedRows(rows.map((r) => r.name));
-    } else {
-      setSelectedRows([]);
-    }
-  }
-
-  function toggleRow(name: string) {
-    setSelectedRows((prev) =>
-      prev.includes(name) ? prev.filter((id) => id !== name) : [...prev, name],
-    );
-  }
 
   async function handleSubmit(order: SalesOrder) {
     setActiveActionId(order.name);
@@ -131,8 +113,9 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
         {onCreate && (
           <Button
             size="sm"
+            variant="contrast"
             onClick={onCreate}
-            className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+            className="mt-4 h-8 text-xs font-medium px-4 rounded-md gap-1.5"
           >
             <Plus className="size-3.5" />
             <span>Create Sales Order</span>
@@ -147,13 +130,6 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
       <Table className="min-w-[850px]">
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead className="w-[40px] px-3">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={toggleSelectAll}
-                aria-label="Select all"
-              />
-            </TableHead>
             <TableHead className="w-[200px] min-w-[190px] text-xs font-semibold">
               Order ID
             </TableHead>
@@ -177,22 +153,13 @@ export function SalesOrderTable({ rows, loading, onEdit, onCreate }: SalesOrderT
           {rows.map((row) => {
             const isRowBusy = activeActionId === row.name;
             const isDraft = row.docstatus === 0;
-            const isSelected = selectedRows.includes(row.name);
 
             return (
               <TableRow
                 key={row.name}
-                data-state={isSelected ? "selected" : undefined}
                 className="hover:bg-muted/40 transition-colors cursor-pointer"
                 onClick={() => onEdit?.(row)}
               >
-                <TableCell className="px-3" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => toggleRow(row.name)}
-                    aria-label={`Select ${row.name}`}
-                  />
-                </TableCell>
                 <TableCell className="font-mono text-xs font-semibold text-primary hover:underline whitespace-nowrap min-w-[190px]">
                   {row.name}
                 </TableCell>

@@ -139,7 +139,7 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
           </Select>
         </div>
       )}
-      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
+      <div className="flex flex-1 min-h-0 gap-3 sm:gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full">
         {SALES_ORDER_STAGES.filter((col) => !hiddenColumns.includes(col.key)).map((col) => {
         const list = grouped.get(col.key) ?? [];
         const totalAmount = list.reduce((sum, o) => sum + (Number(o.grand_total) || 0), 0);
@@ -148,37 +148,40 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
         return (
           <div
             key={col.key}
-            className="flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-lg border bg-muted/30 border-border h-full max-h-full overflow-hidden"
+            className="flex w-[84vw] max-w-[320px] sm:w-[272px] sm:max-w-none shrink-0 flex-col rounded-2xl border border-border/60 bg-muted/[0.35] h-full max-h-full overflow-hidden"
           >
             {/* Stage Column Header */}
-            <div className="flex items-center justify-between border-b bg-card/50 p-3 rounded-t-lg shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-xs text-foreground">{col.label}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  {list.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
+            <div className="border-b border-border/50 bg-background/60 px-3.5 py-3 rounded-t-2xl backdrop-blur-sm shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold text-[13px] tracking-tight text-foreground truncate">{col.label}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground tabular-nums">{list.length}</span>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
-                  className="size-6 text-muted-foreground hover:text-destructive"
+                  className="size-7 rounded-md text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10"
                   title={`Hide column ${col.label}`}
+                  aria-label={`Hide ${col.label} column`}
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
-                <span className="text-[11px] font-semibold text-muted-foreground">
+              </div>
+              <div className="mt-1">
+                <span className="text-[12px] font-medium text-muted-foreground tabular-nums tracking-tight">
                   {laneCurrency} {totalAmount.toLocaleString()}
                 </span>
               </div>
             </div>
 
             {/* Stage Cards Container */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 flex flex-col gap-2.5">
               {list.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1 italic">
-                  No orders in this stage
+                <div className="flex flex-1 flex-col items-center justify-center py-10 px-4 text-center text-muted-foreground/70">
+                  <div className="size-8 rounded-full border border-dashed border-border/70 mb-2.5" />
+                  <p className="text-xs font-medium text-muted-foreground">No orders</p>
+                  <p className="text-[11px] mt-0.5">Nothing in this stage</p>
                 </div>
               ) : (
                 list.map((order) => {
@@ -189,33 +192,43 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                     <div
                       key={order.name}
                       onClick={() => onEdit?.(order)}
-                      className="group relative flex flex-col justify-between rounded-md border bg-card p-3 shadow-xs hover:shadow-md transition-all border-border cursor-pointer hover:border-primary/40 shrink-0"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Sales order: ${order.customer} (${order.name})`}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onEdit?.(order);
+                        }
+                      }}
+                      className="group relative flex flex-col justify-between rounded-xl border border-border/70 bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color] duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:border-border shrink-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
-                      <div className="flex items-start justify-between gap-1 mb-2">
-                        <div className="flex-1 truncate">
-                          <h4 className="font-semibold text-xs text-foreground truncate hover:underline">
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-[13px] leading-5 text-foreground truncate group-hover:text-primary transition-colors">
                             {order.customer}
                           </h4>
-                          <span className="font-mono text-[10px] text-muted-foreground">
+                          <span className="block font-mono text-[10px] leading-4 text-muted-foreground/80 mt-0.5 truncate">
                             {order.name}
                           </span>
                         </div>
 
                         {isDraft && (
-                          <div onClick={(e) => e.stopPropagation()}>
+                          <div onClick={(e) => e.stopPropagation()} className="-mr-1 -mt-1">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-6 text-muted-foreground"
+                                  className="size-7 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                                   disabled={isRowBusy}
                                   aria-label={`Actions for sales order ${order.name}`}
                                 >
                                   {isRowBusy ? (
-                                    <Loader2 className="size-3 animate-spin" />
+                                    <Loader2 className="size-3.5 animate-spin" />
                                   ) : (
-                                    <MoreVertical className="size-3.5" />
+                                    <MoreVertical className="size-4" />
                                   )}
                                 </Button>
                               </DropdownMenuTrigger>
@@ -238,18 +251,18 @@ export function SalesOrderKanban({ rows, loading, onEdit, onAddOrder }: SalesOrd
                       </div>
 
                       {order.delivery_date && (
-                        <div className="mb-2 text-[10px] text-muted-foreground flex items-center gap-1">
-                          <span>Delivery:</span>
-                          <span className="font-medium text-foreground">{order.delivery_date}</span>
+                        <div className="mb-2.5 text-[11px] text-muted-foreground flex items-center gap-1.5 min-w-0">
+                          <span className="shrink-0">Delivery</span>
+                          <span className="text-foreground/80 truncate">{order.delivery_date}</span>
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between border-t pt-2 text-[11px]">
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Calendar className="size-3" />
-                          <span>{order.transaction_date}</span>
+                      <div className="flex items-end justify-between gap-2 border-t border-border/50 pt-2.5">
+                        <span className="text-muted-foreground flex items-center gap-1.5 text-[11px] min-w-0">
+                          <Calendar className="size-3.5 opacity-60 shrink-0" />
+                          <span className="truncate">{order.transaction_date}</span>
                         </span>
-                        <span className="font-bold text-xs text-primary">
+                        <span className="font-semibold text-[15px] leading-none tracking-tight text-foreground tabular-nums shrink-0">
                           {(order.currency as string) || "PKR"} {Number(order.grand_total || 0).toLocaleString()}
                         </span>
                       </div>

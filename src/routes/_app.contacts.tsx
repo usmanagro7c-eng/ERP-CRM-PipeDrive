@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Columns3,
@@ -20,6 +19,7 @@ import { ContactTable, type SortState } from "@/components/contacts/contact-tabl
 import { ContactKanban } from "@/components/contacts/contact-kanban";
 import { ContactGrid } from "@/components/contacts/contact-grid";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
+import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading";
@@ -27,8 +27,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -287,108 +285,122 @@ function ContactsPage() {
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 min-h-[42px] sm:min-h-[48px]">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <span className="font-medium text-foreground">Contacts</span>
-          <span className="text-muted-foreground/60">/</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-xs sm:text-sm">
-                <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate max-w-[100px] sm:max-w-none">{currentViewObj.label}</span>
-                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 text-xs">
-              <DropdownMenuLabel>Switch View</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+      <PageHeader
+        title="Contacts"
+        badge={
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">{total}</span>
+        }
+        actions={
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden sm:flex items-center rounded-md border border-border/70 bg-muted/30 p-0.5">
               {viewOptions.map((opt) => {
                 const Icon = opt.icon;
-                const isSelected = activeView === opt.mode;
+                const active = activeView === opt.mode;
                 return (
-                  <DropdownMenuItem
+                  <Button
                     key={opt.mode}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleViewChange(opt.mode)}
-                    className="flex items-center justify-between cursor-pointer"
+                    className={cn(
+                      "h-7 px-2.5 text-xs gap-1.5 rounded-sm",
+                      active ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={active}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-muted-foreground" />
-                      <span>{opt.label}</span>
-                    </div>
-                    {isSelected && <Check className="size-3.5 text-primary" />}
-                  </DropdownMenuItem>
+                    <Icon className="size-3.5" />
+                    <span>{opt.mode === "kanban" ? "Kanban" : opt.mode === "table" ? "Table" : "Cards"}</span>
+                  </Button>
                 );
               })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreateModal}
-            disabled={!meta}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1 sm:gap-1.5"
-          >
-            <Plus className="size-3.5" />
-            <span>Create</span>
-          </Button>
-        </div>
-      </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="sm:hidden h-9 w-9" aria-label="Change view">
+                  <CurrentIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 text-xs">
+                {viewOptions.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = activeView === opt.mode;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.mode}
+                      onClick={() => handleViewChange(opt.mode)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="size-4 text-muted-foreground" />
+                        <span>{opt.label}</span>
+                      </div>
+                      {isSelected && <Check className="size-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-      {/* Secondary Filter Toolbar Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-3 sm:px-6 py-1.5 sm:py-2 gap-2 shrink-0">
-        <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
-          {/* Search Input */}
-          <form
-            onSubmit={submitSearch}
-            className="relative flex-1 min-w-[120px] max-w-[210px] sm:w-52"
-          >
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search contacts..."
-              className="h-7 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-md w-full"
-            />
-          </form>
-        </div>
+            <Button
+              size="sm"
+              onClick={handleOpenCreateModal}
+              disabled={!meta}
+              className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold"
+              aria-label="Create contact"
+            >
+              <Plus className="size-3.5" />
+              <span>New</span>
+            </Button>
+          </div>
+        }
+        filters={
+          <div className="flex items-center gap-2 w-full">
+            <form onSubmit={submitSearch} className="relative flex-1 min-w-0 sm:max-w-[260px]">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search"
+                aria-label="Search contacts"
+                className="h-9 sm:h-8 pl-8 pr-3 text-sm sm:text-xs bg-background/70 border-border/70 w-full"
+              />
+            </form>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void metaQuery.refetch();
-              void listQuery.refetch();
-              void countQuery.refetch();
-            }}
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-
-          {/* Column chooser only in table view */}
-          {activeView === "table" && meta && (
-            <ColumnChooser
-              meta={meta}
-              selected={columns}
-              onChange={(next) => {
-                setSavedColumns(next);
-                saveColumns(next);
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                void metaQuery.refetch();
+                void listQuery.refetch();
+                void countQuery.refetch();
               }}
-            />
-          )}
-        </div>
-      </div>
+              className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 text-muted-foreground"
+              title="Refresh"
+              aria-label="Refresh contacts"
+            >
+              <RefreshCw className="size-4 sm:size-3.5" />
+            </Button>
+
+            {activeView === "table" && meta && (
+              <ColumnChooser
+                meta={meta}
+                selected={columns}
+                onChange={(next) => {
+                  setSavedColumns(next);
+                  saveColumns(next);
+                }}
+              />
+            )}
+          </div>
+        }
+      />
 
       {/* Main Content Area */}
       <div
         className={cn(
           "flex-1 min-h-0 flex flex-col",
-          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-auto p-4 sm:p-6",
+          activeView === "kanban" ? "overflow-hidden p-3 sm:p-6 pb-2" : "overflow-auto p-3 sm:p-6",
         )}
       >
         {error ? (

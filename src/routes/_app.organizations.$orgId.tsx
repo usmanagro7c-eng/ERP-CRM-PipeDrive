@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -119,6 +120,7 @@ function OrganizationDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [dealModalOpen, setDealModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
 
@@ -209,13 +211,15 @@ function OrganizationDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete organization "${orgName}"?`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await deleteMutation.mutateAsync(orgId);
+      await deleteMutation.mutateAsync(deleteTarget);
       void navigate({ to: "/organizations" });
     } catch {
       // handled
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -328,9 +332,10 @@ function OrganizationDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleDelete}
+              onClick={() => setDeleteTarget(orgId)}
               className="h-7 text-xs px-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-border/60 cursor-pointer"
               title="Delete Organization"
+              aria-label="Delete Organization"
             >
               <Trash2 className="size-3.5 mr-1" />
               <span>Delete</span>
@@ -688,6 +693,17 @@ function OrganizationDetailPage() {
         onOpenChange={setContactModalOpen}
         initialValues={{ company_name: orgName }}
         onSuccess={() => void refetch()}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete organization "${orgName}"?`}
+        description="This organization will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

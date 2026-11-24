@@ -16,6 +16,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +51,10 @@ export interface SortState {
   field: string;
   direction: "asc" | "desc";
 }
+
+type ContactDeleteTarget =
+  | { kind: "single"; name: string; title: string }
+  | { kind: "bulk"; names: string[] };
 
 interface ContactTableProps {
   meta: FrappeDocTypeMeta;
@@ -259,6 +264,7 @@ export function ContactTable({
   const bulkMoveMutation = useBulkMoveContactStatus();
 
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<ContactDeleteTarget | null>(null);
 
   const fieldMap = useMemo(() => new Map((meta.fields ?? []).map((f) => [f.fieldname, f])), [meta]);
 
@@ -335,16 +341,7 @@ export function ContactTable({
               variant="destructive"
               size="sm"
               className="h-8 text-xs cursor-pointer"
-              onClick={() => {
-                if (
-                  confirm(
-                    `Are you sure you want to delete ${selectedNames.length} selected contact(s)?`,
-                  )
-                ) {
-                  bulkDeleteMutation.mutate(selectedNames);
-                  setSelectedNames([]);
-                }
-              }}
+              onClick={() => setDeleteTarget({ kind: "bulk", names: selectedNames })}
               disabled={bulkDeleteMutation.isPending}
             >
               <Trash2 className="size-3.5 mr-1" />
@@ -510,11 +507,9 @@ export function ContactTable({
                           <DropdownMenuSeparator />
 
                           <DropdownMenuItem
-                            onClick={() => {
-                              if (confirm(`Delete contact "${fullName}"?`)) {
-                                deleteMutation.mutate(name);
-                              }
-                            }}
+                            onClick={() =>
+                              setDeleteTarget({ kind: "single", name, title: fullName })
+                            }
                             className="text-destructive focus:text-destructive cursor-pointer"
                           >
                             Delete
@@ -529,6 +524,40 @@ export function ContactTable({
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending && !bulkDeleteMutation.isPending)
+            setDeleteTarget(null);
+        }}
+        title={
+          deleteTarget?.kind === "bulk"
+            ? `Delete ${deleteTarget.names.length} selected contact${deleteTarget.names.length === 1 ? "" : "s"}?`
+            : `Delete contact "${deleteTarget?.title || ""}"?`
+        }
+        description={
+          deleteTarget?.kind === "bulk"
+            ? "These contacts will be permanently removed. This action cannot be undone."
+            : "This contact will be permanently removed. This action cannot be undone."
+        }
+        pending={deleteMutation.isPending || bulkDeleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget.kind === "bulk") {
+            const names = deleteTarget.names;
+            bulkDeleteMutation.mutate(names, {
+              onSettled: () => {
+                setDeleteTarget(null);
+                setSelectedNames([]);
+              },
+            });
+            return;
+          }
+          const name = deleteTarget.name;
+          deleteMutation.mutate(name, { onSettled: () => setDeleteTarget(null) });
+        }}
+      />
     </div>
   );
 }

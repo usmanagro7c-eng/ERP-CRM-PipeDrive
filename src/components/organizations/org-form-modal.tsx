@@ -362,8 +362,9 @@ export function OrgFormModal({
           <div className="px-6 py-3 border-t border-border/60 bg-muted/20 flex items-center justify-end shrink-0">
             <Button
               type="submit"
+              variant="contrast"
               disabled={saveMutation.isPending}
-              className="h-8 px-5 rounded-md bg-foreground text-background hover:bg-foreground/90 font-medium text-xs cursor-pointer shadow-xs transition-colors"
+              className="h-8 px-5 font-medium text-xs"
             >
               {saveMutation.isPending && <Loader2 className="size-3 animate-spin mr-1.5" />}
               <span>{isEdit ? "Save" : "Create"}</span>

@@ -402,8 +402,18 @@ export function OrgKanban({
                               setDraggedOrgName(null);
                               setDragOverCol(null);
                             }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Organization: ${displayName} (${orgName})`}
+                            onKeyDown={(e) => {
+                              if (e.target !== e.currentTarget) return;
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onRowClick?.(orgName);
+                              }
+                            }}
                             className={cn(
-                              "group relative flex flex-col gap-2.5 rounded-lg border bg-card p-3 shadow-xs transition-all duration-150 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/40",
+                              "group relative flex flex-col gap-2.5 rounded-lg border bg-card p-3 shadow-xs transition-all duration-150 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                               isDragging && "opacity-40 scale-95",
                             )}
                             onClick={() => onRowClick?.(orgName)}

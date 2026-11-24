@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -88,6 +89,7 @@ function ContactDetailPage() {
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [dealModalOpen, setDealModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [sidebarValues, setSidebarValues] = useState<SidebarState>(initialSidebarState);
 
@@ -309,13 +311,15 @@ function ContactDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete contact "${contactName}"?`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await deleteMutation.mutateAsync(contactId);
+      await deleteMutation.mutateAsync(deleteTarget);
       void navigate({ to: "/contacts" });
     } catch {
       // handled
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -423,9 +427,10 @@ function ContactDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleDelete}
+              onClick={() => setDeleteTarget(contactId)}
               className="h-7 text-xs px-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-border/60 cursor-pointer"
               title="Delete Contact"
+              aria-label="Delete Contact"
             >
               <Trash2 className="size-3.5 mr-1" />
               <span>Delete</span>
@@ -731,6 +736,17 @@ function ContactDetailPage() {
           void refetch();
           void refetchDeals();
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete contact "${contactName}"?`}
+        description="This contact will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

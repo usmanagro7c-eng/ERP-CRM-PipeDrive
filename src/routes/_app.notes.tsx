@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowUpDown,
+  Check,
   Filter,
-  List,
   Loader2,
   Plus,
   RefreshCw,
-  Search,
   StickyNote,
   Trash2,
 } from "lucide-react";
@@ -16,6 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { notesListOptions, useDeleteNote, type CrmNote } from "@/hooks/use-notes";
 import { NoteFormModal } from "@/components/notes/note-form-modal";
 import { cn } from "@/lib/utils";
@@ -83,6 +90,9 @@ function NotesPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<CrmNote | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CrmNote | null>(null);
+  const [filterMode, setFilterMode] = useState<"all" | "linked" | "standalone">("all");
+  const [sortBy, setSortBy] = useState<"modified" | "creation" | "title">("modified");
 
   function handleOpenCreate() {
     setEditingNote(null);
@@ -94,189 +104,205 @@ function NotesPage() {
     setModalOpen(true);
   }
 
-  // Filter notes by content if searchContent is entered
-  const filteredNotes = notes.filter((n) => {
-    if (!searchContent.trim()) return true;
-    return (n.content || "").toLowerCase().includes(searchContent.trim().toLowerCase());
-  });
+  // Filter notes by content and linked-record state, then keep the list sorted.
+  const visibleNotes = useMemo(() => {
+    const contentTerm = searchContent.trim().toLowerCase();
+    const filtered = notes.filter((note) => {
+      if (
+        contentTerm &&
+        !(note.content || "").toLowerCase().includes(contentTerm)
+      ) {
+        return false;
+      }
+      if (filterMode === "linked") return Boolean(note.reference_docname);
+      if (filterMode === "standalone") return !note.reference_docname;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "title") {
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      }
+      const aDate = new Date(String(a[sortBy] || "")).getTime();
+      const bDate = new Date(String(b[sortBy] || "")).getTime();
+      return (Number.isNaN(bDate) ? 0 : bDate) - (Number.isNaN(aDate) ? 0 : aDate);
+    });
+  }, [notes, searchContent, filterMode, sortBy]);
+
+  const hasAnyNotes = notes.length > 0;
+  const hasActiveFilters = Boolean(searchTitle.trim() || searchContent.trim() || filterMode !== "all");
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Top Banner Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border bg-card/60 px-3 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs shrink-0 gap-2 sm:gap-3 min-h-[42px] sm:min-h-[48px]">
-        {/* Breadcrumb: Notes / ☰ Notes View */}
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-          <Link to="/notes" className="hover:text-foreground transition-colors font-medium">
-            Notes
-          </Link>
-          <span className="opacity-60">/</span>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-foreground font-semibold hover:text-foreground/80 cursor-pointer"
-          >
-            <List className="size-3.5" />
-            <span>Notes View</span>
-          </button>
-        </div>
-
-        {/* Right Action: Solid Black "+ Create" Button matching CRM Backend */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={handleOpenCreate}
-            className="h-7 text-xs font-medium px-2.5 sm:px-3 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1 sm:gap-1.5 transition-colors"
-          >
+      <div className="shrink-0 border-b border-border/70 bg-card/40 px-3 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Notes</h1>
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">{visibleNotes.length}</span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Capture context, meetings, and follow-ups.</p>
+          </div>
+          <Button size="sm" onClick={handleOpenCreate} className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold shrink-0">
             <Plus className="size-3.5" />
-            <span>Create</span>
+            <span>New</span>
           </Button>
         </div>
-      </div>
 
-      {/* Filter Bar Matching CRM Backend */}
-      <div className="flex items-center justify-between border-b border-border/80 bg-card/20 px-3 sm:px-6 py-1.5 sm:py-2 gap-2 sm:gap-3 shrink-0 overflow-x-auto">
-        {/* Left Inputs */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <div className="relative w-28 sm:w-48 shrink-0">
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 flex-1">
             <Input
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
-              placeholder="Title"
-              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
+              placeholder="Search title"
+              aria-label="Search notes by title"
+              className="h-9 sm:h-8 text-sm sm:text-xs bg-background/70 border-border/70"
             />
-          </div>
-
-          <div className="relative w-28 sm:w-48 shrink-0">
             <Input
               value={searchContent}
               onChange={(e) => setSearchContent(e.target.value)}
-              placeholder="Content"
-              className="h-7 text-xs bg-muted/30 border-border/60 placeholder:text-muted-foreground focus:bg-background"
+              placeholder="Search content"
+              aria-label="Search notes by content"
+              className="h-9 sm:h-8 text-sm sm:text-xs bg-background/70 border-border/70"
             />
           </div>
-        </div>
 
-        {/* Right Toolbar Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => void refetch()}
-            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Filter"
-            aria-label="Filter"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <Filter className="size-3.5" />
-            <span className="hidden sm:inline">Filter</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            title="Sort"
-            aria-label="Sort"
-            className="h-7 w-7 p-0 sm:w-auto sm:px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/60 cursor-pointer gap-1.5"
-          >
-            <ArrowUpDown className="size-3.5" />
-            <span className="hidden sm:inline">Sort</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => void refetch()}
+              className="size-9 sm:size-8 text-muted-foreground shrink-0"
+              title="Refresh"
+              aria-label="Refresh notes"
+            >
+              <RefreshCw className="size-4 sm:size-3.5" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="Filter notes" className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 bg-background/70 border-border/70">
+                  <Filter className="size-3.5 text-muted-foreground" />
+                  <span className="hidden sm:inline">Filter</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 text-xs">
+                <DropdownMenuLabel>Show</DropdownMenuLabel>
+                {[
+                  { value: "all", label: "All notes" },
+                  { value: "linked", label: "Linked records" },
+                  { value: "standalone", label: "Standalone" },
+                ].map((option) => (
+                  <DropdownMenuItem key={option.value} onClick={() => setFilterMode(option.value as typeof filterMode)} className="flex cursor-pointer items-center justify-between">
+                    <span>{option.label}</span>
+                    {filterMode === option.value && <Check className="size-3.5" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="Sort notes" className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 bg-background/70 border-border/70">
+                  <ArrowUpDown className="size-3.5 text-muted-foreground" />
+                  <span className="hidden sm:inline">Sort</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 text-xs">
+                <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                {[
+                  { value: "modified", label: "Last updated" },
+                  { value: "creation", label: "Newest first" },
+                  { value: "title", label: "Title A–Z" },
+                ].map((option) => (
+                  <DropdownMenuItem key={option.value} onClick={() => setSortBy(option.value as typeof sortBy)} className="flex cursor-pointer items-center justify-between">
+                    <span>{option.label}</span>
+                    {sortBy === option.value && <Check className="size-3.5" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
       {/* Main Canvas Body */}
-      <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col p-3 sm:p-6 overflow-y-auto">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-primary" />
+            <Loader2 className="size-7 animate-spin text-muted-foreground" />
           </div>
-        ) : filteredNotes.length === 0 ? (
-          /* Empty State Matching CRM Backend */
-          <div className="flex flex-col items-center justify-center text-center py-20 max-w-md mx-auto">
-            <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
-              <StickyNote className="size-6" />
+        ) : visibleNotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center py-16 max-w-md mx-auto">
+            <div className="size-12 rounded-2xl bg-muted/60 border border-border/60 flex items-center justify-center text-muted-foreground mb-3">
+              <StickyNote className="size-5" />
             </div>
-            <h3 className="text-base font-semibold text-foreground">No notes yet</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {hasAnyNotes ? "No notes match these filters" : "No notes yet"}
+            </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-              Notes keep what you learned on a call or in a meeting next to the lead or deal it
-              belongs to.
+              {hasAnyNotes
+                ? "Try a different search term or switch the filter back to all notes."
+                : "Capture key context from calls, meetings, and deals."}
             </p>
-            <Button
-              size="sm"
-              onClick={handleOpenCreate}
-              className="mt-4 h-8 text-xs font-medium px-4 rounded-md bg-foreground text-background hover:bg-foreground/90 cursor-pointer shadow-xs gap-1.5 transition-colors"
-            >
-              <Plus className="size-3.5" />
-              <span>Create</span>
-            </Button>
+            {hasAnyNotes && hasActiveFilters ? (
+              <Button size="sm" variant="outline" onClick={() => { setSearchTitle(""); setSearchContent(""); setFilterMode("all"); }} className="mt-4 h-9 sm:h-8 text-xs px-4">
+                Clear filters
+              </Button>
+            ) : (
+              <Button size="sm" onClick={handleOpenCreate} className="mt-4 h-9 sm:h-8 text-xs font-semibold px-4 gap-1.5">
+                <Plus className="size-3.5" />
+                <span>Create note</span>
+              </Button>
+            )}
           </div>
         ) : (
-          /* Notes Card Grid Matching CRM Backend */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredNotes.map((note) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {visibleNotes.map((note) => {
               const author = note.owner || "User";
               const authorInitial = author.charAt(0).toUpperCase();
               return (
                 <div
                   key={note.name}
                   onClick={() => handleOpenEdit(note)}
-                  className="group relative rounded-xl border border-border bg-card p-4 hover:border-foreground/40 hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between min-h-[150px]"
+                  className="group relative rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:border-border transition-[transform,box-shadow,border-color] duration-200 cursor-pointer flex flex-col justify-between min-h-[156px]"
                 >
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-xs text-foreground line-clamp-1 group-hover:underline">
+                      <h3 className="font-semibold text-[13px] leading-5 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                         {note.title}
                       </h3>
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Delete note "${note.title}"?`)) {
-                            void deleteMutation.mutate(note.name);
-                          }
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive cursor-pointer p-0.5"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(note); }}
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 transition-opacity text-muted-foreground/80 hover:text-destructive hover:bg-destructive/10 rounded-md p-1.5 -m-1.5"
                         title="Delete note"
+                        aria-label={`Delete note ${note.title}`}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
-
                     {note.content && (
-                      <p className="text-xs text-muted-foreground line-clamp-4 leading-relaxed break-words">
+                      <p className="text-[11px] text-muted-foreground line-clamp-4 leading-relaxed break-words">
                         {stripHtml(note.content)}
                       </p>
                     )}
                   </div>
 
-                  {/* Card Footer */}
-                  <div className="pt-3 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground mt-3">
-                    {/* Linked Record badge */}
+                  <div className="pt-3 border-t border-border/50 flex items-center justify-between gap-2 text-[11px] text-muted-foreground mt-3">
                     {note.reference_docname ? (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-mono font-normal truncate max-w-[140px] px-1.5 py-0"
-                      >
+                      <Badge variant="outline" className="text-[10px] font-normal truncate max-w-[140px] px-1.5 py-0 bg-muted/30 border-border/60">
                         {note.reference_doctype ? `${note.reference_doctype}: ` : ""}
                         {note.reference_docname}
                       </Badge>
                     ) : (
-                      <span className="text-[10px] opacity-60">Standalone</span>
+                      <span className="text-[10px] text-muted-foreground/70">Standalone</span>
                     )}
-
-                    {/* Author & Relative Date */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <div className="size-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-foreground flex items-center justify-center text-[9px] font-semibold">
+                      <div className="size-5 rounded-full bg-muted text-foreground/80 flex items-center justify-center text-[9px] font-semibold">
                         {authorInitial}
                       </div>
-                      <span className="text-[11px]">
-                        {formatRelativeTime(note.modified || note.creation)}
-                      </span>
+                      <span className="text-[11px] tabular-nums">{formatRelativeTime(note.modified || note.creation)}</span>
                     </div>
                   </div>
                 </div>
@@ -292,6 +318,21 @@ function NotesPage() {
         onOpenChange={setModalOpen}
         note={editingNote}
         onSuccess={() => void refetch()}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete note "${deleteTarget?.title || "Untitled"}"?`}
+        description="This note will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const name = deleteTarget.name;
+          void deleteMutation.mutateAsync(name).finally(() => setDeleteTarget(null));
+        }}
       />
     </div>
   );

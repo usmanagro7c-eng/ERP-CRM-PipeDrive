@@ -11,14 +11,21 @@ import {
 import { type DashboardAxisChartData } from "@/lib/api";
 
 const SERIES_COLORS: Record<string, string> = {
-  leads: "#3b82f6", // blue
-  deals: "#f97316", // orange
-  won_deals: "#10b981", // green
-  forecasted: "#8b5cf6", // purple
-  actual: "#06b6d4", // cyan
+  leads: "var(--chart-1)",
+  deals: "var(--chart-2)",
+  won_deals: "var(--success)",
+  forecasted: "var(--chart-4)",
+  actual: "var(--info)",
 };
 
-const DEFAULT_COLORS = ["#3b82f6", "#f97316", "#10b981", "#8b5cf6", "#06b6d4", "#ec4899"];
+const DEFAULT_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--warning)",
+];
 
 interface DashboardTrendChartProps {
   data: DashboardAxisChartData;
@@ -52,8 +59,8 @@ function CustomGlassTooltip({ active, payload, label }: CustomTooltipProps) {
             />
             <span className="text-muted-foreground truncate max-w-[100px]">{item.name}</span>
           </div>
-          <span className="font-mono font-bold text-foreground">
-            {Number(item.value).toLocaleString("en-PK")}
+          <span className="font-bold tabular-nums text-foreground">
+            {Number(item.value).toLocaleString()}
           </span>
         </div>
       ))}
@@ -91,15 +98,13 @@ export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
     );
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
-      {/* Title & Subtitle */}
+    <div className="flex h-full flex-col justify-between rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-tight">{data.title}</h3>
         {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
-      {/* Chart Canvas */}
-      <div className="my-4 h-64 w-full">
+      <div className="my-4 h-[240px] sm:h-64 w-full" role="img" aria-label={`${data.title} chart`}>
         {!hasData ? (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
             No data to show
@@ -153,6 +158,7 @@ export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
               key={s.name}
               type="button"
               onClick={() => toggleSeries(s.name)}
+              aria-pressed={isActive}
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition cursor-pointer ${
                 isActive
                   ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -161,7 +167,7 @@ export function DashboardTrendChart({ data }: DashboardTrendChartProps) {
             >
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: isActive ? color : "#888" }}
+                style={{ backgroundColor: isActive ? color : "var(--muted-foreground)" }}
               />
               <span>{label}</span>
             </button>

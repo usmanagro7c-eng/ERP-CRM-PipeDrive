@@ -3,15 +3,17 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 
 import { type DashboardAxisChartData } from "@/lib/api";
 
 const STAGE_COLORS: Record<string, string> = {
-  Leads: "#6366f1", // indigo
-  Qualification: "#3b82f6", // blue
-  "Demo/Making": "#06b6d4", // cyan
-  "Proposal/Quotation": "#eab308", // yellow
-  Negotiation: "#f97316", // orange
-  "Ready to Close": "#ec4899", // pink
-  Won: "#10b981", // emerald
-  Lost: "#ef4444", // red
+  Leads: "var(--info)",
+  Qualification: "var(--chart-2)",
+  "Demo/Making": "var(--chart-3)",
+  "Proposal/Quotation": "var(--chart-4)",
+  Negotiation: "var(--chart-5)",
+  "Ready to Close": "var(--warning)",
+  Won: "var(--success)",
+  Lost: "var(--destructive)",
 };
+
+const DEFAULT_STAGE_COLOR = "var(--chart-1)";
 
 interface DashboardFunnelChartProps {
   data: DashboardAxisChartData;
@@ -26,13 +28,13 @@ export function DashboardFunnelChart({ data }: DashboardFunnelChartProps) {
   }, [data.data]);
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
+    <div className="flex h-full flex-col justify-between rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-tight">{data.title}</h3>
         {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
-      <div className="my-3 h-64 w-full">
+      <div className="my-3 h-[240px] sm:h-64 w-full" role="img" aria-label={`${data.title} chart`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
@@ -56,16 +58,17 @@ export function DashboardFunnelChart({ data }: DashboardFunnelChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--color-card, #1e1e24)",
-                borderColor: "var(--color-border, #333)",
-                borderRadius: "6px",
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
+                borderRadius: "8px",
+                color: "var(--foreground)",
                 fontSize: "12px",
               }}
               formatter={(val) => [val, "Count"]}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20}>
               {chartData.map((entry, index) => {
-                const color = STAGE_COLORS[entry.stage] || "#3b82f6";
+                const color = STAGE_COLORS[entry.stage] || DEFAULT_STAGE_COLOR;
                 return <Cell key={`cell-${index}`} fill={color} />;
               })}
             </Bar>

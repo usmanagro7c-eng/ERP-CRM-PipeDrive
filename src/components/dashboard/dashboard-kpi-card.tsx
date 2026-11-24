@@ -50,30 +50,20 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
   }, [num, prefix, suffix, effectiveDecimals]);
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/80 bg-card p-3 sm:p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md min-w-0">
-      {/* Subtle ambient gradient sheen */}
-      <div className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-radial from-primary/5 via-transparent to-transparent rounded-xl" />
-
-      {/* Title */}
-      <div className="relative z-10 flex items-start justify-between gap-1.5 min-w-0">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/70 bg-card p-3 sm:p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-[0_4px_16px_-8px_rgba(0,0,0,0.12)] min-w-0">
+      <div className="relative z-10 flex items-start justify-between gap-2 min-w-0">
         <span
-          className="text-[11px] font-medium text-muted-foreground truncate"
+          className="block min-w-0 text-[11px] font-medium text-muted-foreground truncate"
           title={data.tooltip || data.title}
         >
           {data.title}
         </span>
-        {isGood && (
-          <span className="relative flex h-2 w-2 shrink-0 mt-0.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-        )}
+        {isGood && <span className="size-1.5 rounded-full bg-emerald-500 shrink-0 mt-1" aria-hidden="true" />}
       </div>
 
-      {/* Number Value & Delta */}
-      <div className="relative z-10 mt-2 flex items-baseline justify-between gap-1.5 min-w-0">
+      <div className="relative z-10 mt-3 flex items-end justify-between gap-2 min-w-0">
         <span
-          className="min-w-0 truncate text-base sm:text-lg xl:text-xl font-bold tracking-tight text-foreground transition-transform duration-200 group-hover:scale-[1.01] font-mono"
+          className="min-w-0 truncate text-[1.35rem] sm:text-xl font-semibold tracking-tight text-foreground tabular-nums leading-none"
           title={fullFormattedValue}
         >
           <AnimatedCounter
@@ -85,19 +75,19 @@ export function DashboardKpiCard({ data }: DashboardKpiCardProps) {
           />
         </span>
 
-        {delta !== undefined && (
+        {delta !== undefined && delta !== 0 && (
           <div
-            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] sm:text-[11px] font-semibold transition-all duration-150 ${
+            className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${
               isGood
-                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 : isBad
-                  ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20"
-                  : "bg-muted text-muted-foreground border border-border"
+                  ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                  : "bg-muted text-muted-foreground"
             }`}
           >
-            {isPositive && <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 stroke-[2.5]" />}
-            {isNegative && <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 stroke-[2.5]" />}
-            {!isPositive && !isNegative && <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
+            {isPositive && <TrendingUp className="h-3 w-3" />}
+            {isNegative && <TrendingDown className="h-3 w-3" />}
+            {!isPositive && !isNegative && <Minus className="h-3 w-3" />}
             <span>
               {delta > 0 ? `+${delta}` : delta}
               {deltaSuffix}

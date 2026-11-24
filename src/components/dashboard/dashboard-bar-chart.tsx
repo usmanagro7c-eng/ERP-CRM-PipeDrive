@@ -18,13 +18,13 @@ export function DashboardBarChart({ data }: DashboardBarChartProps) {
   }, [data.data, xKey]);
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
+    <div className="flex h-full flex-col justify-between rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-tight">{data.title}</h3>
         {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
-      <div className="my-3 h-64 w-full">
+      <div className="my-3 h-[240px] sm:h-64 w-full" role="img" aria-label={`${data.title} chart`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
@@ -42,14 +42,15 @@ export function DashboardBarChart({ data }: DashboardBarChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--color-card, #1e1e24)",
-                borderColor: "var(--color-border, #333)",
-                borderRadius: "6px",
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
+                borderRadius: "8px",
+                color: "var(--foreground)",
                 fontSize: "12px",
               }}
               formatter={(val) => [val, "Count"]}
             />
-            <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={36} />
+            <Bar dataKey="count" fill="var(--destructive)" radius={[4, 4, 0, 0]} maxBarSize={36} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -99,6 +99,13 @@ function DashboardPage() {
     return map;
   }, [widgets]);
 
+  const hasWidgetData = useMemo(
+    () =>
+      widgets.some((widget) => Boolean(widget.data)) ||
+      Array.from(chartMap.values()).some((widget) => Boolean(widget.data)),
+    [widgets, chartMap],
+  );
+
   const salesTrendWidget = chartMap.get("sales_trend");
   const forecastedRevenueWidget = chartMap.get("forecasted_revenue");
   const funnelWidget = chartMap.get("funnel_conversion");
@@ -113,41 +120,37 @@ function DashboardPage() {
     <Page>
       <PageHeader
         title="Dashboard"
-        breadcrumbs={[
-          { label: "Dashboard" },
-          { label: "Overview" },
-        ]}
         badge={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success border border-success/20">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
-            </span>
-            <span>Live</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            Live
           </span>
         }
         actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              className="h-8 px-3 gap-1.5 text-xs font-medium"
-            >
-              <RotateCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </Button>
-
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="h-9 w-9 sm:h-8 sm:w-8 text-muted-foreground"
+            aria-label="Refresh dashboard"
+          >
+            <RotateCw className={`size-4 sm:size-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        }
+        filters={
+          <div className="flex items-center gap-2 w-full">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
-                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="max-w-[100px] truncate">{preset}</span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+                <Button variant="outline" size="sm" className="h-9 sm:h-8 px-3 gap-2 text-xs font-medium flex-1 sm:flex-none sm:min-w-[150px] justify-between bg-background/70 border-border/70">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Calendar className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{preset}</span>
+                  </span>
+                  <ChevronDown className="size-3 text-muted-foreground/70 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuContent align="start" className="w-44">
                 {PRESETS.map((p) => (
                   <DropdownMenuItem
                     key={p}
@@ -162,10 +165,12 @@ function DashboardPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
-                  <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <span className="max-w-[100px] truncate">{selectedUserLabel}</span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
+                <Button variant="outline" size="sm" className="h-9 sm:h-8 px-3 gap-2 text-xs font-medium flex-1 sm:flex-none sm:min-w-[150px] justify-between bg-background/70 border-border/70">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <UserIcon className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{selectedUserLabel}</span>
+                  </span>
+                  <ChevronDown className="size-3 text-muted-foreground/70 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 max-h-64 overflow-y-auto">
@@ -176,7 +181,7 @@ function DashboardPage() {
                   All Users
                 </DropdownMenuItem>
                 {users
-                  .filter((u) => u.name && u.full_name)
+                  .filter((u) => u.name && (u.full_name || u.first_name))
                   .map((u) => (
                     <DropdownMenuItem
                       key={u.name}
@@ -188,33 +193,70 @@ function DashboardPage() {
                   ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </>
+          </div>
         }
       />
 
-      <PageContainer>
+      <PageContainer className="[&>div]:p-3 sm:[&>div]:p-6 [&>div]:space-y-4 sm:[&>div]:space-y-6">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3 animate-pulse sm:grid-cols-4 lg:grid-cols-7">
+          <div
+            className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-4 lg:grid-cols-7"
+            aria-busy="true"
+            aria-label="Loading dashboard"
+          >
             {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-xl bg-card border border-border" />
+              <div
+                key={i}
+                className="h-[104px] animate-pulse rounded-xl border border-border/70 bg-card p-3"
+              >
+                <div className="h-2.5 w-2/3 rounded-full bg-muted" />
+                <div className="mt-5 h-6 w-1/2 rounded-full bg-muted" />
+                <div className="mt-4 h-4 w-10 rounded-md bg-muted/60 ml-auto" />
+              </div>
             ))}
+          </div>
+        ) : !hasWidgetData ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-6 py-20 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Layers className="size-6" />
+            </div>
+            <h2 className="mt-4 text-sm font-semibold text-foreground">
+              No dashboard data for this selection
+            </h2>
+            <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+              Try a wider date range or switch back to all users to see your CRM overview.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPreset("Last 30 Days");
+                setSelectedUser(null);
+              }}
+              className="mt-4 h-8 text-xs"
+            >
+              Reset filters
+            </Button>
           </div>
         ) : (
           <>
             {/* KPI Cards */}
             {numberWidgets.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-                {numberWidgets.map((w) => (
-                  <DashboardKpiCard
-                    key={w.name}
-                    data={w.data as unknown as DashboardNumberChartData}
-                  />
-                ))}
+              <div className="-mx-3 px-3 sm:mx-0 sm:px-0">
+                <div className="flex gap-2.5 overflow-x-auto pb-1 sm:pb-0 sm:grid sm:grid-cols-4 lg:grid-cols-7 sm:gap-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory">
+                  {numberWidgets.map((w) => (
+                    <div key={w.name} className="min-w-[152px] sm:min-w-0 snap-start">
+                      <DashboardKpiCard
+                        data={w.data as unknown as DashboardNumberChartData}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
               {salesTrendWidget?.data && (
                 <DashboardTrendChart
                   data={salesTrendWidget.data as unknown as DashboardAxisChartData}
@@ -286,89 +328,42 @@ function DashboardPage() {
         )}
 
         {/* Quick Hub Navigation Strip */}
-        <div className="border-t border-border pt-4 sm:pt-6">
+        <div className="pt-2 sm:pt-4">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">
-              CRM Modules
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Quick access
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5 lg:grid-cols-8">
             <div
               title="Leads (Temporarily Disabled)"
               aria-disabled="true"
-              className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-card/40 p-3 text-xs font-semibold text-muted-foreground opacity-60 cursor-not-allowed select-none"
+              className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5 text-xs font-medium text-muted-foreground/70 cursor-not-allowed select-none"
             >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                <Target className="h-4 w-4 opacity-50" />
-              </div>
+              <Target className="size-4 shrink-0 opacity-60" />
               <span className="truncate">Leads</span>
-              <span className="ml-auto text-[9px] uppercase tracking-wider text-muted-foreground/60 bg-muted/80 px-1.5 py-0.5 rounded border border-border/40 font-mono">
-                Disabled
-              </span>
             </div>
-            <Link
-              to="/deals"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 group-hover:scale-110 transition-transform duration-200">
-                <Layers className="h-4 w-4" />
-              </div>
-              <span className="truncate">Deals</span>
-            </Link>
-            <Link
-              to="/contacts"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform duration-200">
-                <Users className="h-4 w-4" />
-              </div>
-              <span className="truncate">Contacts</span>
-            </Link>
-            <Link
-              to="/organizations"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-200">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <span className="truncate">Organizations</span>
-            </Link>
-            <Link
-              to="/quotations"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 group-hover:scale-110 transition-transform duration-200">
-                <FileText className="h-4 w-4" />
-              </div>
-              <span className="truncate">Quotations</span>
-            </Link>
-            <Link
-              to="/sales-orders"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform duration-200">
-                <ShoppingCart className="h-4 w-4" />
-              </div>
-              <span className="truncate">Sales Orders</span>
-            </Link>
-            <Link
-              to="/notes"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-transform duration-200">
-                <StickyNote className="h-4 w-4" />
-              </div>
-              <span className="truncate">Notes</span>
-            </Link>
-            <Link
-              to="/calls"
-              className="group flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 dark:text-rose-400 group-hover:scale-110 transition-transform duration-200">
-                <PhoneCall className="h-4 w-4" />
-              </div>
-              <span className="truncate">Call Logs</span>
-            </Link>
+            {[
+              { to: "/deals", label: "Deals", icon: Layers },
+              { to: "/contacts", label: "Contacts", icon: Users },
+              { to: "/organizations", label: "Organizations", icon: Building2 },
+              { to: "/quotations", label: "Quotations", icon: FileText },
+              { to: "/sales-orders", label: "Sales Orders", icon: ShoppingCart },
+              { to: "/notes", label: "Notes", icon: StickyNote },
+              { to: "/calls", label: "Call Logs", icon: PhoneCall },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="group flex items-center gap-2.5 rounded-lg border border-border/60 bg-card px-3 py-2.5 text-xs font-medium text-foreground/90 transition-colors hover:bg-muted/40 hover:border-border"
+                >
+                  <Icon className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </PageContainer>

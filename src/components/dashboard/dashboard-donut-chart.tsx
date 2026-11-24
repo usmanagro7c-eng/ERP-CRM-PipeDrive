@@ -3,14 +3,14 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { type DashboardDonutChartData } from "@/lib/api";
 
 const PIE_COLORS = [
-  "#3b82f6", // blue
-  "#10b981", // green
-  "#f97316", // orange
-  "#8b5cf6", // purple
-  "#ef4444", // red
-  "#06b6d4", // cyan
-  "#eab308", // yellow
-  "#ec4899", // pink
+  "var(--chart-1)",
+  "var(--success)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--destructive)",
+  "var(--info)",
+  "var(--warning)",
+  "var(--chart-5)",
 ];
 
 interface DashboardDonutChartProps {
@@ -53,18 +53,14 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
     return filteredItems.reduce((acc, curr) => acc + curr.value, 0);
   }, [filteredItems]);
 
-  const grandTotal = useMemo(() => {
-    return rawItems.reduce((acc, curr) => acc + curr.value, 0);
-  }, [rawItems]);
-
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-xs">
+    <div className="flex h-full flex-col justify-between rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">{data.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-tight">{data.title}</h3>
         {data.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{data.subtitle}</p>}
       </div>
 
-      <div className="relative my-3 h-64 w-full">
+      <div className="relative my-3 h-[240px] sm:h-64 w-full" role="img" aria-label={`${data.title} chart`}>
         {/* Total number in the center of donut */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-2xl font-bold text-foreground">{total}</span>
@@ -88,9 +84,10 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--color-card, #1e1e24)",
-                borderColor: "var(--color-border, #333)",
-                borderRadius: "6px",
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
+                borderRadius: "8px",
+                color: "var(--foreground)",
                 fontSize: "12px",
               }}
               formatter={(val, name) => {
@@ -107,12 +104,14 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
       <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/50">
         {rawItems.map((item) => {
           const isHidden = !!hiddenIds[item.id];
-          const pct = grandTotal > 0 ? Math.round((item.value / grandTotal) * 100) : 0;
+          const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => toggleItem(item.id)}
+              aria-pressed={!isHidden}
+              aria-label={`${isHidden ? "Show" : "Hide"} ${item.name} segment`}
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition cursor-pointer ${
                 !isHidden
                   ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -121,7 +120,7 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
             >
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: !isHidden ? item.color : "#888" }}
+                style={{ backgroundColor: !isHidden ? item.color : "var(--muted-foreground)" }}
               />
               <span>{item.name}</span>
               <span className="opacity-70 font-normal">{pct}%</span>

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -100,6 +101,7 @@ export function QuotationKanban({
   const createOrderMutation = useCreateSalesOrderFromQuotation();
 
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Quotation | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
     try {
       const raw = window.localStorage.getItem("agrocrm.hiddenQuotationColumns");
@@ -196,12 +198,18 @@ export function QuotationKanban({
     }
   }
 
-  async function handleDelete(q: Quotation, e?: React.MouseEvent) {
+  function handleDelete(q: Quotation, e?: React.MouseEvent) {
     e?.stopPropagation();
-    if (!confirm(`Are you sure you want to delete quotation ${q.name}?`)) return;
-    setActiveActionId(q.name);
+    setDeleteTarget(q);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const name = deleteTarget.name;
+    setActiveActionId(name);
     try {
-      await deleteMutation.mutateAsync(q.name);
+      await deleteMutation.mutateAsync(name);
+      setDeleteTarget(null);
     } finally {
       setActiveActionId(null);
     }
@@ -300,50 +308,56 @@ export function QuotationKanban({
               setDraggedQuotationName(null);
             }}
             className={cn(
-              "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-xl border bg-muted/20 transition-all duration-200 shadow-2xs h-full max-h-full overflow-hidden",
-              isOver ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border/80",
+              "flex w-[84vw] max-w-[320px] sm:w-[272px] sm:max-w-none shrink-0 flex-col rounded-2xl border bg-muted/[0.35] transition-[border-color,box-shadow,background-color] duration-200 h-full max-h-full overflow-hidden",
+              isOver ? "border-primary/50 ring-2 ring-primary/15 bg-primary/[0.03]" : "border-border/60",
             )}
           >
             {/* Stage Column Header */}
-            <div className="flex items-center justify-between border-b bg-card/60 backdrop-blur-xs p-3 rounded-t-xl border-border/70 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-xs text-foreground">{col.label}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                  {list.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
-                  className="size-6 text-muted-foreground hover:text-destructive"
-                  title={`Hide column ${col.label}`}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  {laneCurrency} {totalAmount.toLocaleString()}
-                </span>
-                {col.key === "Draft" && onAddQuotation && (
+            <div className="border-b border-border/50 bg-background/60 px-3.5 py-3 rounded-t-2xl backdrop-blur-sm shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold text-[13px] text-foreground tracking-tight truncate">{col.label}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground tabular-nums">{list.length}</span>
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={onAddQuotation}
-                    className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
-                    title="Add Quotation"
+                    onClick={() => setHiddenColumns((prev) => [...prev, col.key])}
+                    className="size-7 rounded-md text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10"
+                    title={`Hide column ${col.label}`}
+                    aria-label={`Hide ${col.label} column`}
                   >
-                    <Plus className="size-3.5" />
+                    <Trash2 className="size-3.5" />
                   </Button>
-                )}
+                  {col.key === "Draft" && onAddQuotation && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onAddQuotation}
+                      className="size-7 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60"
+                      title="Add Quotation"
+                      aria-label="Add quotation"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="mt-1">
+                <span className="text-[12px] font-medium text-muted-foreground tabular-nums tracking-tight">
+                  {laneCurrency} {totalAmount.toLocaleString()}
+                </span>
               </div>
             </div>
 
             {/* Stage Cards Container */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-2.5 flex flex-col gap-2.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 flex flex-col gap-2.5">
               {list.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground border-2 border-dashed border-border/40 rounded-lg m-1">
-                  <span>Drop quotations here</span>
+                <div className="flex flex-1 flex-col items-center justify-center py-10 px-4 text-center text-muted-foreground/70">
+                  <div className="size-8 rounded-full border border-dashed border-border/70 mb-2.5" />
+                  <p className="text-xs font-medium text-muted-foreground">No quotations</p>
+                  <p className="text-[11px] mt-0.5">Drop a quotation here</p>
                 </div>
               ) : (
                 list.map((q) => {
@@ -366,11 +380,11 @@ export function QuotationKanban({
                       }}
                       onClick={() => handleCardClick(q.name)}
                       className={cn(
-                        "group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-2xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/20 active:scale-[0.99] shrink-0",
+                        "group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color,opacity] duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:border-border active:scale-[0.995] shrink-0",
                         draggedQuotationName === q.name
-                          ? "opacity-40 border-dashed"
-                          : "border-border/80",
-                        isMoving && "pointer-events-none ring-2 ring-primary/40",
+                          ? "opacity-40 border-dashed border-primary/50 shadow-none"
+                          : "border-border/70",
+                        isMoving && "pointer-events-none ring-2 ring-primary/30",
                       )}
                     >
                       {/* In-Flight Moving Overlay */}
@@ -384,33 +398,30 @@ export function QuotationKanban({
                       )}
 
                       {/* Header: Customer Name & 3-Dots Menu */}
-                      <div className="flex items-start justify-between gap-1 mb-2">
-                        <div className="flex-1 min-w-0 pr-1">
-                          <div className="flex items-center gap-1.5">
-                            <Building2 className="size-3.5 text-primary shrink-0" />
-                            <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
-                              {q.party_name}
-                            </h4>
-                          </div>
-                          <span className="font-mono text-[10px] text-muted-foreground block mt-0.5">
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-[13px] leading-5 text-foreground truncate group-hover:text-primary transition-colors">
+                            {q.party_name}
+                          </h4>
+                          <span className="block font-mono text-[10px] leading-4 text-muted-foreground/80 mt-0.5 truncate">
                             {q.name}
                           </span>
                         </div>
 
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div onClick={(e) => e.stopPropagation()} className="-mr-1 -mt-1">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
+                                className="size-7 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                                 disabled={isRowBusy || isMoving}
                                 aria-label={`Actions for quotation ${q.name}`}
                               >
                                 {isRowBusy ? (
-                                  <Loader2 className="size-3 animate-spin" />
+                                  <Loader2 className="size-3.5 animate-spin" />
                                 ) : (
-                                  <MoreVertical className="size-3.5" />
+                                  <MoreVertical className="size-4" />
                                 )}
                               </Button>
                             </DropdownMenuTrigger>
@@ -495,40 +506,33 @@ export function QuotationKanban({
                         </div>
                       </div>
 
-                      {/* Linked Deal if any */}
                       {q.crm_deal && (
-                        <div className="mb-2 text-[10px] text-muted-foreground flex items-center gap-1">
-                          <span>Deal:</span>
-                          <span className="font-mono font-medium text-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40">
-                            {q.crm_deal}
-                          </span>
+                        <div className="mb-2.5 text-[11px] text-muted-foreground flex items-center gap-1.5 min-w-0">
+                          <span className="shrink-0">Deal</span>
+                          <span className="font-mono text-foreground/80 truncate">{q.crm_deal}</span>
                         </div>
                       )}
 
-                      {/* Bottom row: Date & Grand Total */}
-                      <div className="flex items-center justify-between border-t border-border/50 pt-2 text-[11px]">
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Calendar className="size-3" />
-                          <span>{q.transaction_date || "-"}</span>
+                      <div className="flex items-end justify-between gap-2 border-t border-border/50 pt-2.5">
+                        <span className="text-muted-foreground flex items-center gap-1.5 text-[11px] min-w-0">
+                          <Calendar className="size-3.5 opacity-60 shrink-0" />
+                          <span className="truncate">{q.transaction_date || "-"}</span>
                         </span>
-                        <span className="font-bold text-xs text-foreground">
+                        <span className="font-semibold text-[15px] leading-none tracking-tight text-foreground tabular-nums shrink-0">
                           {(q.currency as string) || "PKR"} {Number(q.grand_total || 0).toLocaleString()}
                         </span>
                       </div>
 
-                      {/* Quick "Convert to Order" CTA button on card */}
-                      <div
-                        className="mt-2.5 pt-2 border-t border-border/40"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={(e) => handleCreateSalesOrder(q, e)}
                           disabled={isRowBusy || isMoving}
-                          className="w-full h-6.5 text-[11px] font-semibold gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-2xs"
+                          className="w-full h-8 text-[11px] font-medium gap-1.5 text-foreground/85 hover:text-foreground"
                         >
-                          <ShoppingCart className="size-3" />
-                          <span>Convert to Sales Order</span>
+                          <ShoppingCart className="size-3.5 text-muted-foreground" />
+                          <span>Create sales order</span>
                         </Button>
                       </div>
                     </div>
@@ -540,6 +544,20 @@ export function QuotationKanban({
         );
       })}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete quotation ${deleteTarget?.name || ""}?`}
+        description="This quotation will be permanently removed. This action cannot be undone."
+        pending={
+          deleteMutation.isPending ||
+          (deleteTarget !== null && activeActionId === deleteTarget.name)
+        }
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }

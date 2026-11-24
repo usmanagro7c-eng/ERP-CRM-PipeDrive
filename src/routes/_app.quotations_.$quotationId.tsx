@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,6 +105,7 @@ function QuotationDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [salesOrderModalOpen, setSalesOrderModalOpen] = useState(false);
   const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const submitMutation = useSubmitQuotation();
   const deleteMutation = useDeleteQuotation();
@@ -160,13 +162,15 @@ function QuotationDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete quotation ${quotationId}?`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await deleteMutation.mutateAsync(quotationId);
+      await deleteMutation.mutateAsync(deleteTarget);
       void navigate({ to: "/quotations" });
     } catch {
       // toast handled in hook
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -217,8 +221,9 @@ function QuotationDetailPage() {
 
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => setSalesOrderModalOpen(true)}
-            className="h-7 text-xs font-semibold px-2 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1 shrink-0"
+            className="h-7 text-xs font-semibold px-2 gap-1 shrink-0"
           >
             <ShoppingCart className="size-3.5" />
             <span>Convert</span>
@@ -307,10 +312,11 @@ function QuotationDetailPage() {
           {/* Prominent CONVERT TO SALES ORDER Button */}
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => setSalesOrderModalOpen(true)}
             title="Convert to Sales Order"
             aria-label="Convert to Sales Order"
-            className="h-7 text-xs font-semibold px-2.5 sm:px-3 rounded-md cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black shadow-xs gap-1.5 transition-colors shrink-0"
+            className="h-7 text-xs font-semibold px-2.5 sm:px-3 gap-1.5 shrink-0"
           >
             <ShoppingCart className="size-3.5" />
             <span>Convert to Sales Order</span>
@@ -362,7 +368,7 @@ function QuotationDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleDelete}
+                onClick={() => setDeleteTarget(quotationId)}
                 className="cursor-pointer gap-2 text-rose-700 dark:text-rose-400 focus:text-rose-700 dark:text-rose-400"
               >
                 <Trash2 className="size-3.5" />
@@ -442,8 +448,9 @@ function QuotationDetailPage() {
                 </div>
                 <Button
                   size="sm"
+                  variant="contrast"
                   onClick={() => setSalesOrderModalOpen(true)}
-                  className="w-full h-7 text-xs font-semibold px-3 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5 mt-1"
+                  className="w-full h-7 text-xs font-semibold px-3 gap-1.5 mt-1"
                 >
                   <ShoppingCart className="size-3" />
                   <span>Convert to Sales Order</span>
@@ -575,8 +582,9 @@ function QuotationDetailPage() {
                 </p>
                 <Button
                   size="sm"
+                  variant="contrast"
                   onClick={() => setSalesOrderModalOpen(true)}
-                  className="w-full h-8 text-xs font-semibold rounded-md bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs gap-1.5"
+                  className="w-full h-8 text-xs font-semibold gap-1.5"
                 >
                   <ShoppingCart className="size-3.5" />
                   <span>Convert to Sales Order</span>
@@ -680,6 +688,17 @@ function QuotationDetailPage() {
         open={whatsAppModalOpen}
         onOpenChange={setWhatsAppModalOpen}
         quotation={quotation}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete quotation ${deleteTarget ?? quotationId}?`}
+        description="This quotation will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

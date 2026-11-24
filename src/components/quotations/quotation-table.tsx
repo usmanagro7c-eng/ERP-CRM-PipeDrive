@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,24 +84,8 @@ export function QuotationTable({
   const createOrderMutation = useCreateSalesOrderFromQuotation();
 
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [whatsAppQuotation, setWhatsAppQuotation] = useState<Quotation | null>(null);
-
-  const allIds = rows.map((r) => r.name);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(allIds);
-    }
-  };
-
-  const toggleSelectRow = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-  };
+  const [deleteTarget, setDeleteTarget] = useState<Quotation | null>(null);
 
   async function handleSubmit(q: Quotation) {
     setActiveActionId(q.name);
@@ -112,11 +96,13 @@ export function QuotationTable({
     }
   }
 
-  async function handleDelete(q: Quotation) {
-    if (!confirm(`Are you sure you want to delete quotation ${q.name}?`)) return;
-    setActiveActionId(q.name);
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const name = deleteTarget.name;
+    setActiveActionId(name);
     try {
-      await deleteMutation.mutateAsync(q.name);
+      await deleteMutation.mutateAsync(name);
+      setDeleteTarget(null);
     } finally {
       setActiveActionId(null);
     }
@@ -163,14 +149,6 @@ export function QuotationTable({
       <Table className="min-w-[640px] md:min-w-[850px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/70 text-muted-foreground text-xs">
-            {/* Checkbox */}
-            <TableHead className="w-[40px] pl-4">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={toggleSelectAll}
-                aria-label="Select all"
-              />
-            </TableHead>
             <TableHead className="w-[190px] min-w-[180px]">Quotation ID</TableHead>
             <TableHead className="min-w-[180px]">Customer / Party</TableHead>
             <TableHead className="w-[110px] min-w-[100px] whitespace-nowrap">Status</TableHead>
@@ -186,7 +164,6 @@ export function QuotationTable({
 
         <TableBody>
           {rows.map((row) => {
-            const isSelected = selectedIds.includes(row.name);
             const isRowBusy = activeActionId === row.name;
             const isDraft = row.docstatus === 0;
 
@@ -199,19 +176,8 @@ export function QuotationTable({
                     params: { quotationId: row.name },
                   })
                 }
-                className={cn(
-                  "group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10",
-                  isSelected && "bg-muted/30",
-                )}
+                className="group cursor-pointer hover:bg-muted/40 transition-colors border-b border-border/50 h-10"
               >
-                {/* Checkbox */}
-                <TableCell
-                  className="w-[40px] pl-4 py-2"
-                  onClick={(e) => toggleSelectRow(row.name, e)}
-                >
-                  <Checkbox checked={isSelected} aria-label={`Select ${row.name}`} />
-                </TableCell>
-
                 {/* Quotation ID */}
                 <TableCell className="text-xs font-mono font-medium text-foreground py-2 whitespace-nowrap min-w-[180px]">
                   <Link
@@ -267,9 +233,10 @@ export function QuotationTable({
                   <div className="flex items-center justify-end gap-1.5">
                     <Button
                       size="sm"
+                      variant="contrast"
                       onClick={() => handleCreateSalesOrder(row)}
                       disabled={isRowBusy}
-                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-2xs"
+                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 shadow-2xs"
                       title="Convert this quotation to a Sales Order"
                     >
                       <ShoppingCart className="size-3" />
@@ -334,7 +301,7 @@ export function QuotationTable({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => handleDelete(row)}
+                          onClick={() => setDeleteTarget(row)}
                         >
                           <Trash2 className="size-3.5 mr-1.5" />
                           Delete Quotation
@@ -354,6 +321,17 @@ export function QuotationTable({
         open={whatsAppQuotation !== null}
         onOpenChange={(open) => !open && setWhatsAppQuotation(null)}
         quotation={whatsAppQuotation}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete quotation ${deleteTarget?.name || ""}?`}
+        description="This quotation will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending || (deleteTarget !== null && activeActionId === deleteTarget.name)}
+        onConfirm={() => void confirmDelete()}
       />
     </div>
   );

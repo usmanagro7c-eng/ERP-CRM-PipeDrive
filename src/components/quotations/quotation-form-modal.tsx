@@ -388,9 +388,10 @@ export function QuotationFormModal({
           <Button
             type="button"
             size="sm"
+            variant="contrast"
             onClick={() => handleSave(true)}
             disabled={isSaving}
-            className="h-8 text-xs px-4 rounded-md font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer shadow-xs gap-1.5"
+            className="h-8 text-xs px-4 rounded-md font-medium cursor-pointer shadow-xs gap-1.5"
           >
             {isSaving ? (
               <Loader2 className="size-3.5 animate-spin mr-1" />

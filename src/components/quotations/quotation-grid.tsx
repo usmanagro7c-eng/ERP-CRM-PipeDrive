@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,6 +84,7 @@ export function QuotationGrid({
   const createOrderMutation = useCreateSalesOrderFromQuotation();
 
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Quotation | null>(null);
 
   async function handleSubmit(q: Quotation) {
     setActiveActionId(q.name);
@@ -93,11 +95,13 @@ export function QuotationGrid({
     }
   }
 
-  async function handleDelete(q: Quotation) {
-    if (!confirm(`Are you sure you want to delete quotation ${q.name}?`)) return;
-    setActiveActionId(q.name);
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const name = deleteTarget.name;
+    setActiveActionId(name);
     try {
-      await deleteMutation.mutateAsync(q.name);
+      await deleteMutation.mutateAsync(name);
+      setDeleteTarget(null);
     } finally {
       setActiveActionId(null);
     }
@@ -148,7 +152,7 @@ export function QuotationGrid({
         return (
           <div
             key={row.name}
-            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs hover:shadow-md transition-all border-border hover:border-primary/40 relative"
+            className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] relative"
           >
             {/* Header: Title, ID & Actions */}
             <div>
@@ -157,15 +161,14 @@ export function QuotationGrid({
                   <Link
                     to="/quotations/$quotationId"
                     params={{ quotationId: row.name }}
-                    className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:underline hover:text-primary transition-colors cursor-pointer"
+                    className="font-semibold text-[13px] leading-5 text-foreground hover:text-primary transition-colors cursor-pointer block truncate max-w-[220px]"
                   >
-                    <Building2 className="size-4 text-primary shrink-0" />
-                    <span className="truncate max-w-[200px]">{row.party_name}</span>
+                    {row.party_name}
                   </Link>
                   <Link
                     to="/quotations/$quotationId"
                     params={{ quotationId: row.name }}
-                    className="font-mono text-[11px] text-muted-foreground hover:underline hover:text-foreground inline-block cursor-pointer"
+                    className="font-mono text-[10px] leading-4 text-muted-foreground/80 hover:text-foreground inline-block cursor-pointer mt-0.5"
                   >
                     {row.name}
                   </Link>
@@ -178,7 +181,7 @@ export function QuotationGrid({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground"
+                        className="size-7 -mr-1 -mt-1 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-muted/60 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         disabled={isRowBusy}
                         aria-label={`Actions for quotation ${row.name}`}
                       >
@@ -236,7 +239,7 @@ export function QuotationGrid({
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleDelete(row)}
+                            onClick={() => setDeleteTarget(row)}
                             className="gap-2 cursor-pointer text-destructive focus:text-destructive"
                           >
                             <Trash2 className="size-3.5" />
@@ -251,47 +254,57 @@ export function QuotationGrid({
 
               {/* Deal Link if any */}
               {row.crm_deal && (
-                <div className="mb-3 text-[11px] text-muted-foreground flex items-center gap-1">
-                  <span>Linked Deal:</span>
-                  <span className="font-mono font-medium text-foreground bg-muted/60 px-1.5 py-0.5 rounded">
-                    {row.crm_deal}
-                  </span>
+                <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5 min-w-0">
+                  <span className="shrink-0">Deal</span>
+                  <span className="font-mono text-foreground/80 truncate">{row.crm_deal}</span>
                 </div>
               )}
             </div>
 
-            {/* Bottom details: Dates & Grand Total */}
-            <div className="border-t pt-3 mt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="size-3" />
-                  <span>{row.transaction_date}</span>
+            <div className="border-t border-border/50 pt-3 mt-3 space-y-3">
+              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <Calendar className="size-3.5 opacity-60 shrink-0" />
+                  <span className="truncate">{row.transaction_date}</span>
                 </span>
-                {row.valid_till && <span>Valid till: {row.valid_till}</span>}
+                {row.valid_till && <span className="shrink-0">Valid {row.valid_till}</span>}
               </div>
 
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-[11px] font-medium text-muted-foreground">Grand Total:</span>
-                <span className="text-base font-bold text-primary">
+              <div className="flex items-end justify-between gap-2">
+                <span className="text-[11px] font-medium text-muted-foreground">Total</span>
+                <span className="text-[15px] font-semibold tracking-tight tabular-nums text-foreground">
                   {(row.currency as string) || "PKR"} {Number(row.grand_total || 0).toLocaleString()}
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-border/40">
-                <Button
-                  size="sm"
-                  onClick={() => handleCreateSalesOrder(row)}
-                  disabled={isRowBusy}
-                  className="w-full h-7 text-xs font-semibold gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-xs"
-                >
-                  <ShoppingCart className="size-3.5" />
-                  <span>Convert to Sales Order</span>
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCreateSalesOrder(row)}
+                disabled={isRowBusy}
+                className="w-full h-8 text-[11px] font-medium gap-1.5 text-foreground/85 hover:text-foreground"
+              >
+                <ShoppingCart className="size-3.5 text-muted-foreground" />
+                <span>Create sales order</span>
+              </Button>
             </div>
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete quotation ${deleteTarget?.name || ""}?`}
+        description="This quotation will be permanently removed. This action cannot be undone."
+        pending={
+          deleteMutation.isPending ||
+          (deleteTarget !== null && activeActionId === deleteTarget.name)
+        }
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }

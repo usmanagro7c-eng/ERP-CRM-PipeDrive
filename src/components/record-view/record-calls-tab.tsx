@@ -100,8 +100,9 @@ export function RecordCallsTab({
         <h2 className="text-2xl font-semibold text-foreground">Calls</h2>
         <Button
           size="sm"
+          variant="contrast"
           onClick={openLogModal}
-          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 cursor-pointer shadow-xs"
         >
           <Plus className="size-3.5" />
           <span>Log a Call</span>

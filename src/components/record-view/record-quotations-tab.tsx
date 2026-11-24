@@ -96,8 +96,9 @@ export function RecordQuotationsTab({
         {onNewQuotation && (
           <Button
             size="sm"
+            variant="contrast"
             onClick={onNewQuotation}
-            className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+            className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 cursor-pointer shadow-xs"
           >
             <Plus className="size-3.5" />
             <span>New Quotation</span>
@@ -154,9 +155,9 @@ export function RecordQuotationsTab({
                   {onConvertToSalesOrder && (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="contrast"
                       onClick={() => onConvertToSalesOrder(q)}
-                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black cursor-pointer shadow-2xs"
+                      className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 cursor-pointer shadow-2xs"
                     >
                       <ShoppingCart className="size-3" />
                       <span>Convert to Sales Order</span>

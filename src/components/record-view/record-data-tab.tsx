@@ -169,13 +169,12 @@ export function RecordDataTab({ data, users = [], onOpenModal, onSave }: RecordD
           <Button
             type="button"
             size="sm"
+            variant={isDirty ? "contrast" : "secondary"}
             disabled={!isDirty || isSaving}
             onClick={handleSave}
             className={cn(
-              "h-7 text-xs px-3 rounded-md transition-colors cursor-pointer",
-              isDirty
-                ? "bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black font-semibold shadow-xs"
-                : "bg-secondary/40 text-muted-foreground opacity-50 cursor-not-allowed",
+              "h-7 text-xs px-3 transition-colors",
+              isDirty ? "font-semibold" : "opacity-50 cursor-not-allowed",
             )}
           >
             {isSaving && <Loader2 className="size-3 animate-spin mr-1" />}

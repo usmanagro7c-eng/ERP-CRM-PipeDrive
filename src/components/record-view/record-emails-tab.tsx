@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ export function RecordEmailsTab({
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [activeTemplateId, setActiveTemplateId] = useState<string>("");
+  const [deleteTarget, setDeleteTarget] = useState<RecordEmail | null>(null);
 
   const effectiveRecordLabel = recordTitle || referenceName;
 
@@ -138,6 +140,17 @@ export function RecordEmailsTab({
     }
   }
 
+  async function confirmDeleteEmail() {
+    if (!deleteTarget) return;
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.name);
+    } catch {
+      // error handled in hook
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-full max-w-4xl px-1 sm:px-4">
       {/* Emails Header */}
@@ -162,13 +175,14 @@ export function RecordEmailsTab({
           </Button>
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => {
               if (!recipient && defaultRecipientEmail) {
                 setRecipient(defaultRecipientEmail);
               }
               setShowComposer((p) => !p);
             }}
-            className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+            className="h-7 text-xs font-medium px-2.5 gap-1"
           >
             <Plus className="size-3.5" />
             <span>New Email</span>
@@ -333,9 +347,10 @@ export function RecordEmailsTab({
               </Button>
               <Button
                 size="sm"
+                variant="contrast"
                 onClick={handleSend}
                 disabled={sendMutation.isPending}
-                className="h-8 text-xs gap-1.5 cursor-pointer bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black font-semibold shadow-xs"
+                className="h-8 text-xs gap-1.5 font-semibold"
               >
                 {sendMutation.isPending ? (
                   <Loader2 className="size-3 animate-spin" />
@@ -365,13 +380,14 @@ export function RecordEmailsTab({
           </p>
           <Button
             size="sm"
+            variant="contrast"
             onClick={() => {
               if (!recipient && defaultRecipientEmail) {
                 setRecipient(defaultRecipientEmail);
               }
               setShowComposer(true);
             }}
-            className="mt-4 h-7 text-xs gap-1.5 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black font-medium cursor-pointer"
+            className="mt-4 h-7 text-xs gap-1.5 font-medium"
           >
             <Plus className="size-3" />
             <span>Send Email</span>
@@ -433,13 +449,11 @@ export function RecordEmailsTab({
                       {formatEmailDate(email.communication_date || email.creation)}
                     </span>
                     <button
-                      onClick={() => {
-                        if (confirm("Delete this email log?")) {
-                          deleteMutation.mutate(email.name);
-                        }
-                      }}
+                      type="button"
+                      onClick={() => setDeleteTarget(email)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive cursor-pointer p-0.5 rounded"
                       title="Delete email"
+                      aria-label={`Delete email ${email.subject || email.name}`}
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -457,6 +471,17 @@ export function RecordEmailsTab({
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+        title={`Delete email "${deleteTarget?.subject || deleteTarget?.name || ""}"?`}
+        description="This email log will be permanently removed. This action cannot be undone."
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDeleteEmail()}
+      />
     </div>
   );
 }

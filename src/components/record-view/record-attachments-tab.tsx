@@ -78,9 +78,10 @@ export function RecordAttachmentsTab({
         <h2 className="text-2xl font-semibold text-foreground">Attachments</h2>
         <Button
           size="sm"
+          variant="contrast"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadMutation.isPending}
-          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black cursor-pointer shadow-xs"
+          className="h-7 text-xs font-medium px-2.5 rounded-md gap-1 cursor-pointer shadow-xs"
         >
           {uploadMutation.isPending ? (
             <Loader2 className="size-3.5 animate-spin" />

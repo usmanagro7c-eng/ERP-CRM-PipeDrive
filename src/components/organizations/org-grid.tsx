@@ -90,11 +90,11 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
 
   if (loading && rows.length === 0) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={`skel-card-${i}`}
-            className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-xs"
+            className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-2xs"
           >
             <div className="flex items-center gap-3">
               <Skeleton className="size-11 rounded-lg" />
@@ -130,7 +130,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {rows.map((org) => {
         const orgName = String(org["name"] ?? "");
         const displayName = String(org[titleField] ?? orgName);
@@ -150,7 +150,7 @@ export function OrgGrid({ meta, rows, onRowClick, onEdit, loading, emptyAction }
           <div
             key={orgName}
             onClick={() => onRowClick?.(orgName)}
-            className="group relative flex flex-col justify-between rounded-xl border bg-card p-5 shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 cursor-pointer"
+            className="group relative flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:border-border cursor-pointer"
           >
             {/* Card Header */}
             <div>

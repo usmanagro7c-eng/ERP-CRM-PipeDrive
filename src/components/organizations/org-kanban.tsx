@@ -231,17 +231,11 @@ export function OrgKanban({
 
   return (
     <div className="flex flex-1 min-h-0 h-full flex-col space-y-3">
-      {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Group by:
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 rounded-xl border border-border/70 bg-card/70 p-3 shadow-2xs shrink-0">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Group by</span>
           <Select value={currentField?.fieldname ?? groupBy} onValueChange={onGroupByChange}>
-            <SelectTrigger
-              aria-label="Group organizations by"
-              className="h-8 w-48 text-xs font-medium"
-            >
+            <SelectTrigger aria-label="Group organizations by" className="h-9 sm:h-8 w-full sm:w-48 text-xs font-medium bg-background/70 border-border/70">
               <SelectValue placeholder="Select group field" />
             </SelectTrigger>
             <SelectContent>
@@ -254,16 +248,10 @@ export function OrgKanban({
           </Select>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between sm:justify-end gap-2 text-xs text-muted-foreground">
           {hiddenColumns.length > 0 && (
-            <Select
-              value=""
-              onValueChange={(val) => {
-                if (!val) return;
-                setHiddenColumns((prev) => prev.filter((c) => c !== val));
-              }}
-            >
-              <SelectTrigger className="h-7 text-xs w-36">
+            <Select value="" onValueChange={(val) => { if (!val) return; setHiddenColumns((prev) => prev.filter((c) => c !== val)); }}>
+              <SelectTrigger className="h-8 text-xs w-[140px] bg-background/70 border-border/70">
                 <SelectValue placeholder="Restore column..." />
               </SelectTrigger>
               <SelectContent>
@@ -284,7 +272,7 @@ export function OrgKanban({
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full scrollbar-thin">
+      <div className="flex flex-1 min-h-0 gap-3 sm:gap-4 overflow-x-auto pb-3 pt-1 items-stretch h-full scrollbar-thin">
         {loading && rows.length === 0
           ? // Skeleton loader for Kanban columns
             Array.from({ length: 4 }).map((_, i) => (
@@ -320,7 +308,7 @@ export function OrgKanban({
                     void handleCardDrop(col.key);
                   }}
                   className={cn(
-                    "flex w-[82vw] sm:w-64 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/30 transition-all duration-150 h-full max-h-full overflow-hidden",
+                    "flex w-[84vw] sm:w-64 shrink-0 flex-col rounded-xl border border-t-4 bg-muted/20 transition-all duration-150 h-full max-h-full overflow-hidden shadow-2xs",
                     colorClass,
                     isOver && "border-primary/60 bg-accent/40 ring-2 ring-primary/20",
                   )}

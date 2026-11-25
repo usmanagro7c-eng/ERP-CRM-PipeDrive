@@ -15,7 +15,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
-import { Page, PageHeader } from "@/components/page-header";
+import { Page } from "@/components/page-header";
 import { OrgFormModal } from "@/components/organizations/org-form-modal";
 import { ColumnChooser } from "@/components/organizations/column-chooser";
 import { OrgTable, type SortState } from "@/components/organizations/org-table";
@@ -284,34 +284,32 @@ function OrganizationsPage() {
 
   return (
     <Page>
-      <PageHeader
-        title="Organizations"
-        breadcrumbs={[
-          { label: "Contacts" },
-          { label: "Organizations" },
-        ]}
-        actions={
-          <>
+      <div className="shrink-0 border-b border-border/70 bg-card/40 px-3 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Organizations</h1>
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">{total}</span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Manage companies, industries, and territories.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5 text-xs font-medium">
-                  <CurrentIcon className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="max-w-[100px] truncate">{currentViewObj.label}</span>
-                  <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+                <Button variant="outline" size="sm" className="h-9 sm:h-8 w-9 sm:w-auto px-0 sm:px-3 gap-1.5 text-xs font-medium bg-background/70 border-border/70">
+                  <CurrentIcon className="size-4 sm:size-3.5 text-muted-foreground shrink-0" />
+                  <span className="hidden sm:inline max-w-[100px] truncate">{currentViewObj.label}</span>
+                  <ChevronDown className="hidden sm:block size-3 text-muted-foreground shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 text-xs">
+              <DropdownMenuContent align="end" className="w-48 text-xs">
                 <DropdownMenuLabel>View</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {viewOptions.map((opt) => {
                   const Icon = opt.icon;
                   const isSelected = activeView === opt.mode;
                   return (
-                    <DropdownMenuItem
-                      key={opt.mode}
-                      onClick={() => handleViewChange(opt.mode)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
+                    <DropdownMenuItem key={opt.mode} onClick={() => handleViewChange(opt.mode)} className="flex items-center justify-between cursor-pointer">
                       <div className="flex items-center gap-2">
                         <Icon className="size-4 text-muted-foreground" />
                         <span>{opt.label}</span>
@@ -322,65 +320,58 @@ function OrganizationsPage() {
                 })}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Button
-              size="sm"
-              onClick={handleOpenCreateModal}
-              disabled={!meta}
-              className="h-8 px-3 gap-1.5 text-xs font-semibold"
-            >
+            <Button size="sm" onClick={handleOpenCreateModal} disabled={!meta} className="h-9 sm:h-8 px-3 sm:px-3.5 gap-1.5 text-xs font-semibold">
               <Plus className="size-3.5" />
-              <span>New Organization</span>
+              <span className="hidden sm:inline">New Organization</span>
+              <span className="sm:hidden">New</span>
             </Button>
-          </>
-        }
-        filters={
-          <div className="flex items-center gap-2 flex-1">
-            <form onSubmit={submitSearch} className="relative min-w-[180px] max-w-[240px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search organizations..."
-                className="h-8 pl-9 pr-3 text-xs bg-muted/40 border-input"
-              />
-            </form>
-
-            <div className="flex items-center gap-1 ml-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  void metaQuery.refetch();
-                  void listQuery.refetch();
-                  void countQuery.refetch();
-                }}
-                className="h-8 w-8 p-0"
-                title="Refresh"
-              >
-                <RefreshCw className="size-3.5" />
-              </Button>
-
-              {activeView === "table" && meta && (
-                <ColumnChooser
-                  meta={meta}
-                  selected={columns}
-                  onChange={(next) => {
-                    setSavedColumns(next);
-                    saveColumns(next);
-                  }}
-                />
-              )}
-            </div>
           </div>
-        }
-      />
+        </div>
+
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <form onSubmit={submitSearch} className="relative w-full sm:max-w-[280px]">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search organizations..."
+              className="h-9 sm:h-8 pl-8 text-sm sm:text-xs bg-background/70 border-border/70"
+            />
+          </form>
+          <div className="flex items-center gap-1 ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                void metaQuery.refetch();
+                void listQuery.refetch();
+                void countQuery.refetch();
+              }}
+              className="size-9 sm:size-8 text-muted-foreground"
+              title="Refresh"
+              aria-label="Refresh organizations"
+            >
+              <RefreshCw className="size-4 sm:size-3.5" />
+            </Button>
+            {activeView === "table" && meta && (
+              <ColumnChooser
+                meta={meta}
+                selected={columns}
+                onChange={(next) => {
+                  setSavedColumns(next);
+                  saveColumns(next);
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Main Content Area */}
       <div
         className={cn(
           "flex-1 min-h-0 flex flex-col",
-          activeView === "kanban" ? "overflow-hidden p-4 sm:p-6 pb-2" : "overflow-auto p-4 sm:p-6",
+          activeView === "kanban" ? "overflow-hidden p-3 sm:p-6 pb-2" : "overflow-auto p-3 sm:p-6",
         )}
       >
         {/* Error Alert */}

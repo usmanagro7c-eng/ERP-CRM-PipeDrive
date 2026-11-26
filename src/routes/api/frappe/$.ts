@@ -126,23 +126,38 @@ async function forward(request: Request): Promise<Response> {
     return jsonResponse({ _proxy_error: `Blocked ${request.method} ${rawPath}` }, 403);
   }
 
-  // Restrict custom notification hierarchy settings strictly to System Users
-  if (
-    rawPath.startsWith("api/method/custom_crm_sync.api.notify.") ||
-    rawPath.startsWith("api/resource/CRM Notification Settings")
-  ) {
-    let isAllowed = Boolean(session.isSystemUser);
-    if (!isAllowed && session.roles && session.roles.length > 0) {
-      isAllowed = isSystemUserRoles(session.roles);
+  // Notification settings access control:
+  // - System Users / Admins: full access to CRM Notification Settings and administrative notify RPCs.
+  // - Regular Authenticated Users:
+  //     - Allowed to GET CRM Notification Settings (to read their personal user_settings row)
+  //     - Allowed to PUT CRM Notification Settings (to update user_settings)
+  //     - Allowed to trigger send_test_notification
+  //     - Blocked from administrative hierarchy management (save_notification_settings, preview, queue)
+  const isCrmNotificationResource = rawPath.startsWith("api/resource/CRM Notification Settings");
+  const isCustomNotifyMethod = rawPath.startsWith("api/method/custom_crm_sync.api.notify.");
+
+  if (isCrmNotificationResource || isCustomNotifyMethod) {
+    let isSystemAllowed = Boolean(session.isSystemUser);
+    if (!isSystemAllowed && session.roles && session.roles.length > 0) {
+      isSystemAllowed = isSystemUserRoles(session.roles);
     }
-    if (!isAllowed && session.u.toLowerCase() === "administrator") {
-      isAllowed = true;
+    if (!isSystemAllowed && session.u.toLowerCase() === "administrator") {
+      isSystemAllowed = true;
     }
-    if (!isAllowed) {
-      return jsonResponse(
-        { _proxy_error: "Forbidden: Notification settings are restricted to System Users only." },
-        403,
-      );
+
+    if (!isSystemAllowed) {
+      const isAllowedRegularPath =
+        (isCrmNotificationResource && (request.method === "GET" || request.method === "PUT")) ||
+        rawPath === "api/method/custom_crm_sync.api.notify.send_test_notification" ||
+        rawPath === "api/method/custom_crm_sync.api.notify.get_user_notification_settings" ||
+        rawPath === "api/method/custom_crm_sync.api.notify.save_user_notification_settings";
+
+      if (!isAllowedRegularPath) {
+        return jsonResponse(
+          { _proxy_error: "Forbidden: Administrative notification settings are restricted to System Users only." },
+          403,
+        );
+      }
     }
   }
 

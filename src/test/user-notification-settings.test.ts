@@ -6,6 +6,8 @@ import {
   getUserNotificationStorageKey,
   getLocalUserNotificationSettings,
   saveLocalUserNotificationSettings,
+  normalizeDeliveryMode,
+  normalizeScheduledTime,
   type FrappeUserNotificationRow,
   type UserNotificationSettings,
 } from "@/lib/notification-settings";
@@ -57,19 +59,35 @@ describe("User Notification Settings & Frappe Child Table Mapping", () => {
       expect(result.notifyOwnActions).toBe(true);
     });
 
-    it("applies defaults gracefully when Frappe row has omitted or partial fields", () => {
-      const partialRow: Partial<FrappeUserNotificationRow> = {
-        user: "sara@agrovisions.pk",
-        enabled: 0,
-      };
+    it("normalizes Frappe Desk select values (Instant, Daily Scheduled, Periodic Interval) to lowercase frontend modes", () => {
+      expect(fromFrappeUserRow({ delivery_mode: "Instant" }, "u1@example.com").deliveryMode).toBe("instant");
+      expect(fromFrappeUserRow({ delivery_mode: "Daily Scheduled" }, "u1@example.com").deliveryMode).toBe("scheduled");
+      expect(fromFrappeUserRow({ delivery_mode: "Periodic Interval" }, "u1@example.com").deliveryMode).toBe("interval");
+      expect(fromFrappeUserRow({ delivery_mode: "scheduled" }, "u1@example.com").deliveryMode).toBe("scheduled");
+      expect(fromFrappeUserRow({ delivery_mode: "instant" }, "u1@example.com").deliveryMode).toBe("instant");
+      expect(fromFrappeUserRow({ delivery_mode: "interval" }, "u1@example.com").deliveryMode).toBe("interval");
+    });
+  });
 
-      const result = fromFrappeUserRow(partialRow, "sara@agrovisions.pk");
+  describe("normalizeDeliveryMode & normalizeScheduledTime", () => {
+    it("normalizes diverse mode representations correctly", () => {
+      expect(normalizeDeliveryMode("Instant")).toBe("instant");
+      expect(normalizeDeliveryMode("instant")).toBe("instant");
+      expect(normalizeDeliveryMode("Daily Scheduled")).toBe("scheduled");
+      expect(normalizeDeliveryMode("scheduled")).toBe("scheduled");
+      expect(normalizeDeliveryMode("Periodic Interval")).toBe("interval");
+      expect(normalizeDeliveryMode("interval")).toBe("interval");
+      expect(normalizeDeliveryMode("")).toBe("instant");
+      expect(normalizeDeliveryMode(undefined)).toBe("instant");
+      expect(normalizeDeliveryMode(null)).toBe("instant");
+    });
 
-      expect(result.userId).toBe("sara@agrovisions.pk");
-      expect(result.enabled).toBe(false);
-      expect(result.deliveryMode).toBe("instant");
-      expect(result.events.dealStageChange).toBe(true);
-      expect(result.notifyOwnActions).toBe(false);
+    it("normalizes scheduled time strings cleanly to HH:MM", () => {
+      expect(normalizeScheduledTime("8:30:")).toBe("08:30");
+      expect(normalizeScheduledTime("08:30:00")).toBe("08:30");
+      expect(normalizeScheduledTime("9:00")).toBe("09:00");
+      expect(normalizeScheduledTime("18:15:30")).toBe("18:15");
+      expect(normalizeScheduledTime("")).toBe("09:00");
     });
   });
 

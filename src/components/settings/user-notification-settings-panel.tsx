@@ -41,6 +41,7 @@ import {
 import * as api from "@/lib/api";
 import {
   createDefaultUserNotificationSettings,
+  normalizeDeliveryMode,
   type UserNotificationSettings,
   type NotificationDeliveryMode,
 } from "@/lib/notification-settings";
@@ -368,20 +369,20 @@ export function UserNotificationSettingsPanel({
             </p>
           </div>
           <Badge variant="outline" className="text-[10px] font-normal">
-            {formState.deliveryMode === "instant"
+            {normalizeDeliveryMode(formState.deliveryMode) === "instant"
               ? "Zero Delay"
-              : formState.deliveryMode === "scheduled"
+              : normalizeDeliveryMode(formState.deliveryMode) === "scheduled"
                 ? `Daily ${formState.scheduledTime || "09:00"}`
                 : `Every ${formatInterval(formState.intervalMinutes || 60)}`}
           </Badge>
         </div>
 
         <RadioGroup
-          value={formState.deliveryMode}
+          value={normalizeDeliveryMode(formState.deliveryMode)}
           onValueChange={(val) => {
             setFormState((prev) => ({
               ...prev,
-              deliveryMode: val as NotificationDeliveryMode,
+              deliveryMode: normalizeDeliveryMode(val),
             }));
             setHasChanges(true);
           }}
@@ -392,7 +393,7 @@ export function UserNotificationSettingsPanel({
             htmlFor="timing-user-instant"
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
-              formState.deliveryMode === "instant"
+              normalizeDeliveryMode(formState.deliveryMode) === "instant"
                 ? "border-emerald-500/70 bg-emerald-500/5 shadow-2xs"
                 : "border-border hover:bg-muted/40",
             )}
@@ -420,7 +421,7 @@ export function UserNotificationSettingsPanel({
             htmlFor="timing-user-scheduled"
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
-              formState.deliveryMode === "scheduled"
+              normalizeDeliveryMode(formState.deliveryMode) === "scheduled"
                 ? "border-blue-500/70 bg-blue-500/5 shadow-2xs"
                 : "border-border hover:bg-muted/40",
             )}
@@ -447,7 +448,7 @@ export function UserNotificationSettingsPanel({
             htmlFor="timing-user-interval"
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
-              formState.deliveryMode === "interval"
+              normalizeDeliveryMode(formState.deliveryMode) === "interval"
                 ? "border-amber-500/70 bg-amber-500/5 shadow-2xs"
                 : "border-border hover:bg-muted/40",
             )}
@@ -470,7 +471,7 @@ export function UserNotificationSettingsPanel({
           </label>
         </RadioGroup>
 
-        {formState.deliveryMode === "scheduled" && (
+        {normalizeDeliveryMode(formState.deliveryMode) === "scheduled" && (
           <div className="p-3.5 rounded-lg border border-blue-500/30 bg-blue-500/5 space-y-2.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -522,7 +523,7 @@ export function UserNotificationSettingsPanel({
           </div>
         )}
 
-        {formState.deliveryMode === "interval" && (
+        {normalizeDeliveryMode(formState.deliveryMode) === "interval" && (
           <div className="p-3.5 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-2.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>

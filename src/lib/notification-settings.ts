@@ -10,6 +10,34 @@ export interface NotificationEvents {
 
 export type NotificationDeliveryMode = "instant" | "scheduled" | "interval";
 
+/**
+ * Robustly normalizes delivery mode strings from Frappe Desk select values
+ * ("Instant", "Daily Scheduled", "Periodic Interval") or API formats
+ * to the frontend standard ("instant" | "scheduled" | "interval").
+ */
+export function normalizeDeliveryMode(mode?: unknown): NotificationDeliveryMode {
+  if (typeof mode !== "string" || !mode.trim()) return "instant";
+  const m = mode.trim().toLowerCase();
+  if (m.includes("sched")) return "scheduled";
+  if (m.includes("interv")) return "interval";
+  return "instant";
+}
+
+/**
+ * Normalizes scheduled time string to HH:MM format (e.g. "8:30" or "08:30:00" -> "08:30").
+ */
+export function normalizeScheduledTime(time?: unknown): string {
+  if (typeof time !== "string" || !time.trim()) return "09:00";
+  const t = time.trim();
+  if (t.includes(":")) {
+    const parts = t.split(":");
+    const h = (parts[0] || "09").replace(/\D/g, "").padStart(2, "0");
+    const m = (parts[1] || "00").replace(/\D/g, "").slice(0, 2).padEnd(2, "0");
+    return `${h}:${m}`;
+  }
+  return "09:00";
+}
+
 export interface UserNotificationEvents {
   dealStageChange: boolean;
   dealUpdates: boolean;
@@ -42,7 +70,7 @@ export interface FrappeUserNotificationRow {
   enabled: number | boolean;
   email?: string;
   alternate_email?: string;
-  delivery_mode?: "instant" | "scheduled" | "interval";
+  delivery_mode?: string;
   scheduled_time?: string;
   interval_minutes?: number;
   deal_stage_change?: number | boolean;
@@ -124,8 +152,8 @@ export function fromFrappeUserRow(
     email: row.email || defaultEmail || row.user || defaults.email,
     alternateEmail: row.alternate_email || "",
     notifyOwnActions: Boolean(Number(row.notify_own_actions || 0)),
-    deliveryMode: (row.delivery_mode as NotificationDeliveryMode) || defaults.deliveryMode,
-    scheduledTime: row.scheduled_time || defaults.scheduledTime,
+    deliveryMode: normalizeDeliveryMode(row.delivery_mode),
+    scheduledTime: normalizeScheduledTime(row.scheduled_time || defaults.scheduledTime),
     intervalMinutes: row.interval_minutes ? Number(row.interval_minutes) : defaults.intervalMinutes,
     events: {
       dealStageChange:
@@ -168,8 +196,8 @@ export function toFrappeUserRow(
     enabled: settings.enabled ? 1 : 0,
     email: settings.email,
     alternate_email: settings.alternateEmail || "",
-    delivery_mode: settings.deliveryMode,
-    scheduled_time: settings.scheduledTime || "09:00",
+    delivery_mode: normalizeDeliveryMode(settings.deliveryMode),
+    scheduled_time: normalizeScheduledTime(settings.scheduledTime),
     interval_minutes: Number(settings.intervalMinutes) || 60,
     deal_stage_change: settings.events.dealStageChange ? 1 : 0,
     deal_updates: settings.events.dealUpdates ? 1 : 0,
@@ -207,8 +235,8 @@ export function getLocalUserNotificationSettings(
       email: parsed.email || defaults.email,
       alternateEmail: parsed.alternateEmail || "",
       notifyOwnActions: Boolean(parsed.notifyOwnActions),
-      deliveryMode: parsed.deliveryMode || defaults.deliveryMode,
-      scheduledTime: parsed.scheduledTime || defaults.scheduledTime,
+      deliveryMode: normalizeDeliveryMode(parsed.deliveryMode),
+      scheduledTime: normalizeScheduledTime(parsed.scheduledTime || defaults.scheduledTime),
       intervalMinutes: parsed.intervalMinutes ? Number(parsed.intervalMinutes) : defaults.intervalMinutes,
       events: {
         dealStageChange: parsed.events?.dealStageChange ?? defaults.events.dealStageChange,

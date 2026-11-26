@@ -825,6 +825,72 @@ describe("validateMethodBody", () => {
         }).ok,
       ).toBe(false);
     });
+
+    it("validates and sanitizes get_user_notification_settings and save_user_notification_settings", () => {
+      // get_user_notification_settings
+      const getValid = validateMethodBody(
+        "api/method/custom_crm_sync.api.notify.get_user_notification_settings",
+        { user: "test2@gmail.com", dropped_field: "danger" },
+      );
+      expect(getValid).toEqual({
+        ok: true,
+        body: { user: "test2@gmail.com" },
+      });
+
+      // save_user_notification_settings
+      const saveValid = validateMethodBody(
+        "api/method/custom_crm_sync.api.notify.save_user_notification_settings",
+        {
+          payload: {
+            user: "test2@gmail.com",
+            enabled: true,
+            email: "test2@gmail.com",
+            alternate_email: "cc@agro.pk",
+            delivery_mode: "Daily Scheduled",
+            scheduled_time: "08:30:00",
+            interval_minutes: 60,
+            deal_stage_change: true,
+            deal_updates: false,
+            quotations: true,
+            sales_orders: true,
+            leads: true,
+            tasks: false,
+            other_records: true,
+            notify_own_actions: true,
+            extra_unvetted: "malicious",
+          },
+        },
+      );
+      expect(saveValid).toEqual({
+        ok: true,
+        body: {
+          payload: {
+            user: "test2@gmail.com",
+            enabled: 1,
+            email: "test2@gmail.com",
+            alternate_email: "cc@agro.pk",
+            delivery_mode: "Daily Scheduled",
+            scheduled_time: "08:30:00",
+            interval_minutes: 60,
+            deal_stage_change: 1,
+            deal_updates: 0,
+            quotations: 1,
+            sales_orders: 1,
+            leads: 1,
+            tasks: 0,
+            other_records: 1,
+            notify_own_actions: 1,
+          },
+        },
+      });
+
+      // Rejects invalid interval_minutes
+      expect(
+        validateMethodBody("api/method/custom_crm_sync.api.notify.save_user_notification_settings", {
+          payload: { interval_minutes: 0 },
+        }).ok,
+      ).toBe(false);
+    });
   });
 });
 

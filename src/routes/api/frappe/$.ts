@@ -16,6 +16,7 @@ import {
   classifyRequest,
   doctypeFromResourcePath,
   isErpNextRequest,
+  isPlainObject,
   linkTargetsFromMeta,
   referenceScopeFor,
   validateMethodBody,
@@ -136,15 +137,15 @@ async function forward(request: Request): Promise<Response> {
   const isCrmNotificationResource = rawPath.startsWith("api/resource/CRM Notification Settings");
   const isCustomNotifyMethod = rawPath.startsWith("api/method/custom_crm_sync.api.notify.");
 
-  if (isCrmNotificationResource || isCustomNotifyMethod) {
-    let isSystemAllowed = Boolean(session.isSystemUser);
-    if (!isSystemAllowed && session.roles && session.roles.length > 0) {
-      isSystemAllowed = isSystemUserRoles(session.roles);
-    }
-    if (!isSystemAllowed && session.u.toLowerCase() === "administrator") {
-      isSystemAllowed = true;
-    }
+  let isSystemAllowed = Boolean(session.isSystemUser);
+  if (!isSystemAllowed && session.roles && session.roles.length > 0) {
+    isSystemAllowed = isSystemUserRoles(session.roles);
+  }
+  if (!isSystemAllowed && session.u.toLowerCase() === "administrator") {
+    isSystemAllowed = true;
+  }
 
+  if (isCrmNotificationResource || isCustomNotifyMethod) {
     if (!isSystemAllowed) {
       const isAllowedRegularPath =
         (isCrmNotificationResource && (request.method === "GET" || request.method === "PUT")) ||
@@ -225,6 +226,21 @@ async function forward(request: Request): Promise<Response> {
     if (rawPath === "api/method/frappe.desk.form.utils.add_comment") {
       result.body["comment_by"] = session.u;
       result.body["comment_email"] = session.u;
+    }
+
+    if (rawPath === "api/method/custom_crm_sync.api.notify.save_user_notification_settings") {
+      const payloadObj = isPlainObject(result.body["payload"])
+        ? (result.body["payload"] as Record<string, unknown>)
+        : result.body;
+      if (!isSystemAllowed || !payloadObj["user"]) {
+        payloadObj["user"] = session.u;
+      }
+    }
+
+    if (rawPath === "api/method/custom_crm_sync.api.notify.get_user_notification_settings") {
+      if (!isSystemAllowed || !result.body["user"]) {
+        result.body["user"] = session.u;
+      }
     }
     forwardBody = new TextEncoder().encode(JSON.stringify(result.body)).buffer as ArrayBuffer;
     bodyDocType = typeof result.body["doctype"] === "string" ? result.body["doctype"] : undefined;

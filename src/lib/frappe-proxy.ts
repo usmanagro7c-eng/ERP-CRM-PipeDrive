@@ -285,6 +285,8 @@ export function classifyRequest(
       path === "api/method/crm.api.activities.get_activities" ||
       path === "api/method/custom_crm_sync.api.notify.get_notification_settings" ||
       path === "api/method/custom_crm_sync.api.notify.save_notification_settings" ||
+      path === "api/method/custom_crm_sync.api.notify.get_user_notification_settings" ||
+      path === "api/method/custom_crm_sync.api.notify.save_user_notification_settings" ||
       path === "api/method/custom_crm_sync.api.notify.preview_recipients" ||
       path === "api/method/custom_crm_sync.api.notify.send_test_notification" ||
       path === "api/method/custom_crm_sync.api.notify.get_queue_status" ||
@@ -570,7 +572,7 @@ const NOTIFICATION_EVENT_KEYS = [
   "other_records",
 ] as const;
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -586,6 +588,8 @@ export const VALIDATED_METHODS = new Set([
   "api/method/frappe.core.doctype.communication.email.make",
   "api/method/custom_crm_sync.api.notify.get_notification_settings",
   "api/method/custom_crm_sync.api.notify.save_notification_settings",
+  "api/method/custom_crm_sync.api.notify.get_user_notification_settings",
+  "api/method/custom_crm_sync.api.notify.save_user_notification_settings",
   "api/method/custom_crm_sync.api.notify.preview_recipients",
   "api/method/custom_crm_sync.api.notify.send_test_notification",
   "api/method/custom_crm_sync.api.notify.get_queue_status",
@@ -733,6 +737,93 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
     case "api/method/custom_crm_sync.api.notify.get_queue_status":
     case "api/method/custom_crm_sync.api.notify.process_notification_queue": {
       return { ok: true, body: {} };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.get_user_notification_settings": {
+      const sanitized: Record<string, unknown> = {};
+      if (typeof body["user"] === "string" && isPlausibleDocName(body["user"])) {
+        sanitized["user"] = body["user"].trim();
+      }
+      return { ok: true, body: sanitized };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.save_user_notification_settings": {
+      const input = isPlainObject(body["payload"])
+        ? (body["payload"] as Record<string, unknown>)
+        : body;
+      const sanitized: Record<string, unknown> = {};
+
+      if (typeof input["user"] === "string" && isPlausibleDocName(input["user"])) {
+        sanitized["user"] = input["user"].trim();
+      }
+
+      if ("enabled" in input) {
+        sanitized["enabled"] = Boolean(input["enabled"]) ? 1 : 0;
+      }
+
+      if (typeof input["email"] === "string" && input["email"].length <= MAX_EXTRA_EMAILS_LENGTH) {
+        sanitized["email"] = input["email"].trim();
+      }
+
+      if (
+        "alternate_email" in input &&
+        input["alternate_email"] !== undefined &&
+        input["alternate_email"] !== null
+      ) {
+        if (
+          typeof input["alternate_email"] !== "string" ||
+          input["alternate_email"].length > MAX_EXTRA_EMAILS_LENGTH
+        ) {
+          return {
+            ok: false,
+            reason: "save_user_notification_settings: alternate_email exceeds maximum length",
+          };
+        }
+        sanitized["alternate_email"] = input["alternate_email"].trim();
+      }
+
+      if (
+        "delivery_mode" in input &&
+        input["delivery_mode"] !== undefined &&
+        input["delivery_mode"] !== null
+      ) {
+        sanitized["delivery_mode"] = String(input["delivery_mode"]).trim();
+      }
+
+      if (
+        "scheduled_time" in input &&
+        input["scheduled_time"] !== undefined &&
+        input["scheduled_time"] !== null
+      ) {
+        if (typeof input["scheduled_time"] !== "string" || input["scheduled_time"].length > 10) {
+          return { ok: false, reason: "save_user_notification_settings: invalid scheduled_time" };
+        }
+        sanitized["scheduled_time"] = input["scheduled_time"].trim();
+      }
+
+      if (
+        "interval_minutes" in input &&
+        input["interval_minutes"] !== undefined &&
+        input["interval_minutes"] !== null
+      ) {
+        const mins = Number(input["interval_minutes"]);
+        if (isNaN(mins) || mins < 1 || mins > 10080) {
+          return { ok: false, reason: "save_user_notification_settings: invalid interval_minutes" };
+        }
+        sanitized["interval_minutes"] = mins;
+      }
+
+      for (const key of NOTIFICATION_EVENT_KEYS) {
+        if (key in input) {
+          sanitized[key] = Boolean(input[key]) ? 1 : 0;
+        }
+      }
+
+      if ("notify_own_actions" in input) {
+        sanitized["notify_own_actions"] = Boolean(input["notify_own_actions"]) ? 1 : 0;
+      }
+
+      return { ok: true, body: { payload: sanitized } };
     }
 
     case "api/method/custom_crm_sync.api.notify.preview_recipients": {

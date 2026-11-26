@@ -2327,28 +2327,24 @@ export async function getUserNotificationSettings(
 ): Promise<UserNotificationSettings> {
   const local = getLocalUserNotificationSettings(userEmail);
   try {
-    const rawSettings = await proxyRequest(
-      "api/resource/CRM Notification Settings/CRM Notification Settings",
+    const payload = await proxyRequest(
+      "api/method/custom_crm_sync.api.notify.get_user_notification_settings",
+      {
+        method: "POST",
+        body: { user: userEmail },
+      },
     );
-    const rawData = unwrapResourceData<{
-      user_settings?: FrappeUserNotificationRow[];
-      user_notification_settings?: FrappeUserNotificationRow[];
-    }>(rawSettings);
+    const data =
+      (payload as { message?: FrappeUserNotificationRow }).message ??
+      (payload as FrappeUserNotificationRow);
 
-    const rows = rawData?.user_settings || rawData?.user_notification_settings || [];
-    const matched = rows.find(
-      (r) =>
-        (r.user && r.user.toLowerCase() === userEmail.toLowerCase()) ||
-        (r.email && r.email.toLowerCase() === userEmail.toLowerCase()),
-    );
-
-    if (matched) {
-      const parsed = fromFrappeUserRow(matched, userEmail);
+    if (data && typeof data === "object" && (data.user || data.email || data.delivery_mode)) {
+      const parsed = fromFrappeUserRow(data, userEmail);
       saveLocalUserNotificationSettings(parsed);
       return parsed;
     }
   } catch (err) {
-    console.warn("Could not fetch user notification settings from CRM Notification Settings:", err);
+    console.warn("Could not fetch user notification settings via RPC, falling back to cache:", err);
   }
 
   return local;
@@ -2356,7 +2352,7 @@ export async function getUserNotificationSettings(
 
 /**
  * Persist a user's notification settings to the Frappe CRM Notification Settings child table.
- * Merges this user's row into the `user_settings` table without overwriting other users' rows.
+ * Uses dedicated whitelisted backend RPC which securely commits this user's row in the child table.
  */
 export async function saveUserNotificationSettings(
   settings: UserNotificationSettings,
@@ -2364,51 +2360,35 @@ export async function saveUserNotificationSettings(
   // Update local cache immediately
   saveLocalUserNotificationSettings(settings);
 
-  try {
-    const rawSettings = await proxyRequest(
-      "api/resource/CRM Notification Settings/CRM Notification Settings",
-    );
-    const rawData = unwrapResourceData<{
-      user_settings?: FrappeUserNotificationRow[];
-      user_notification_settings?: FrappeUserNotificationRow[];
-    }>(rawSettings);
+  const row = toFrappeUserRow(settings);
 
-    const existingRows = Array.isArray(rawData?.user_settings)
-      ? [...rawData.user_settings]
-      : Array.isArray(rawData?.user_notification_settings)
-        ? [...rawData.user_notification_settings]
-        : [];
-
-    const existingIndex = existingRows.findIndex(
-      (r) =>
-        (r.user && r.user.toLowerCase() === settings.userId.toLowerCase()) ||
-        (r.email && r.email.toLowerCase() === settings.userId.toLowerCase()),
-    );
-
-    const existingRowName = existingIndex >= 0 ? existingRows[existingIndex]?.name : undefined;
-    const updatedRow = toFrappeUserRow(settings, existingRowName);
-
-    if (existingIndex >= 0) {
-      existingRows[existingIndex] = updatedRow;
-    } else {
-      existingRows.push(updatedRow);
-    }
-
-    await proxyRequest(
-      "api/resource/CRM Notification Settings/CRM Notification Settings",
-      {
-        method: "PUT",
-        body: {
-          user_settings: existingRows,
+  await proxyRequest(
+    "api/method/custom_crm_sync.api.notify.save_user_notification_settings",
+    {
+      method: "POST",
+      body: {
+        payload: {
+          user: settings.userId,
+          enabled: row.enabled,
+          email: row.email,
+          alternate_email: row.alternate_email,
+          delivery_mode: row.delivery_mode,
+          scheduled_time: row.scheduled_time,
+          interval_minutes: row.interval_minutes,
+          deal_stage_change: row.deal_stage_change,
+          deal_updates: row.deal_updates,
+          leads: row.leads,
+          tasks: row.tasks,
+          quotations: row.quotations,
+          sales_orders: row.sales_orders,
+          other_records: row.other_records,
+          notify_own_actions: row.notify_own_actions,
         },
       },
-    );
+    },
+  );
 
-    return { success: true };
-  } catch (err) {
-    console.warn("Could not persist user notification settings to CRM Notification Settings table:", err);
-    return { success: true };
-  }
+  return { success: true };
 }
 
 /**

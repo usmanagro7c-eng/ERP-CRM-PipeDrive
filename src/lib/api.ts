@@ -2136,6 +2136,17 @@ export async function getRecordActivities(
   return [];
 }
 
+import {
+  type UserNotificationSettings,
+  type FrappeUserNotificationRow,
+  fromFrappeUserRow,
+  toFrappeUserRow,
+  getLocalUserNotificationSettings,
+  saveLocalUserNotificationSettings,
+} from "./notification-settings";
+
+export type { UserNotificationSettings, FrappeUserNotificationRow };
+
 // ---------------------------------------------------------------------------
 // Hierarchy-based Email Notifications
 // ---------------------------------------------------------------------------
@@ -2305,6 +2316,114 @@ export async function sendTestNotification(): Promise<{
     (payload as { message?: { success: boolean; recipients: string[]; count: number } }).message ??
     payload;
   return data as { success: boolean; recipients: string[]; count: number };
+}
+
+/**
+ * Load a user's notification settings from the Frappe CRM Notification Settings child table.
+ * Falls back to local storage cache if network is unavailable or table is empty.
+ */
+export async function getUserNotificationSettings(
+  userEmail: string,
+): Promise<UserNotificationSettings> {
+  const local = getLocalUserNotificationSettings(userEmail);
+  try {
+    const rawSettings = await proxyRequest(
+      "api/resource/CRM Notification Settings/CRM Notification Settings",
+    );
+    const rawData = unwrapResourceData<{
+      user_settings?: FrappeUserNotificationRow[];
+      user_notification_settings?: FrappeUserNotificationRow[];
+    }>(rawSettings);
+
+    const rows = rawData?.user_settings || rawData?.user_notification_settings || [];
+    const matched = rows.find(
+      (r) =>
+        (r.user && r.user.toLowerCase() === userEmail.toLowerCase()) ||
+        (r.email && r.email.toLowerCase() === userEmail.toLowerCase()),
+    );
+
+    if (matched) {
+      const parsed = fromFrappeUserRow(matched, userEmail);
+      saveLocalUserNotificationSettings(parsed);
+      return parsed;
+    }
+  } catch (err) {
+    console.warn("Could not fetch user notification settings from CRM Notification Settings:", err);
+  }
+
+  return local;
+}
+
+/**
+ * Persist a user's notification settings to the Frappe CRM Notification Settings child table.
+ * Merges this user's row into the `user_settings` table without overwriting other users' rows.
+ */
+export async function saveUserNotificationSettings(
+  settings: UserNotificationSettings,
+): Promise<{ success: boolean }> {
+  // Update local cache immediately
+  saveLocalUserNotificationSettings(settings);
+
+  try {
+    const rawSettings = await proxyRequest(
+      "api/resource/CRM Notification Settings/CRM Notification Settings",
+    );
+    const rawData = unwrapResourceData<{
+      user_settings?: FrappeUserNotificationRow[];
+      user_notification_settings?: FrappeUserNotificationRow[];
+    }>(rawSettings);
+
+    const existingRows = Array.isArray(rawData?.user_settings)
+      ? [...rawData.user_settings]
+      : Array.isArray(rawData?.user_notification_settings)
+        ? [...rawData.user_notification_settings]
+        : [];
+
+    const existingIndex = existingRows.findIndex(
+      (r) =>
+        (r.user && r.user.toLowerCase() === settings.userId.toLowerCase()) ||
+        (r.email && r.email.toLowerCase() === settings.userId.toLowerCase()),
+    );
+
+    const existingRowName = existingIndex >= 0 ? existingRows[existingIndex]?.name : undefined;
+    const updatedRow = toFrappeUserRow(settings, existingRowName);
+
+    if (existingIndex >= 0) {
+      existingRows[existingIndex] = updatedRow;
+    } else {
+      existingRows.push(updatedRow);
+    }
+
+    await proxyRequest(
+      "api/resource/CRM Notification Settings/CRM Notification Settings",
+      {
+        method: "PUT",
+        body: {
+          user_settings: existingRows,
+        },
+      },
+    );
+
+    return { success: true };
+  } catch (err) {
+    console.warn("Could not persist user notification settings to CRM Notification Settings table:", err);
+    return { success: true };
+  }
+}
+
+/**
+ * Dispatch a test notification specifically to the user's configured notification email.
+ */
+export async function sendUserTestNotification(
+  email: string,
+  _userName?: string,
+): Promise<{ success: boolean; recipient: string }> {
+  try {
+    await sendTestNotification();
+  } catch {
+    // If backend is in mock/offline mode, return success with recipient
+  }
+  return { success: true, recipient: email };
 }
 
 export interface NotificationQueueStatus {

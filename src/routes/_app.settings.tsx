@@ -64,6 +64,7 @@ import { useCrmUsers } from "@/hooks/use-dashboard";
 import { sessionQueryOptions, logout, SESSION_QUERY_KEY } from "@/lib/auth-client";
 import * as api from "@/lib/api";
 import { HierarchyTreePicker } from "@/components/settings/hierarchy-tree-picker";
+import { UserNotificationSettingsPanel } from "@/components/settings/user-notification-settings-panel";
 import { readStoredTheme, setTheme, type Theme } from "@/lib/theme";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -147,14 +148,9 @@ function SettingsPage() {
   const isSystemUser = Boolean(session?.isSystemUser);
 
   const [activeTab, setActiveTab] = useState<"appearance" | "notifications" | "account">(
-    isSystemUser ? "notifications" : "appearance",
+    "notifications",
   );
-
-  useEffect(() => {
-    if (session && !session.isSystemUser && activeTab === "notifications") {
-      setActiveTab("appearance");
-    }
-  }, [session, activeTab]);
+  const [adminNotificationView, setAdminNotificationView] = useState<"personal" | "system">("personal");
 
   const [currentTheme, setCurrentTheme] = useState<Theme>("light");
   const [compactMode, setCompactMode] = useState(false);
@@ -450,7 +446,7 @@ function SettingsPage() {
               </p>
             </div>
           </div>
-          {isSystemUser && activeTab === "notifications" && (
+          {isSystemUser && activeTab === "notifications" && adminNotificationView === "system" && (
             <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
@@ -486,7 +482,7 @@ function SettingsPage() {
 
       {/* Main Container */}
       <div className="p-3 sm:p-8 max-w-4xl mx-auto w-full space-y-4 sm:space-y-6">
-        {isSystemUser && hasChanges && (
+        {isSystemUser && activeTab === "notifications" && adminNotificationView === "system" && hasChanges && (
           <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-400">
             <div className="flex items-center gap-2 min-w-0">
               <AlertCircle className="size-4 shrink-0" />
@@ -501,17 +497,12 @@ function SettingsPage() {
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList
-            className={cn(
-              "grid w-full sm:max-w-md h-10 sm:h-9 bg-muted/50 p-1 rounded-lg",
-              isSystemUser ? "grid-cols-3" : "grid-cols-2",
-            )}
+            className="grid w-full sm:max-w-md h-10 sm:h-9 bg-muted/50 p-1 rounded-lg grid-cols-3"
           >
-            {isSystemUser && (
-              <TabsTrigger value="notifications" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
-                <Bell className="size-3.5 shrink-0" />
-                <span className="truncate">Notifications</span>
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="notifications" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
+              <Bell className="size-3.5 shrink-0" />
+              <span className="truncate">Notifications</span>
+            </TabsTrigger>
             <TabsTrigger value="appearance" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 cursor-pointer px-1">
               <Palette className="size-3.5 shrink-0" />
               <span className="truncate">Appearance</span>
@@ -522,10 +513,43 @@ function SettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: NOTIFICATIONS (System Users Only) */}
-          {isSystemUser && (
-            <TabsContent value="notifications" className="space-y-3 sm:space-y-4 mt-4">
-            {isLoadingSettings ? (
+          {/* TAB 1: NOTIFICATIONS (Accessible to All Users) */}
+          <TabsContent value="notifications" className="space-y-3 sm:space-y-4 mt-4">
+            {/* Admin Segmented Sub-Navigation */}
+            {isSystemUser && (
+              <div className="flex items-center p-1 bg-muted/60 rounded-xl w-full sm:w-fit border border-border/70 mb-3 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAdminNotificationView("personal")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex-1 sm:flex-initial justify-center",
+                    adminNotificationView === "personal"
+                      ? "bg-background text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <User className="size-3.5" />
+                  <span>My Preferences</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminNotificationView("system")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex-1 sm:flex-initial justify-center",
+                    adminNotificationView === "system"
+                      ? "bg-background text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Network className="size-3.5 text-primary" />
+                  <span>System Hierarchy Dispatch (Admin)</span>
+                </button>
+              </div>
+            )}
+
+            {(!isSystemUser || adminNotificationView === "personal") ? (
+              <UserNotificationSettingsPanel userEmail={userEmail} userName={userName} />
+            ) : isLoadingSettings ? (
               <div className="rounded-xl border border-border bg-card p-12 text-center shadow-2xs space-y-3">
                 <Loader2 className="size-6 animate-spin mx-auto text-primary" />
                 <p className="text-xs text-muted-foreground">
@@ -1280,7 +1304,6 @@ function SettingsPage() {
               </>
             )}
           </TabsContent>
-          )}
 
           {/* TAB 2: APPEARANCE & DARK MODE */}
           <TabsContent value="appearance" className="space-y-3 sm:space-y-4 mt-4">

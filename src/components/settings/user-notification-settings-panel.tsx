@@ -391,6 +391,13 @@ export function UserNotificationSettingsPanel({
           {/* Instant */}
           <label
             htmlFor="timing-user-instant"
+            onClick={() => {
+              setFormState((prev) => ({
+                ...prev,
+                deliveryMode: "instant",
+              }));
+              setHasChanges(true);
+            }}
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
               normalizeDeliveryMode(formState.deliveryMode) === "instant"
@@ -419,6 +426,13 @@ export function UserNotificationSettingsPanel({
           {/* Daily Scheduled */}
           <label
             htmlFor="timing-user-scheduled"
+            onClick={() => {
+              setFormState((prev) => ({
+                ...prev,
+                deliveryMode: "scheduled",
+              }));
+              setHasChanges(true);
+            }}
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
               normalizeDeliveryMode(formState.deliveryMode) === "scheduled"
@@ -446,6 +460,13 @@ export function UserNotificationSettingsPanel({
           {/* Periodic Interval */}
           <label
             htmlFor="timing-user-interval"
+            onClick={() => {
+              setFormState((prev) => ({
+                ...prev,
+                deliveryMode: "interval",
+              }));
+              setHasChanges(true);
+            }}
             className={cn(
               "flex flex-col justify-between p-3.5 rounded-lg border cursor-pointer transition-all",
               normalizeDeliveryMode(formState.deliveryMode) === "interval"

@@ -347,6 +347,7 @@ async function forward(request: Request): Promise<Response> {
     const upstreamType = upstream.headers.get("content-type");
     if (upstreamType) responseHeaders.set("Content-Type", upstreamType);
     responseHeaders.set("Cache-Control", "no-store");
+    responseHeaders.set("Alt-Svc", "clear");
     return new Response(await upstream.arrayBuffer(), {
       status: upstream.status,
       headers: responseHeaders,

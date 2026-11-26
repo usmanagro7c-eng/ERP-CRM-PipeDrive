@@ -330,6 +330,19 @@ const linkStores = Object.fromEntries(
   Object.entries(linkTargets).map(([doctype, names]) => [doctype, names.map((name) => ({ name }))]),
 );
 
+const notificationSettingsDoc = [
+  {
+    name: "CRM Notification Settings",
+    delivery_mode: "Instant",
+    delivery_schedule: JSON.stringify({
+      delivery_mode: "instant",
+      scheduled_time: "09:00",
+      interval_minutes: 60,
+    }),
+    user_settings: [],
+  },
+];
+
 function storeFor(doctype) {
   const map = {
     "CRM Organization": orgs,
@@ -348,6 +361,7 @@ function storeFor(doctype) {
     File: files,
     Communication: communications,
     Company: [{ name: "AGROVISIONS", default_currency: "PKR" }],
+    "CRM Notification Settings": notificationSettingsDoc,
   };
   return map[doctype] || linkStores[doctype] || null;
 }
@@ -560,6 +574,11 @@ async function handleMethod(req, res, url) {
   if (method === "crm.api.activities.get_activities") {
     await parseBody(req);
     return send(res, 200, { message: [[]] });
+  }
+  if (method === "custom_crm_sync.api.notify.send_test_notification") {
+    return send(res, 200, {
+      message: { success: true, recipients: ["admin@example.com"], count: 1 },
+    });
   }
   if (method === "frappe.core.doctype.communication.email.make") {
     const body = await parseBody(req);

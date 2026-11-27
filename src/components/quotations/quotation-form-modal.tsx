@@ -46,7 +46,7 @@ export function QuotationFormModal({
   initialValues,
   onConvertToSalesOrder,
 }: QuotationFormModalProps) {
-  const { data: customerOptions = [] } = useQuery(customersListOptions());
+  const { data: rawCustomerOptions = [] } = useQuery(customersListOptions());
   const { data: catalogItems = [] } = useQuery(itemsListOptions());
 
   const crmDealRef = initialValues?.crm_deal;
@@ -67,6 +67,21 @@ export function QuotationFormModal({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [partyName, setPartyName] = useState("");
+  const customerOptions = useMemo(() => {
+    const list = [...rawCustomerOptions];
+    const candidates = [
+      initialValues?.party_name,
+      dealData ? String(dealData["organization_name"] || dealData["organization"] || "") : "",
+      partyName,
+    ];
+    for (const candidate of candidates) {
+      const trimmed = candidate?.trim();
+      if (trimmed && !list.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) {
+        list.unshift({ name: trimmed });
+      }
+    }
+    return list;
+  }, [rawCustomerOptions, initialValues?.party_name, dealData, partyName]);
   const [crmDeal, setCrmDeal] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
   const [validTill, setValidTill] = useState("");
@@ -74,39 +89,55 @@ export function QuotationFormModal({
   const currency = String(quotation?.currency || dealData?.["currency"] || "PKR");
 
   const wasOpenRef = useRef(false);
+  const dealSyncedRef = useRef(false);
 
   // Initialize or reset form state when modal opens
   useEffect(() => {
     if (!open) {
       wasOpenRef.current = false;
+      dealSyncedRef.current = false;
       return;
     }
-    if (wasOpenRef.current) return;
-    wasOpenRef.current = true;
 
     const today = new Date().toISOString().split("T")[0]!;
     const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]!;
 
-    if (quotation) {
-      setPartyName(quotation.party_name || "");
-      setCrmDeal(quotation.crm_deal || "");
-      setTransactionDate(quotation.transaction_date || today);
-      setValidTill(quotation.valid_till || in30Days);
-      setItems(quotation.items || []);
-    } else {
-      const defaultParty =
-        initialValues?.party_name ||
-        String(dealData?.["organization_name"] || dealData?.["organization"] || "") ||
-        customerOptions[0]?.name ||
-        "";
-      setPartyName(defaultParty);
-      setCrmDeal(initialValues?.crm_deal || "");
-      setTransactionDate(today);
-      setValidTill(in30Days);
+    if (!wasOpenRef.current) {
+      wasOpenRef.current = true;
 
-      if (initialValues?.items && initialValues.items.length > 0) {
-        setItems(initialValues.items);
-      } else if (dealData) {
+      if (quotation) {
+        setPartyName(quotation.party_name || "");
+        setCrmDeal(quotation.crm_deal || "");
+        setTransactionDate(quotation.transaction_date || today);
+        setValidTill(quotation.valid_till || in30Days);
+        setItems(quotation.items || []);
+      } else {
+        const defaultParty =
+          initialValues?.party_name ||
+          String(dealData?.["organization_name"] || dealData?.["organization"] || "") ||
+          customerOptions[0]?.name ||
+          "";
+        setPartyName(defaultParty);
+        setCrmDeal(initialValues?.crm_deal || "");
+        setTransactionDate(today);
+        setValidTill(in30Days);
+
+        if (initialValues?.items && initialValues.items.length > 0) {
+          setItems(initialValues.items);
+          dealSyncedRef.current = true;
+        } else {
+          setItems([]);
+        }
+      }
+    }
+
+    if (!quotation && dealData && !dealSyncedRef.current) {
+      dealSyncedRef.current = true;
+      const dealOrg = String(dealData["organization_name"] || dealData["organization"] || "").trim();
+      if (dealOrg && !partyName) {
+        setPartyName(dealOrg);
+      }
+      if (!initialValues?.items || initialValues.items.length === 0) {
         const rawProducts = Array.isArray(dealData["products"])
           ? (dealData["products"] as Array<Record<string, unknown>>)
           : Array.isArray(dealData["items"])
@@ -129,12 +160,12 @@ export function QuotationFormModal({
           })
           .filter((it) => it.item_code.trim().length > 0);
 
-        setItems(mappedItems);
-      } else {
-        setItems([]);
+        if (mappedItems.length > 0) {
+          setItems(mappedItems);
+        }
       }
     }
-  }, [open, quotation, initialValues, dealData, customerOptions, catalogItems]);
+  }, [open, quotation, initialValues, dealData, customerOptions, catalogItems, partyName]);
 
   const grandTotal = useMemo(() => {
     return items.reduce(

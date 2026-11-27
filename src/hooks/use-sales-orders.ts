@@ -83,7 +83,7 @@ export function useSaveSalesOrder() {
         action: "Created",
         eventCategory: "salesOrders",
         summary: `New Sales Order created for ${order.customer_name || order.customer || "customer"} with value ${order.currency || "PKR"} ${order.grand_total?.toLocaleString() ?? 0}.${itemsList.length > 0 ? ` (${itemsList.length} line items)` : ""}`,
-        linkPath: `/orders/${order.name}`,
+        linkPath: `/sales-orders?q=${encodeURIComponent(order.name)}`,
         details: {
           "Customer": order.customer_name || order.customer,
           "Grand Total": `${order.currency || "PKR"} ${order.grand_total?.toLocaleString() ?? 0}`,
@@ -113,7 +113,7 @@ export function useSubmitSalesOrder() {
         action: "Submitted",
         eventCategory: "salesOrders",
         summary: `Sales Order ${name} has been officially SUBMITTED to ERP.`,
-        linkPath: `/orders/${name}`,
+        linkPath: `/sales-orders?q=${encodeURIComponent(name)}`,
       }).catch((err) => console.warn("Failed to notify sales order submit:", err));
     },
     onError: (error) => {
@@ -165,7 +165,7 @@ export function useCreateSalesOrderFromQuotation() {
         action: "Converted from Quotation",
         eventCategory: "salesOrders",
         summary: `Sales Order ${order.name} was successfully created from Quotation ${variables.quotation.name} for ${order.customer_name || order.customer}.${itemsList.length > 0 ? ` (${itemsList.length} line items)` : ""}`,
-        linkPath: `/orders/${order.name}`,
+        linkPath: `/sales-orders?q=${encodeURIComponent(order.name)}`,
         details: {
           "Customer": order.customer_name || order.customer,
           "Grand Total": `${order.currency || "PKR"} ${order.grand_total?.toLocaleString() ?? 0}`,

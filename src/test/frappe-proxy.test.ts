@@ -246,6 +246,25 @@ describe("link targets", () => {
     expect(query.get("fields")).toBe('["name"]');
     expect(query.get("limit_page_length")).toBe("1000");
     expect(query.get("filters")).toBeNull();
+
+    // Company and Customer allow their explicit safe fields and drop unsafe ones
+    const companyQuery = new URLSearchParams(
+      buildLinkQuery(
+        new URLSearchParams({ fields: '["name","default_currency","api_secret"]', limit_page_length: "1" }),
+        "Company",
+      ),
+    );
+    expect(companyQuery.get("fields")).toBe('["name","default_currency"]');
+    expect(companyQuery.get("limit_page_length")).toBe("1");
+
+    const customerQuery = new URLSearchParams(
+      buildLinkQuery(
+        new URLSearchParams({ fields: '["name","customer_name","*"]', limit_page_length: "500" }),
+        "Customer",
+      ),
+    );
+    expect(customerQuery.get("fields")).toBe('["name","customer_name"]');
+    expect(customerQuery.get("limit_page_length")).toBe("500");
   });
 });
 

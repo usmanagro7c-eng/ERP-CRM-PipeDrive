@@ -356,15 +356,40 @@ export function linkTargetsFromMeta(meta: unknown): Set<string> {
   return targets;
 }
 
-/** Link lookups only ever return names, capped in size; the caller's own query is ignored. */
-export function buildLinkQuery(incoming: URLSearchParams): string {
+const SAFE_LINK_FIELDS: Record<string, ReadonlySet<string>> = {
+  Company: new Set(["name", "default_currency"]),
+  Customer: new Set(["name", "customer_name"]),
+};
+
+/** Link lookups return only names (or an explicit per-DocType safe field allowlist); caller filters are ignored. */
+export function buildLinkQuery(incoming: URLSearchParams, doctype?: string): string {
   const requested = Number(incoming.get("limit_page_length"));
   const limit =
     Number.isFinite(requested) && requested > 0
       ? Math.min(requested, MAX_LINK_ROWS)
       : MAX_LINK_ROWS;
+
+  let allowedFields: string[] = ["name"];
+  const safeSet = doctype ? SAFE_LINK_FIELDS[doctype] : undefined;
+  if (safeSet) {
+    try {
+      const rawFields = incoming.get("fields");
+      const parsed = rawFields ? (JSON.parse(rawFields) as unknown) : null;
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter(
+          (f): f is string => typeof f === "string" && safeSet.has(f),
+        );
+        if (filtered.length > 0) {
+          allowedFields = filtered;
+        }
+      }
+    } catch {
+      // keep default ["name"]
+    }
+  }
+
   const query = new URLSearchParams();
-  query.set("fields", JSON.stringify(["name"]));
+  query.set("fields", JSON.stringify(allowedFields));
   query.set("limit_page_length", String(limit));
   query.set("order_by", "name asc");
   return query.toString();

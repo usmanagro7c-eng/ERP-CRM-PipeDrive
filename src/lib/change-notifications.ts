@@ -44,7 +44,7 @@ function getRecordUrl(doctype: string, docname: string, customPath?: string): st
     case api.QUOTATION_DOCTYPE:
       return `${baseUrl}/quotations/${encodeURIComponent(docname)}`;
     case api.SALES_ORDER_DOCTYPE:
-      return `${baseUrl}/orders/${encodeURIComponent(docname)}`;
+      return `${baseUrl}/sales-orders?q=${encodeURIComponent(docname)}`;
     case api.ORG_DOCTYPE:
       return `${baseUrl}/organizations/${encodeURIComponent(docname)}`;
     case api.CONTACT_DOCTYPE:

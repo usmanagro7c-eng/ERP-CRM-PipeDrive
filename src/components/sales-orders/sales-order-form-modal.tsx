@@ -101,44 +101,59 @@ export function SalesOrderFormModal({
   const currency = String(activeOrder?.currency || quotationData?.currency || "PKR");
 
   const wasOpenRef = useRef(false);
+  const quotationSyncedRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
       wasOpenRef.current = false;
+      quotationSyncedRef.current = false;
       return;
     }
-    if (wasOpenRef.current) return;
-    wasOpenRef.current = true;
 
     const today = new Date().toISOString().split("T")[0]!;
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]!;
 
-    if (activeOrder) {
-      setCustomer(activeOrder.customer || "");
-      setTransactionDate(activeOrder.transaction_date || today);
-      setDeliveryDate(activeOrder.delivery_date || nextWeek);
-      setOrderType(activeOrder.order_type || "Sales");
-      setItems(
-        (activeOrder.items || []).map((i) => ({
-          item_code: i.item_code,
-          item_name: i.item_name || i.item_code,
-          qty: i.qty || 1,
-          rate: i.rate || 0,
-          amount: i.amount || 0,
-          discount_percentage: 0,
-        })),
-      );
-    } else {
-      const defaultCustomer =
-        initialValues?.customer || quotationData?.party_name || customerOptions[0]?.name || "";
-      setCustomer(defaultCustomer);
-      setTransactionDate(today);
-      setDeliveryDate(nextWeek);
-      setOrderType("Sales");
+    if (!wasOpenRef.current) {
+      wasOpenRef.current = true;
 
-      if (initialValues?.items && initialValues.items.length > 0) {
-        setItems(initialValues.items);
-      } else if (quotationData?.items && quotationData.items.length > 0) {
+      if (activeOrder) {
+        setCustomer(activeOrder.customer || "");
+        setTransactionDate(activeOrder.transaction_date || today);
+        setDeliveryDate(activeOrder.delivery_date || nextWeek);
+        setOrderType(activeOrder.order_type || "Sales");
+        setItems(
+          (activeOrder.items || []).map((i) => ({
+            item_code: i.item_code,
+            item_name: i.item_name || i.item_code,
+            qty: i.qty || 1,
+            rate: i.rate || 0,
+            amount: i.amount || 0,
+            discount_percentage: 0,
+          })),
+        );
+      } else {
+        const defaultCustomer =
+          initialValues?.customer || quotationData?.party_name || customerOptions[0]?.name || "";
+        setCustomer(defaultCustomer);
+        setTransactionDate(today);
+        setDeliveryDate(nextWeek);
+        setOrderType("Sales");
+
+        if (initialValues?.items && initialValues.items.length > 0) {
+          setItems(initialValues.items);
+          quotationSyncedRef.current = true;
+        } else {
+          setItems([]);
+        }
+      }
+    }
+
+    if (!activeOrder && quotationData && !quotationSyncedRef.current) {
+      quotationSyncedRef.current = true;
+      if (quotationData.party_name && !customer) {
+        setCustomer(quotationData.party_name);
+      }
+      if ((!initialValues?.items || initialValues.items.length === 0) && quotationData.items?.length) {
         setItems(
           quotationData.items.map((i) => ({
             item_code: i.item_code,
@@ -149,11 +164,9 @@ export function SalesOrderFormModal({
             discount_percentage: Number(i.discount_percentage) || 0,
           })),
         );
-      } else {
-        setItems([]);
       }
     }
-  }, [open, activeOrder, initialValues, quotationData, customerOptions, catalogItems]);
+  }, [open, activeOrder, initialValues, quotationData, customerOptions, catalogItems, customer]);
 
   const grandTotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);

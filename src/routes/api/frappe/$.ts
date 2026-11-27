@@ -324,7 +324,7 @@ async function forward(request: Request): Promise<Response> {
       ) {
         return jsonResponse({ _proxy_error: `Blocked read of ${classification.doctype}` }, 403);
       }
-      search = `?${buildLinkQuery(incoming.searchParams)}`;
+      search = `?${buildLinkQuery(incoming.searchParams, classification.doctype)}`;
     }
 
     if (classification.kind === "scoped-read") {

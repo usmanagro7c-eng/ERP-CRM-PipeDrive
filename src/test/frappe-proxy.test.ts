@@ -724,14 +724,6 @@ describe("validateMethodBody", () => {
           extra: "ignored",
         }),
       ).toEqual({ ok: true, body: {} });
-
-      expect(
-        validateMethodBody("api/method/custom_crm_sync.api.notify.get_queue_status", {}),
-      ).toEqual({ ok: true, body: {} });
-
-      expect(
-        validateMethodBody("api/method/custom_crm_sync.api.notify.process_notification_queue", {}),
-      ).toEqual({ ok: true, body: {} });
     });
 
     it("validates preview_recipients parameters", () => {
@@ -765,22 +757,18 @@ describe("validateMethodBody", () => {
       ).toBe(false);
     });
 
-    it("validates and sanitizes save_notification_settings payload", () => {
+    it("validates and sanitizes save_notification_settings hierarchy-only payload", () => {
       const valid = validateMethodBody(
         "api/method/custom_crm_sync.api.notify.save_notification_settings",
         {
           payload: {
             mode: "Direct Parent",
             enabled: true,
-            include_actor: false,
             selected_nodes: ["nodeA"],
+            include_actor: false,
             extra_emails: "audit@example.com",
             deal_stage_change: true,
-            quotations: false,
             delivery_mode: "scheduled",
-            scheduled_time: "09:00",
-            interval_minutes: 60,
-            delivery_schedule: '{"delivery_mode":"scheduled"}',
             injected_danger: "drop-me",
           },
         },
@@ -791,15 +779,7 @@ describe("validateMethodBody", () => {
           payload: {
             mode: "Direct Parent",
             enabled: 1,
-            include_actor: 0,
             selected_nodes: ["nodeA"],
-            extra_emails: "audit@example.com",
-            deal_stage_change: 1,
-            quotations: 0,
-            delivery_mode: "scheduled",
-            scheduled_time: "09:00",
-            interval_minutes: 60,
-            delivery_schedule: '{"delivery_mode":"scheduled"}',
           },
         },
       });
@@ -810,20 +790,26 @@ describe("validateMethodBody", () => {
           payload: { mode: "HackerMode" },
         }).ok,
       ).toBe(false);
+    });
 
-      // Rejects invalid delivery_mode
-      expect(
-        validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
-          payload: { delivery_mode: "invalid-mode" },
-        }).ok,
-      ).toBe(false);
-
-      // Rejects invalid interval_minutes
-      expect(
-        validateMethodBody("api/method/custom_crm_sync.api.notify.save_notification_settings", {
-          payload: { interval_minutes: -10 },
-        }).ok,
-      ).toBe(false);
+    it("validates and sanitizes send_user_test_notification payload", () => {
+      const valid = validateMethodBody(
+        "api/method/custom_crm_sync.api.notify.send_user_test_notification",
+        {
+          user: "test2@gmail.com",
+          email: "test2@gmail.com",
+          alternate_email: "cc@agro.pk",
+          dropped_field: "danger",
+        },
+      );
+      expect(valid).toEqual({
+        ok: true,
+        body: {
+          user: "test2@gmail.com",
+          email: "test2@gmail.com",
+          alternate_email: "cc@agro.pk",
+        },
+      });
     });
 
     it("validates and sanitizes get_user_notification_settings and save_user_notification_settings", () => {

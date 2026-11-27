@@ -5,18 +5,13 @@ import {
   Bell,
   Check,
   Mail,
-  Plus,
   Send,
-  Trash2,
   Users,
-  ShieldCheck,
   AlertCircle,
   Loader2,
   Settings as SettingsIcon,
   ChevronDown,
-  MoreVertical,
   RotateCcw,
-  SlidersHorizontal,
   Sun,
   Moon,
   Laptop,
@@ -29,15 +24,10 @@ import {
   Network,
   GitBranch,
   Eye,
-  ExternalLink,
-  Clock,
-  Timer,
-  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -51,15 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { useCrmUsers } from "@/hooks/use-dashboard";
 import { sessionQueryOptions, logout, SESSION_QUERY_KEY } from "@/lib/auth-client";
 import * as api from "@/lib/api";
@@ -128,12 +109,6 @@ function SettingsSection({
   );
 }
 
-function formatInterval(minutes: number): string {
-  if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""}`;
-  const hours = Math.round(minutes / 60);
-  return `${hours} hour${hours > 1 ? "s" : ""}`;
-}
-
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({ meta: [{ title: "Settings · AgroCRM" }] }),
   component: SettingsPage,
@@ -172,36 +147,20 @@ function SettingsPage() {
     enabled: 1,
     mode: "All Ancestors",
     selected_nodes: [],
-    include_actor: 0,
-    extra_emails: "",
-    app_base_url: typeof window !== "undefined" && window.location?.origin ? window.location.origin : "",
-    deal_stage_change: 1,
-    deal_updates: 1,
-    leads: 1,
-    tasks: 1,
-    quotations: 1,
-    sales_orders: 1,
-    other_records: 1,
-    delivery_mode: "instant",
-    scheduled_time: "09:00",
-    interval_minutes: 60,
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [previewActor, setPreviewActor] = useState<string>("");
 
   useEffect(() => {
     if (serverData?.settings) {
       setFormState({
-        ...serverData.settings,
+        enabled: serverData.settings.enabled,
+        mode: serverData.settings.mode || "All Ancestors",
         selected_nodes: Array.isArray(serverData.settings.selected_nodes)
           ? serverData.settings.selected_nodes
           : [],
-        delivery_mode: serverData.settings.delivery_mode || "instant",
-        scheduled_time: serverData.settings.scheduled_time || "09:00",
-        interval_minutes: serverData.settings.interval_minutes ? Number(serverData.settings.interval_minutes) : 60,
       });
     }
   }, [serverData]);
@@ -218,8 +177,6 @@ function SettingsPage() {
       formState.mode,
       formState.selected_nodes,
       formState.mode === "Selected Nodes" ? null : effectivePreviewActor,
-      formState.include_actor,
-      formState.extra_emails,
     ],
     queryFn: () =>
       api.previewNotificationRecipients({
@@ -291,67 +248,6 @@ function SettingsPage() {
     setHasChanges(true);
   };
 
-  const handleToggleEvent = (key: keyof api.ServerNotificationSettings, checked: boolean) => {
-    setFormState((prev) => ({
-      ...prev,
-      [key]: checked ? 1 : 0,
-    }));
-    setHasChanges(true);
-  };
-
-  const applyPreset = (preset: "all" | "stageOnly" | "salesPipeline" | "none") => {
-    setFormState((prev) => {
-      switch (preset) {
-        case "all":
-          return {
-            ...prev,
-            deal_stage_change: 1,
-            deal_updates: 1,
-            quotations: 1,
-            sales_orders: 1,
-            leads: 1,
-            tasks: 1,
-            other_records: 1,
-          };
-        case "stageOnly":
-          return {
-            ...prev,
-            deal_stage_change: 1,
-            deal_updates: 0,
-            quotations: 0,
-            sales_orders: 0,
-            leads: 0,
-            tasks: 0,
-            other_records: 0,
-          };
-        case "salesPipeline":
-          return {
-            ...prev,
-            deal_stage_change: 1,
-            deal_updates: 1,
-            quotations: 1,
-            sales_orders: 1,
-            leads: 0,
-            tasks: 0,
-            other_records: 0,
-          };
-        case "none":
-          return {
-            ...prev,
-            deal_stage_change: 0,
-            deal_updates: 0,
-            quotations: 0,
-            sales_orders: 0,
-            leads: 0,
-            tasks: 0,
-            other_records: 0,
-          };
-      }
-    });
-    setHasChanges(true);
-    toast.success(`Preset applied: ${preset}`);
-  };
-
   const handleSave = () => {
     saveMutation.mutate(formState);
   };
@@ -370,30 +266,6 @@ function SettingsPage() {
       toast.error(msg);
     } finally {
       setIsSendingTest(false);
-    }
-  };
-
-  const handleProcessQueue = async () => {
-    setIsProcessingQueue(true);
-    try {
-      const res = await api.processNotificationQueue();
-      if (res.status === "instant_mode") {
-        toast.info("Instant Mode is active — notifications are dispatched on-change without queueing.");
-      } else if (res.dispatched > 0) {
-        toast.success(`Queue processed: ${res.dispatched} pending notification(s) dispatched to Email Queue.`);
-      } else if (res.status === "not_due") {
-        toast.info("Queue checked: Scheduled time or interval has not arrived yet.");
-      } else if (res.status === "empty_queue") {
-        toast.info("Queue checked: No pending notifications waiting in queue.");
-      } else {
-        toast.info(`Queue checked: Status '${res.status}'.`);
-      }
-      queryClient.invalidateQueries({ queryKey: ["notification-settings"] });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to process notification queue";
-      toast.error(msg);
-    } finally {
-      setIsProcessingQueue(false);
     }
   };
 
@@ -594,267 +466,6 @@ function SettingsPage() {
                 </div>
 
                 <SettingsSection
-                  title="Delivery Timing"
-                  description="Choose instant, daily, or interval email dispatch."
-                  icon={<Clock className="size-4" />}
-                  defaultOpen
-                  badge={
-                    (formState.delivery_mode || "instant") === "instant" ? (
-                      <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-normal"><Zap className="size-3" />Instant</Badge>
-                    ) : formState.delivery_mode === "scheduled" ? (
-                      <Badge variant="outline" className="text-[10px] gap-1 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-normal"><Clock className="size-3" />{formState.scheduled_time || "09:00"}</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 font-normal"><Timer className="size-3" />{formatInterval(formState.interval_minutes || 60)}</Badge>
-                    )
-                  }
-                >
-                  <div className="space-y-4 pt-4">
-
-                  <RadioGroup
-                    value={formState.delivery_mode || "instant"}
-                    onValueChange={(val) => {
-                      setFormState((prev) => ({
-                        ...prev,
-                        delivery_mode: val as api.NotificationDeliveryMode,
-                      }));
-                      setHasChanges(true);
-                    }}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-3"
-                  >
-                    {/* Mode 1: Instant / Real-Time */}
-                    <label
-                      htmlFor="timing-instant"
-                      className={cn(
-                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
-                        (formState.delivery_mode || "instant") === "instant"
-                          ? "border-emerald-500/70 bg-emerald-500/5 shadow-2xs"
-                          : "border-border hover:bg-muted/40",
-                      )}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                            <Zap className="size-3.5 text-emerald-500" />
-                            Instant (Real-Time)
-                          </span>
-                          <RadioGroupItem value="instant" id="timing-instant" />
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Email is dispatched immediately on any change. Every update or stage change triggers an instant email alert.
-                        </p>
-                      </div>
-                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Zero delay dispatch
-                      </div>
-                    </label>
-
-                    {/* Mode 2: Daily Scheduled Time */}
-                    <label
-                      htmlFor="timing-scheduled"
-                      className={cn(
-                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
-                        formState.delivery_mode === "scheduled"
-                          ? "border-blue-500/70 bg-blue-500/5 shadow-2xs"
-                          : "border-border hover:bg-muted/40",
-                      )}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                            <Clock className="size-3.5 text-blue-500" />
-                            Daily Scheduled Time
-                          </span>
-                          <RadioGroupItem value="scheduled" id="timing-scheduled" />
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Set the time at which all emails are sent. Pick a fixed daily time for the digest.
-                        </p>
-                      </div>
-                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                        <span>Fixed daily window</span>
-                      </div>
-                    </label>
-
-                    {/* Mode 3: Periodic Time Interval */}
-                    <label
-                      htmlFor="timing-interval"
-                      className={cn(
-                        "flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-all",
-                        formState.delivery_mode === "interval"
-                          ? "border-amber-500/70 bg-amber-500/5 shadow-2xs"
-                          : "border-border hover:bg-muted/40",
-                      )}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                            <Timer className="size-3.5 text-amber-500" />
-                            Periodic Time Interval
-                          </span>
-                          <RadioGroupItem value="interval" id="timing-interval" />
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Set the interval after which emails are sent (e.g. every 1 or 2 hours).
-                        </p>
-                      </div>
-                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                        <span>Batched periodic window</span>
-                      </div>
-                    </label>
-                  </RadioGroup>
-
-                  {/* Sub-config Panel based on selected mode */}
-                  {formState.delivery_mode === "scheduled" && (
-                    <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-500/5 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="scheduled-time" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                            <Clock className="size-3.5 text-blue-500" />
-                            Set Daily Delivery Time (HH:MM)
-                          </Label>
-                          <p className="text-[11px] text-muted-foreground">
-                            All accumulated updates will be bundled and emailed daily at this exact time.
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id="scheduled-time"
-                            type="time"
-                            value={formState.scheduled_time || "09:00"}
-                            onChange={(e) => {
-                              setFormState((prev) => ({ ...prev, scheduled_time: e.target.value }));
-                              setHasChanges(true);
-                            }}
-                            className="w-32 h-8 text-xs font-mono bg-background"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Quick time selection chips */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-blue-500/20">
-                        <span className="text-[11px] text-muted-foreground mr-1">Quick Select:</span>
-                        {[
-                          { label: "08:00 AM (Morning)", value: "08:00" },
-                          { label: "09:00 AM (Workday Start)", value: "09:00" },
-                          { label: "01:00 PM (Midday)", value: "13:00" },
-                          { label: "06:00 PM (EOD Wrap-up)", value: "18:00" },
-                          { label: "09:00 PM (Night Digest)", value: "21:00" },
-                        ].map((chip) => (
-                          <Button
-                            key={chip.value}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setFormState((prev) => ({ ...prev, scheduled_time: chip.value }));
-                              setHasChanges(true);
-                            }}
-                            className={cn(
-                              "h-6 text-[11px] px-2 py-0 border-border/80 bg-background cursor-pointer",
-                              formState.scheduled_time === chip.value && "border-blue-500 bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold",
-                            )}
-                          >
-                            {chip.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {formState.delivery_mode === "interval" && (
-                    <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="interval-minutes" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                            <Timer className="size-3.5 text-amber-500" />
-                            Set Batch Interval Period
-                          </Label>
-                          <p className="text-[11px] text-muted-foreground">
-                            Changes occurring within this duration will be batched into a summary and sent every elapsed cycle.
-                          </p>
-                        </div>
-                        <Select
-                          value={String(formState.interval_minutes || 60)}
-                          onValueChange={(val) => {
-                            setFormState((prev) => ({ ...prev, interval_minutes: Number(val) }));
-                            setHasChanges(true);
-                          }}
-                        >
-                          <SelectTrigger id="interval-minutes" className="w-48 h-8 text-xs bg-background cursor-pointer">
-                            <SelectValue placeholder="Select interval..." />
-                          </SelectTrigger>
-                          <SelectContent className="text-xs">
-                            <SelectItem value="15">Every 15 Minutes</SelectItem>
-                            <SelectItem value="30">Every 30 Minutes</SelectItem>
-                            <SelectItem value="60">Every 1 Hour (Recommended)</SelectItem>
-                            <SelectItem value="120">Every 2 Hours</SelectItem>
-                            <SelectItem value="240">Every 4 Hours</SelectItem>
-                            <SelectItem value="480">Every 8 Hours</SelectItem>
-                            <SelectItem value="720">Every 12 Hours</SelectItem>
-                            <SelectItem value="1440">Every 24 Hours (Daily)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Quick Interval Selection Chips */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-amber-500/20">
-                        <span className="text-[11px] text-muted-foreground mr-1">Quick Presets:</span>
-                        {[
-                          { label: "15 min", value: 15 },
-                          { label: "30 min", value: 30 },
-                          { label: "1 hour", value: 60 },
-                          { label: "2 hours", value: 120 },
-                          { label: "4 hours", value: 240 },
-                          { label: "12 hours", value: 720 },
-                        ].map((chip) => (
-                          <Button
-                            key={chip.value}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setFormState((prev) => ({ ...prev, interval_minutes: chip.value }));
-                              setHasChanges(true);
-                            }}
-                            className={cn(
-                              "h-6 text-[11px] px-2 py-0 border-border/80 bg-background cursor-pointer",
-                              Number(formState.interval_minutes) === chip.value && "border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold",
-                            )}
-                          >
-                            {chip.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">Queue:</span>
-                      <Badge variant="outline" className="text-[11px] font-normal">
-                        {formState.delivery_mode === "scheduled"
-                          ? `Daily ${formState.scheduled_time || "09:00"}`
-                          : formState.delivery_mode === "interval"
-                            ? `Every ${formatInterval(formState.interval_minutes || 60)}`
-                            : "Instant"}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
-                      <Button type="button" variant="outline" size="sm" onClick={handleProcessQueue} disabled={isProcessingQueue} className="h-9 sm:h-8 text-xs gap-1.5 w-full sm:w-auto">
-                        {isProcessingQueue ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-3 text-muted-foreground" />}
-                        <span>Process Queue</span>
-                      </Button>
-                      <Button type="button" variant="secondary" size="sm" onClick={handleSendTestEmail} disabled={isSendingTest || !formState.enabled} className="h-9 sm:h-8 text-xs gap-1.5 w-full sm:w-auto">
-                        {isSendingTest ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3 text-muted-foreground" />}
-                        <span>Test Dispatch</span>
-                      </Button>
-                    </div>
-                  </div>
-                  </div>
-                </SettingsSection>
-
-                <SettingsSection
                   title="Recipient Resolution"
                   description="Choose how recipients are resolved from CRM Sales Hierarchy."
                   icon={<Network className="size-4" />}
@@ -1042,263 +653,6 @@ function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  </div>
-                </SettingsSection>
-
-                <SettingsSection
-                  title="Delivery & Links"
-                  description="Configure actor copy, CCs, and AgroCRM base URL."
-                  icon={<SlidersHorizontal className="size-4" />}
-                  defaultOpen={false}
-                >
-                  <div className="space-y-4 pt-4">
-                    {/* Include Actor Switch */}
-                    <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border/60 bg-muted/10">
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="include-actor"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Include Actor in Email Delivery
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          Also send a copy of the notification email to the person who created or
-                          edited the record.
-                        </p>
-                      </div>
-                      <Switch
-                        id="include-actor"
-                        checked={Boolean(formState.include_actor)}
-                        onCheckedChange={(checked) => {
-                          setFormState((prev) => ({ ...prev, include_actor: checked ? 1 : 0 }));
-                          setHasChanges(true);
-                        }}
-                      />
-                    </div>
-
-                    {/* Extra Emails */}
-                    <div className="space-y-1.5">
-                      <Label
-                        htmlFor="extra-emails"
-                        className="text-xs font-semibold text-foreground"
-                      >
-                        Additional Notification CCs (comma-separated)
-                      </Label>
-                      <Input
-                        id="extra-emails"
-                        placeholder="e.g. notifications@example.com, auditor@example.com"
-                        value={formState.extra_emails || ""}
-                        onChange={(e) => {
-                          setFormState((prev) => ({ ...prev, extra_emails: e.target.value }));
-                          setHasChanges(true);
-                        }}
-                        className="h-8 text-xs bg-muted/20"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        These email addresses will always be copied on every alert regardless of
-                        hierarchy resolution.
-                      </p>
-                    </div>
-
-                    {/* Base URL */}
-                    <div className="space-y-1.5">
-                      <Label
-                        htmlFor="app-base-url"
-                        className="text-xs font-semibold text-foreground"
-                      >
-                        AgroCRM Application Base URL
-                      </Label>
-                      <Input
-                        id="app-base-url"
-                        placeholder={typeof window !== "undefined" ? window.location.origin : "https://your-crm-domain.com"}
-                        value={formState.app_base_url || ""}
-                        onChange={(e) => {
-                          setFormState((prev) => ({ ...prev, app_base_url: e.target.value }));
-                          setHasChanges(true);
-                        }}
-                        className="h-8 text-xs bg-muted/20 font-mono"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Used to construct the &quot;Open in AgroCRM&quot; action button link inside
-                        email notifications.
-                      </p>
-                    </div>
-                  </div>
-                </SettingsSection>
-
-                <SettingsSection
-                  title="Event Triggers"
-                  description="Select which events dispatch notifications."
-                  icon={<ShieldCheck className="size-4" />}
-                  defaultOpen={false}
-                  headerRight={
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 cursor-pointer">
-                          <SlidersHorizontal className="size-3 text-muted-foreground" />
-                          <span className="hidden sm:inline">Presets</span>
-                          <ChevronDown className="size-3 text-muted-foreground" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 text-xs">
-                        <DropdownMenuItem onClick={() => applyPreset("all")} className="cursor-pointer">Enable All Events</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => applyPreset("stageOnly")} className="cursor-pointer">Deal Stage Changes Only</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => applyPreset("salesPipeline")} className="cursor-pointer">Sales Pipeline (Deals &amp; Orders)</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => applyPreset("none")} className="cursor-pointer text-muted-foreground">Disable All Events</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  }
-                >
-                  <div className="space-y-3 pt-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
-                      <Checkbox
-                        id="event-stage"
-                        checked={Boolean(formState.deal_stage_change)}
-                        onCheckedChange={(c) => handleToggleEvent("deal_stage_change", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-stage"
-                          className="text-xs font-semibold text-foreground cursor-pointer flex items-center gap-2"
-                        >
-                          <span>Deal Stage Changes</span>
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] h-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                          >
-                            High Priority
-                          </Badge>
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          Send highlighted email whenever a Deal changes stage (e.g. Won, Lost,
-                          Negotiation).
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-deals"
-                        checked={Boolean(formState.deal_updates)}
-                        onCheckedChange={(c) => handleToggleEvent("deal_updates", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-deals"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Deal Updates &amp; Products
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When a Deal is created, line items/products modified, or deal
-                          value/revenue updated.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-quotations"
-                        checked={Boolean(formState.quotations)}
-                        onCheckedChange={(c) => handleToggleEvent("quotations", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-quotations"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Quotations Created &amp; Submitted
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When a Quotation is created from a Deal or submitted in ERP Backend.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-orders"
-                        checked={Boolean(formState.sales_orders)}
-                        onCheckedChange={(c) => handleToggleEvent("sales_orders", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-orders"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Sales Orders Created &amp; Submitted
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When a Sales Order is created from a Quotation/Deal or submitted.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-leads"
-                        checked={Boolean(formState.leads)}
-                        onCheckedChange={(c) => handleToggleEvent("leads", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-leads"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Leads Created &amp; Converted
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When a new lead arrives or is converted into an organization/deal.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-tasks"
-                        checked={Boolean(formState.tasks)}
-                        onCheckedChange={(c) => handleToggleEvent("tasks", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-tasks"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Tasks Created &amp; Assigned
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When follow-up tasks, calls, or to-dos are created or assigned.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2.5 rounded-lg border border-border/60">
-                      <Checkbox
-                        id="event-other"
-                        checked={Boolean(formState.other_records)}
-                        onCheckedChange={(c) => handleToggleEvent("other_records", Boolean(c))}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="event-other"
-                          className="text-xs font-semibold text-foreground cursor-pointer"
-                        >
-                          Organizations, Contacts, Tasks, Notes &amp; Comments
-                        </Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          When customer contacts, organizations, notes, or tasks are modified or
-                          comments added.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </SettingsSection>
               </>

@@ -149,9 +149,9 @@ async function forward(request: Request): Promise<Response> {
     if (!isSystemAllowed) {
       const isAllowedRegularPath =
         (isCrmNotificationResource && (request.method === "GET" || request.method === "PUT")) ||
-        rawPath === "api/method/custom_crm_sync.api.notify.send_test_notification" ||
         rawPath === "api/method/custom_crm_sync.api.notify.get_user_notification_settings" ||
-        rawPath === "api/method/custom_crm_sync.api.notify.save_user_notification_settings";
+        rawPath === "api/method/custom_crm_sync.api.notify.save_user_notification_settings" ||
+        rawPath === "api/method/custom_crm_sync.api.notify.send_user_test_notification";
 
       if (!isAllowedRegularPath) {
         return jsonResponse(
@@ -237,7 +237,10 @@ async function forward(request: Request): Promise<Response> {
       }
     }
 
-    if (rawPath === "api/method/custom_crm_sync.api.notify.get_user_notification_settings") {
+    if (
+      rawPath === "api/method/custom_crm_sync.api.notify.get_user_notification_settings" ||
+      rawPath === "api/method/custom_crm_sync.api.notify.send_user_test_notification"
+    ) {
       if (!isSystemAllowed || !result.body["user"]) {
         result.body["user"] = session.u;
       }

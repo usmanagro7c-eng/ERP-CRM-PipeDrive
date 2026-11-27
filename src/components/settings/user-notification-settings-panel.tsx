@@ -187,8 +187,9 @@ export function UserNotificationSettingsPanel({
     setIsSendingTest(true);
     try {
       const target = formState.email || userEmail;
-      await api.sendUserTestNotification(target, userName);
-      toast.success(`Test email dispatched to ${target}! Check your inbox.`);
+      const res = await api.sendUserTestNotification(target, formState.alternateEmail);
+      const sentTo = res.recipients?.length ? res.recipients.join(", ") : target;
+      toast.success(`Test email dispatched to ${sentTo}! Check your inbox.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to send test email";
       toast.error(msg);

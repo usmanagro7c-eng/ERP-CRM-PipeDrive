@@ -289,8 +289,7 @@ export function classifyRequest(
       path === "api/method/custom_crm_sync.api.notify.save_user_notification_settings" ||
       path === "api/method/custom_crm_sync.api.notify.preview_recipients" ||
       path === "api/method/custom_crm_sync.api.notify.send_test_notification" ||
-      path === "api/method/custom_crm_sync.api.notify.get_queue_status" ||
-      path === "api/method/custom_crm_sync.api.notify.process_notification_queue"
+      path === "api/method/custom_crm_sync.api.notify.send_user_test_notification"
     ) {
       return { kind: "org-write" };
     }
@@ -561,7 +560,6 @@ const MAX_RECIPIENTS_LENGTH = 1_000;
 const ALLOWED_NOTIFICATION_MODES = new Set(["Direct Parent", "All Ancestors", "Selected Nodes"]);
 const MAX_EXTRA_EMAILS_LENGTH = 1_000;
 const MAX_SELECTED_NODES_COUNT = 200;
-const MAX_APP_BASE_URL_LENGTH = 200;
 const NOTIFICATION_EVENT_KEYS = [
   "deal_stage_change",
   "deal_updates",
@@ -592,8 +590,7 @@ export const VALIDATED_METHODS = new Set([
   "api/method/custom_crm_sync.api.notify.save_user_notification_settings",
   "api/method/custom_crm_sync.api.notify.preview_recipients",
   "api/method/custom_crm_sync.api.notify.send_test_notification",
-  "api/method/custom_crm_sync.api.notify.get_queue_status",
-  "api/method/custom_crm_sync.api.notify.process_notification_queue",
+  "api/method/custom_crm_sync.api.notify.send_user_test_notification",
 ]);
 
 /**
@@ -733,10 +730,25 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
     }
 
     case "api/method/custom_crm_sync.api.notify.get_notification_settings":
-    case "api/method/custom_crm_sync.api.notify.send_test_notification":
-    case "api/method/custom_crm_sync.api.notify.get_queue_status":
-    case "api/method/custom_crm_sync.api.notify.process_notification_queue": {
+    case "api/method/custom_crm_sync.api.notify.send_test_notification": {
       return { ok: true, body: {} };
+    }
+
+    case "api/method/custom_crm_sync.api.notify.send_user_test_notification": {
+      const sanitized: Record<string, unknown> = {};
+      if (typeof body["user"] === "string" && isPlausibleDocName(body["user"])) {
+        sanitized["user"] = body["user"].trim();
+      }
+      if (typeof body["email"] === "string" && body["email"].length <= MAX_EXTRA_EMAILS_LENGTH) {
+        sanitized["email"] = body["email"].trim();
+      }
+      if (
+        typeof body["alternate_email"] === "string" &&
+        body["alternate_email"].length <= MAX_EXTRA_EMAILS_LENGTH
+      ) {
+        sanitized["alternate_email"] = body["alternate_email"].trim();
+      }
+      return { ok: true, body: sanitized };
     }
 
     case "api/method/custom_crm_sync.api.notify.get_user_notification_settings": {
@@ -879,41 +891,6 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
         sanitized["enabled"] = Boolean(input["enabled"]) ? 1 : 0;
       }
 
-      if ("include_actor" in input) {
-        sanitized["include_actor"] = Boolean(input["include_actor"]) ? 1 : 0;
-      }
-
-      if (
-        "app_base_url" in input &&
-        input["app_base_url"] !== undefined &&
-        input["app_base_url"] !== null
-      ) {
-        if (
-          typeof input["app_base_url"] !== "string" ||
-          input["app_base_url"].length > MAX_APP_BASE_URL_LENGTH
-        ) {
-          return { ok: false, reason: "save_notification_settings: invalid app_base_url" };
-        }
-        sanitized["app_base_url"] = input["app_base_url"].trim();
-      }
-
-      if (
-        "extra_emails" in input &&
-        input["extra_emails"] !== undefined &&
-        input["extra_emails"] !== null
-      ) {
-        if (
-          typeof input["extra_emails"] !== "string" ||
-          input["extra_emails"].length > MAX_EXTRA_EMAILS_LENGTH
-        ) {
-          return {
-            ok: false,
-            reason: "save_notification_settings: extra_emails exceeds maximum length",
-          };
-        }
-        sanitized["extra_emails"] = input["extra_emails"].trim();
-      }
-
       if (
         "selected_nodes" in input &&
         input["selected_nodes"] !== undefined &&
@@ -934,61 +911,6 @@ export function validateMethodBody(path: string, body: unknown): MethodBodyResul
           }
         }
         sanitized["selected_nodes"] = input["selected_nodes"].map((s: string) => s.trim());
-      }
-
-      for (const key of NOTIFICATION_EVENT_KEYS) {
-        if (key in input) {
-          sanitized[key] = Boolean(input[key]) ? 1 : 0;
-        }
-      }
-
-      if (
-        "delivery_mode" in input &&
-        input["delivery_mode"] !== undefined &&
-        input["delivery_mode"] !== null
-      ) {
-        const dMode = String(input["delivery_mode"]).toLowerCase();
-        if (dMode !== "instant" && dMode !== "scheduled" && dMode !== "interval") {
-          return { ok: false, reason: "save_notification_settings: invalid delivery_mode" };
-        }
-        sanitized["delivery_mode"] = dMode;
-      }
-
-      if (
-        "scheduled_time" in input &&
-        input["scheduled_time"] !== undefined &&
-        input["scheduled_time"] !== null
-      ) {
-        if (typeof input["scheduled_time"] !== "string" || input["scheduled_time"].length > 10) {
-          return { ok: false, reason: "save_notification_settings: invalid scheduled_time" };
-        }
-        sanitized["scheduled_time"] = input["scheduled_time"].trim();
-      }
-
-      if (
-        "interval_minutes" in input &&
-        input["interval_minutes"] !== undefined &&
-        input["interval_minutes"] !== null
-      ) {
-        const mins = Number(input["interval_minutes"]);
-        if (isNaN(mins) || mins < 1 || mins > 10080) {
-          return { ok: false, reason: "save_notification_settings: invalid interval_minutes" };
-        }
-        sanitized["interval_minutes"] = mins;
-      }
-
-      if (
-        "delivery_schedule" in input &&
-        input["delivery_schedule"] !== undefined &&
-        input["delivery_schedule"] !== null
-      ) {
-        if (
-          typeof input["delivery_schedule"] !== "string" ||
-          input["delivery_schedule"].length > 2000
-        ) {
-          return { ok: false, reason: "save_notification_settings: invalid delivery_schedule" };
-        }
-        sanitized["delivery_schedule"] = input["delivery_schedule"].trim();
       }
 
       return { ok: true, body: { payload: sanitized } };

@@ -1044,9 +1044,33 @@ export async function listItems(search?: string, limit = 500): Promise<Item[]> {
   return Array.isArray(data) ? (data as Item[]) : [];
 }
 
+function buildMultiFieldSearchParams(
+  search: string | undefined,
+  filters: Array<[string, string, string]> | undefined,
+  searchFields: string[],
+): { filters?: string; or_filters?: string } {
+  const result: { filters?: string; or_filters?: string } = {};
+  if (filters && filters.length > 0) {
+    result.filters = JSON.stringify(filters);
+  }
+  const trimmed = (search ?? "").trim();
+  if (trimmed) {
+    result.or_filters = JSON.stringify(searchFields.map((f) => [f, "like", `%${trimmed}%`]));
+  }
+  return result;
+}
+
 export async function listQuotations(params: ListParams): Promise<Quotation[]> {
-  const query = buildListQuery(params, "party_name");
-  const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}?${query}`);
+  const query = new URLSearchParams(
+    buildListQuery({ ...params, search: "" }, "party_name"),
+  );
+  const searchParams = buildMultiFieldSearchParams(params.search, params.filters, [
+    "name",
+    "party_name",
+    "customer_name",
+  ]);
+  if (searchParams.or_filters) query.set("or_filters", searchParams.or_filters);
+  const payload = await proxyRequest(`api/resource/${QUOTATION_DOCTYPE}?${query.toString()}`);
   const data = unwrapResourceData<unknown>(payload);
   return Array.isArray(data) ? (data as Quotation[]) : [];
 }
@@ -1056,9 +1080,13 @@ export async function countQuotations(
   filters: Array<[string, string, string]> = [],
 ): Promise<number> {
   const query = new URLSearchParams({ doctype: QUOTATION_DOCTYPE });
-  const all = [...filters];
-  if (search) all.push(["party_name", "like", `%${search}%`]);
-  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const searchParams = buildMultiFieldSearchParams(search, filters, [
+    "name",
+    "party_name",
+    "customer_name",
+  ]);
+  if (searchParams.filters) query.set("filters", searchParams.filters);
+  if (searchParams.or_filters) query.set("or_filters", searchParams.or_filters);
   const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
   const value = message(payload);
   return typeof value === "number" ? value : Number(value) || 0;
@@ -1257,8 +1285,16 @@ export async function deleteQuotation(name: string): Promise<void> {
 }
 
 export async function listSalesOrders(params: ListParams): Promise<SalesOrder[]> {
-  const query = buildListQuery(params, "customer");
-  const payload = await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}?${query}`);
+  const query = new URLSearchParams(
+    buildListQuery({ ...params, search: "" }, "customer"),
+  );
+  const searchParams = buildMultiFieldSearchParams(params.search, params.filters, [
+    "name",
+    "customer",
+    "customer_name",
+  ]);
+  if (searchParams.or_filters) query.set("or_filters", searchParams.or_filters);
+  const payload = await proxyRequest(`api/resource/${SALES_ORDER_DOCTYPE}?${query.toString()}`);
   const data = unwrapResourceData<unknown>(payload);
   return Array.isArray(data) ? (data as SalesOrder[]) : [];
 }
@@ -1268,9 +1304,13 @@ export async function countSalesOrders(
   filters: Array<[string, string, string]> = [],
 ): Promise<number> {
   const query = new URLSearchParams({ doctype: SALES_ORDER_DOCTYPE });
-  const all = [...filters];
-  if (search) all.push(["customer", "like", `%${search}%`]);
-  if (all.length > 0) query.set("filters", JSON.stringify(all));
+  const searchParams = buildMultiFieldSearchParams(search, filters, [
+    "name",
+    "customer",
+    "customer_name",
+  ]);
+  if (searchParams.filters) query.set("filters", searchParams.filters);
+  if (searchParams.or_filters) query.set("or_filters", searchParams.or_filters);
   const payload = await proxyRequest(`api/method/frappe.client.get_count?${query.toString()}`);
   const value = message(payload);
   return typeof value === "number" ? value : Number(value) || 0;

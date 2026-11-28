@@ -7,20 +7,23 @@ import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { notifyStageChange, notifyEntityChange } from "@/lib/change-notifications";
 
 export const DEAL_QUERY_ROOT = "deals";
+export const DEAL_META_QUERY_ROOT = "deals-meta";
+export const DEAL_STATUSES_QUERY_ROOT = "deals-statuses";
+export const DEAL_LOST_REASONS_QUERY_ROOT = "deals-lost-reasons";
 
 export function dealMetaOptions() {
   return queryOptions({
-    queryKey: [DEAL_QUERY_ROOT, "doctype-meta"],
+    queryKey: [DEAL_META_QUERY_ROOT],
     queryFn: () => api.getDocTypeMeta(api.DEAL_DOCTYPE),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
 export function dealStatusesOptions() {
   return queryOptions({
-    queryKey: [DEAL_QUERY_ROOT, "statuses"],
+    queryKey: [DEAL_STATUSES_QUERY_ROOT],
     queryFn: () => api.getDealStatuses(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -40,7 +43,7 @@ export function findWonStageName(
 
 export function lostReasonsOptions() {
   return queryOptions({
-    queryKey: [DEAL_QUERY_ROOT, "lost-reasons"],
+    queryKey: [DEAL_LOST_REASONS_QUERY_ROOT],
     queryFn: () => api.getLinkOptions("CRM Lost Reason"),
     staleTime: 10 * 60 * 1000,
   });
@@ -118,6 +121,7 @@ function dealSaveErrorMessage(error: unknown): string {
 }
 
 export function useSaveDeal() {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateDeals();
   return useMutation({
     mutationFn: async ({ name, values }: SaveDealInput) => {
@@ -139,11 +143,69 @@ export function useSaveDeal() {
       }
       return api.createDeal(values);
     },
-    onSuccess: async (doc, variables) => {
-      await invalidate();
+    onMutate: async ({ name, values }) => {
+      if (!name) return undefined;
+      await queryClient.cancelQueries({ queryKey: [DEAL_QUERY_ROOT] });
+
+      const previousLists = queryClient.getQueriesData<Record<string, unknown>[]>({
+        queryKey: [DEAL_QUERY_ROOT, "list"],
+      });
+      const previousDetail = queryClient.getQueryData<Record<string, unknown>>([
+        DEAL_QUERY_ROOT,
+        "detail",
+        name,
+      ]);
+
+      const patch: Record<string, unknown> = { ...values };
+      if (typeof values["status"] === "string" && values["probability"] === undefined) {
+        const statuses = queryClient.getQueryData<api.DealStatus[]>([DEAL_STATUSES_QUERY_ROOT]);
+        const matched = statuses?.find((s) => s.name === values["status"]);
+        if (matched?.probability !== undefined) {
+          patch["probability"] = matched.probability;
+        }
+      }
+
+      queryClient.setQueriesData<Record<string, unknown>[]>(
+        { queryKey: [DEAL_QUERY_ROOT, "list"] },
+        (old) =>
+          Array.isArray(old)
+            ? old.map((row) => (row["name"] === name ? { ...row, ...patch } : row))
+            : old,
+      );
+
+      if (previousDetail) {
+        queryClient.setQueryData<Record<string, unknown>>(
+          [DEAL_QUERY_ROOT, "detail", name],
+          { ...previousDetail, ...patch },
+        );
+      }
+
+      return { name, previousLists, previousDetail };
+    },
+    onSuccess: (doc, variables) => {
       const dealName =
         variables.name ||
         (doc && typeof doc === "object" ? String((doc as Record<string, unknown>)["name"] || "") : "");
+
+      if (doc && typeof doc === "object" && dealName) {
+        queryClient.setQueriesData<Record<string, unknown>[]>(
+          { queryKey: [DEAL_QUERY_ROOT, "list"] },
+          (old) => {
+            if (!Array.isArray(old)) return old;
+            const exists = old.some((row) => row["name"] === dealName);
+            if (exists) {
+              return old.map((row) => (row["name"] === dealName ? { ...row, ...doc } : row));
+            }
+            return variables.name ? old : [doc as Record<string, unknown>, ...old];
+          },
+        );
+        queryClient.setQueryData<Record<string, unknown>>(
+          [DEAL_QUERY_ROOT, "detail", dealName],
+          (old) => (old ? { ...old, ...doc } : (doc as Record<string, unknown>)),
+        );
+      }
+
+      void invalidate();
       
       if (!variables.skipNotification) {
         if (variables.values["status"]) {
@@ -209,7 +271,15 @@ export function useSaveDeal() {
         toast.success(variables.name ? "Deal updated" : "Deal created");
       }
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      if (context?.name && context.previousDetail) {
+        queryClient.setQueryData([DEAL_QUERY_ROOT, "detail", context.name], context.previousDetail);
+      }
       toast.error(dealSaveErrorMessage(error));
     },
   });
@@ -219,8 +289,8 @@ export function useDeleteDeal() {
   const invalidate = useInvalidateDeals();
   return useMutation({
     mutationFn: (name: string) => api.deleteDeal(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       void notifyEntityChange({
         doctype: api.DEAL_DOCTYPE,
         docname: name,

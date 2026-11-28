@@ -26,7 +26,11 @@ import {
   salesOrderDetailOptions,
   type SalesOrder,
 } from "@/hooks/use-sales-orders";
-import { DEAL_QUERY_ROOT, findWonStageName } from "@/hooks/use-deals";
+import {
+  DEAL_QUERY_ROOT,
+  DEAL_STATUSES_QUERY_ROOT,
+  findWonStageName,
+} from "@/hooks/use-deals";
 import * as api from "@/lib/api";
 import type { QuotationItem } from "@/lib/api";
 
@@ -226,7 +230,10 @@ export function SalesOrderFormModal({
       const targetDealId = initialValues?.deal_id || quotationData?.crm_deal;
       if (targetDealId) {
         try {
-          const statuses = await api.getDealStatuses();
+          const cachedStatuses = queryClient.getQueryData<api.DealStatus[]>([
+            DEAL_STATUSES_QUERY_ROOT,
+          ]);
+          const statuses = cachedStatuses?.length ? cachedStatuses : await api.getDealStatuses();
           const wonStage = findWonStageName(statuses);
           await api.updateDeal(targetDealId, { status: wonStage });
           void queryClient.invalidateQueries({ queryKey: [DEAL_QUERY_ROOT] });

@@ -59,6 +59,7 @@ export interface SaveSalesOrderInput {
 }
 
 export function useSaveSalesOrder() {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateSalesOrders();
   return useMutation({
     mutationFn: async ({ name, values }: SaveSalesOrderInput) => {
@@ -67,7 +68,10 @@ export function useSaveSalesOrder() {
       }
       return api.createSalesOrder(values);
     },
-    onSuccess: async (order, variables) => {
+    onSuccess: (order, variables) => {
+      if (order?.name) {
+        queryClient.setQueryData([SALES_ORDER_QUERY_ROOT, "detail", order.name], order);
+      }
       invalidate();
       toast.success(variables.name ? "Sales Order updated" : "Sales Order created");
       const itemsList = Array.isArray(order.items) ? order.items : [];
@@ -100,10 +104,14 @@ export function useSaveSalesOrder() {
 }
 
 export function useSubmitSalesOrder() {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateSalesOrders();
   return useMutation({
     mutationFn: (name: string) => api.submitSalesOrder(name),
-    onSuccess: async (order, name) => {
+    onSuccess: (order, name) => {
+      if (order && typeof order === "object") {
+        queryClient.setQueryData([SALES_ORDER_QUERY_ROOT, "detail", name], order);
+      }
       invalidate();
       toast.success("Sales Order submitted");
       void notifyEntityChange({

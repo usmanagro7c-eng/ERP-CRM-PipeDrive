@@ -209,19 +209,26 @@ export function QuotationFormModal({
         values: payload,
       });
 
+      const followUps: Array<Promise<unknown>> = [];
       if (crmDeal.trim() && payload["items"]) {
-        try {
-          await api.syncDealProductsFromQuotation(
-            crmDeal.trim(),
-            payload["items"] as Array<Record<string, unknown>>,
-          );
-        } catch (err) {
-          console.warn("Could not sync deal products from quotation:", err);
-        }
+        followUps.push(
+          api
+            .syncDealProductsFromQuotation(
+              crmDeal.trim(),
+              payload["items"] as Array<Record<string, unknown>>,
+            )
+            .catch((err) => {
+              console.warn("Could not sync deal products from quotation:", err);
+            }),
+        );
       }
 
       if (submitAfterSave && result?.name) {
-        await submitMutation.mutateAsync(result.name);
+        followUps.push(submitMutation.mutateAsync(result.name));
+      }
+
+      if (followUps.length > 0) {
+        await Promise.all(followUps);
       }
 
       onOpenChange(false);

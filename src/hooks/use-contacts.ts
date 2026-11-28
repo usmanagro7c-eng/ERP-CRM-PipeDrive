@@ -5,20 +5,22 @@ import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const CONTACT_QUERY_ROOT = "contacts";
+export const CONTACT_META_QUERY_ROOT = "contacts-meta";
+export const CONTACT_STATUSES_QUERY_ROOT = "contacts-statuses";
 
 export function contactMetaOptions() {
   return queryOptions({
-    queryKey: [CONTACT_QUERY_ROOT, "doctype-meta"],
+    queryKey: [CONTACT_META_QUERY_ROOT],
     queryFn: () => api.getDocTypeMeta(api.CONTACT_DOCTYPE),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
 export function contactStatusesOptions() {
   return queryOptions({
-    queryKey: [CONTACT_QUERY_ROOT, "statuses"],
+    queryKey: [CONTACT_STATUSES_QUERY_ROOT],
     queryFn: () => api.getContactStatuses(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -75,8 +77,8 @@ export function useSaveContact() {
       }
       return api.createContact(values);
     },
-    onSuccess: async (doc, variables) => {
-      await invalidate();
+    onSuccess: (doc, variables) => {
+      void invalidate();
       toast.success(variables.name ? "Contact updated" : "Contact created");
       const cName = String(
         variables.values["full_name"] ||
@@ -110,8 +112,8 @@ export function useDeleteContact() {
   const invalidate = useInvalidateContacts();
   return useMutation({
     mutationFn: (name: string) => api.deleteContact(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       toast.success("Contact deleted");
       void notifyEntityChange({
         doctype: api.CONTACT_DOCTYPE,

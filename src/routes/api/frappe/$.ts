@@ -316,15 +316,17 @@ async function forward(request: Request): Promise<Response> {
 
   try {
     if (classification.kind === "link-read") {
-      const targets = await allowedLinkTargets(targetBaseUrl, targetAuthHeader);
-      if (
-        !classification.doctype ||
-        BLOCKED_LINK_TARGETS.has(classification.doctype) ||
-        !targets.has(classification.doctype)
-      ) {
-        return jsonResponse({ _proxy_error: `Blocked read of ${classification.doctype}` }, 403);
+      const dt = classification.doctype;
+      if (!dt || BLOCKED_LINK_TARGETS.has(dt)) {
+        return jsonResponse({ _proxy_error: `Blocked read of ${dt}` }, 403);
       }
-      search = `?${buildLinkQuery(incoming.searchParams, classification.doctype)}`;
+      if (!DEFAULT_LINK_TARGETS.has(dt)) {
+        const targets = await allowedLinkTargets(targetBaseUrl, targetAuthHeader);
+        if (!targets.has(dt)) {
+          return jsonResponse({ _proxy_error: `Blocked read of ${dt}` }, 403);
+        }
+      }
+      search = `?${buildLinkQuery(incoming.searchParams, dt)}`;
     }
 
     if (classification.kind === "scoped-read") {

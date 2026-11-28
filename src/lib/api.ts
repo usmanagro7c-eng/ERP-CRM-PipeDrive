@@ -152,10 +152,20 @@ function buildListQuery(params: ListParams, defaultSearchField = "organization_n
   return query.toString();
 }
 
+const knownOrganizations = new Map<string, string>();
+const knownCustomers = new Map<string, string>();
+
 export async function listOrganizations(params: ListParams): Promise<Record<string, unknown>[]> {
   const payload = await proxyRequest(`api/resource/${ORG_DOCTYPE}?${buildListQuery(params)}`);
   const data = unwrapResourceData<unknown>(payload);
-  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+  const rows = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+  for (const row of rows) {
+    const docname = typeof row["name"] === "string" ? row["name"].trim() : "";
+    const orgLabel = typeof row["organization_name"] === "string" ? row["organization_name"].trim() : "";
+    if (docname) knownOrganizations.set(docname.toLowerCase(), docname);
+    if (orgLabel && docname) knownOrganizations.set(orgLabel.toLowerCase(), docname);
+  }
+  return rows;
 }
 
 export async function countOrganizations(
@@ -200,7 +210,12 @@ export async function createOrganization(
     body: values,
   });
   const data = unwrapResourceData<unknown>(payload);
-  return (data ?? {}) as Record<string, unknown>;
+  const org = (data ?? {}) as Record<string, unknown>;
+  const docname = typeof org["name"] === "string" ? org["name"].trim() : "";
+  const orgLabel = typeof org["organization_name"] === "string" ? org["organization_name"].trim() : "";
+  if (docname) knownOrganizations.set(docname.toLowerCase(), docname);
+  if (orgLabel && docname) knownOrganizations.set(orgLabel.toLowerCase(), docname);
+  return org;
 }
 
 export async function updateOrganization(
@@ -513,6 +528,8 @@ export interface ConvertLeadToDealParams {
 export async function ensureOrganization(orgName: string): Promise<string> {
   const trimmed = orgName.trim();
   if (!trimmed) return "";
+  const cached = knownOrganizations.get(trimmed.toLowerCase());
+  if (cached) return cached;
   try {
     const matches = await listOrganizations({
       search: trimmed,
@@ -527,14 +544,18 @@ export async function ensureOrganization(orgName: string): Promise<string> {
           .toLowerCase() === trimmed.toLowerCase(),
     );
     if (existing) {
-      return String(existing["name"] ?? trimmed);
+      const resolved = String(existing["name"] ?? trimmed);
+      knownOrganizations.set(trimmed.toLowerCase(), resolved);
+      return resolved;
     }
   } catch {
     // fall through to create
   }
   try {
     const created = await createOrganization({ organization_name: trimmed });
-    return String(created["name"] ?? trimmed);
+    const resolved = String(created["name"] ?? trimmed);
+    knownOrganizations.set(trimmed.toLowerCase(), resolved);
+    return resolved;
   } catch {
     return trimmed;
   }
@@ -912,7 +933,13 @@ export async function getLinkOptions(doctype: string): Promise<{ name: string }[
   });
   const payload = await proxyRequest(`api/resource/${encodeURIComponent(doctype)}?${query}`);
   const data = unwrapResourceData<unknown>(payload);
-  return Array.isArray(data) ? (data as { name: string }[]) : [];
+  const rows = Array.isArray(data) ? (data as { name: string }[]) : [];
+  if (doctype === "Customer") {
+    for (const row of rows) {
+      if (row?.name) knownCustomers.set(row.name.trim().toLowerCase(), row.name);
+    }
+  }
+  return rows;
 }
 
 export async function uploadAttachment(args: {
@@ -1330,6 +1357,9 @@ export async function getSalesOrder(name: string): Promise<SalesOrder> {
 export async function ensureCustomer(customerName: string): Promise<string> {
   const trimmed = customerName.trim();
   if (!trimmed) return "";
+  const cached = knownCustomers.get(trimmed.toLowerCase());
+  if (cached) return cached;
+
   try {
     const query = new URLSearchParams({
       fields: JSON.stringify(["name", "customer_name"]),
@@ -1338,6 +1368,10 @@ export async function ensureCustomer(customerName: string): Promise<string> {
     const payload = await proxyRequest(`api/resource/Customer?${query.toString()}`);
     const existing = unwrapResourceData<Array<{ name: string; customer_name?: string }>>(payload);
     if (Array.isArray(existing)) {
+      for (const c of existing) {
+        if (c.name) knownCustomers.set(c.name.trim().toLowerCase(), c.name);
+        if (c.customer_name && c.name) knownCustomers.set(c.customer_name.trim().toLowerCase(), c.name);
+      }
       const match = existing.find(
         (c) =>
           c.name.trim().toLowerCase() === trimmed.toLowerCase() ||
@@ -1357,29 +1391,17 @@ export async function ensureCustomer(customerName: string): Promise<string> {
       body: {
         customer_name: trimmed,
         customer_type: "Company",
-        customer_group: "All Customer Groups",
-        territory: "All Territories",
       },
     });
     const data = unwrapResourceData<Record<string, unknown>>(payload);
     if (data && data["name"]) {
-      return String(data["name"]);
+      const createdName = String(data["name"]);
+      knownCustomers.set(trimmed.toLowerCase(), createdName);
+      knownCustomers.set(createdName.toLowerCase(), createdName);
+      return createdName;
     }
-  } catch {
-    try {
-      const payload2 = await proxyRequest("api/resource/Customer", {
-        method: "POST",
-        body: {
-          customer_name: trimmed,
-        },
-      });
-      const data2 = unwrapResourceData<Record<string, unknown>>(payload2);
-      if (data2 && data2["name"]) {
-        return String(data2["name"]);
-      }
-    } catch (err2) {
-      console.warn("Could not auto-create Customer in ERP Backend:", err2);
-    }
+  } catch (err) {
+    console.warn("Could not auto-create Customer in ERP Backend:", err);
   }
 
   return trimmed;

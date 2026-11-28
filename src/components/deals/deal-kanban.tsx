@@ -251,7 +251,7 @@ export function DealKanban({
           },
         ]);
       }
-      await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+      await queryClient.invalidateQueries({ queryKey: ["deals-statuses"] });
       setConfirmDelete(null);
     } catch (err) {
       const message = stripHtml(err instanceof Error ? err.message : String(err));
@@ -287,7 +287,7 @@ export function DealKanban({
       });
       toast.success(`Stage "${stageName}" restored`);
       setDeletedStages((prev) => prev.filter((d) => d.name !== stageName));
-      await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+      await queryClient.invalidateQueries({ queryKey: ["deals-statuses"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to restore stage");
     }
@@ -445,8 +445,6 @@ export function DealKanban({
     return stageKey.toLowerCase().includes("lost") || stage?.type?.toLowerCase() === "lost";
   }
 
-  const [movingDeals, setMovingDeals] = useState<Record<string, string>>({});
-
   // Move deal to new column and optionally new swimlane
   async function handleMove(dealName: string, targetColKey: string, targetSwimlaneKey?: string) {
     if (targetColKey === UNASSIGNED_KEY) return;
@@ -471,26 +469,21 @@ export function DealKanban({
       }
     }
 
-    setMovingDeals((prev) => ({ ...prev, [dealName]: targetColKey }));
-
     // Check if target stage is "Won"
     const isTargetWon = targetColKey.toLowerCase().includes("won");
     if (isTargetWon) {
       triggerConfetti();
     }
 
-    try {
-      await saveMutation.mutateAsync({ name: dealName, values: patch });
-      if (isTargetWon && onDealWon) {
-        onDealWon(dealName);
-      }
-    } finally {
-      setMovingDeals((prev) => {
-        const next = { ...prev };
-        delete next[dealName];
-        return next;
-      });
-    }
+    // Optimistic cache update moves the card immediately without locking the UI
+    void saveMutation
+      .mutateAsync({ name: dealName, values: patch })
+      .then(() => {
+        if (isTargetWon && onDealWon) {
+          onDealWon(dealName);
+        }
+      })
+      .catch(() => {});
   }
 
   // Render Deal Card Sub-component with smooth Apple/Trello card-lift & 2.5deg tilt animation
@@ -507,14 +500,12 @@ export function DealKanban({
     const currentStage = String(deal["status"] ?? "");
     const email = String(deal["email"] || "");
     const phone = String(deal["mobile_no"] || deal["phone"] || "");
-    const isMoving = Boolean(movingDeals[name]);
-    const movingTo = movingDeals[name];
     const isDragged = draggedDealName === name;
 
     return (
       <div
         key={name}
-        draggable={!isMoving}
+        draggable
         onDragStart={(e) => {
           e.dataTransfer.setData("text/plain", name);
           e.dataTransfer.effectAllowed = "move";
@@ -543,19 +534,8 @@ export function DealKanban({
           isDragged
             ? "opacity-40 scale-[0.98] border-dashed border-primary/60 ring-2 ring-primary/20 shadow-none"
             : "border-border/70",
-          isMoving && "pointer-events-none ring-2 ring-primary/30",
         )}
       >
-        {isMoving && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-md bg-background/85 backdrop-blur-xs p-2 text-center animate-in fade-in duration-200">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-[11px] font-semibold text-primary shadow-xs">
-              <Loader2 className="size-3.5 animate-spin text-primary" />
-              <span className="truncate max-w-[170px]">
-                Moving to {movingTo}...
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Top row: Organization Name & 3-dots */}
         <div className="flex items-start justify-between gap-2">
@@ -616,14 +596,17 @@ export function DealKanban({
                       if (isTargetWon) {
                         triggerConfetti();
                       }
-                      void saveMutation.mutateAsync({
-                        name,
-                        values: { status: newStage },
-                      }).then(() => {
-                        if (isTargetWon && onDealWon) {
-                          onDealWon(deal);
-                        }
-                      });
+                      void saveMutation
+                        .mutateAsync({
+                          name,
+                          values: { status: newStage },
+                        })
+                        .then(() => {
+                          if (isTargetWon && onDealWon) {
+                            onDealWon(deal);
+                          }
+                        })
+                        .catch(() => {});
                     }
                   }}
                 />
@@ -819,7 +802,7 @@ export function DealKanban({
                       try {
                         await api.createDealStatus({ deal_status: trimmed });
                         toast.success(`Stage "${trimmed}" created`);
-                        await queryClient.invalidateQueries({ queryKey: ["deals", "statuses"] });
+                        await queryClient.invalidateQueries({ queryKey: ["deals-statuses"] });
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Failed to create stage");
                       }

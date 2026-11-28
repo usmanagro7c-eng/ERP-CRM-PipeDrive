@@ -6,26 +6,29 @@ import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const LEAD_QUERY_ROOT = "leads";
+export const LEAD_META_QUERY_ROOT = "leads-meta";
+export const LEAD_STATUSES_QUERY_ROOT = "leads-statuses";
+export const LEAD_LOST_REASONS_QUERY_ROOT = "leads-lost-reasons";
 
 export function leadMetaOptions() {
   return queryOptions({
-    queryKey: [LEAD_QUERY_ROOT, "doctype-meta"],
+    queryKey: [LEAD_META_QUERY_ROOT],
     queryFn: () => api.getDocTypeMeta(api.LEAD_DOCTYPE),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
 export function leadStatusesOptions() {
   return queryOptions({
-    queryKey: [LEAD_QUERY_ROOT, "statuses"],
+    queryKey: [LEAD_STATUSES_QUERY_ROOT],
     queryFn: () => api.getLeadStatuses(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
 export function leadLostReasonsOptions() {
   return queryOptions({
-    queryKey: [LEAD_QUERY_ROOT, "lost-reasons"],
+    queryKey: [LEAD_LOST_REASONS_QUERY_ROOT],
     queryFn: () => api.getLinkOptions("CRM Lost Reason"),
     staleTime: 10 * 60 * 1000,
   });
@@ -94,8 +97,8 @@ export function useSaveLead() {
       }
       return api.createLead(values);
     },
-    onSuccess: async (doc, variables) => {
-      await invalidate();
+    onSuccess: (doc, variables) => {
+      void invalidate();
       if (!variables.silent) {
         toast.success(variables.name ? "Lead updated" : "Lead created");
       }
@@ -126,8 +129,8 @@ export function useDeleteLead() {
   const invalidate = useInvalidateLeads();
   return useMutation({
     mutationFn: (name: string) => api.deleteLead(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       toast.success("Lead deleted");
       void notifyEntityChange({
         doctype: "CRM Lead",

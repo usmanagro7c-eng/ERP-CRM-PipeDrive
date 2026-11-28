@@ -11,12 +11,13 @@ import type { FrappeDocTypeMeta } from "@/lib/frappe-meta";
 import { notifyEntityChange } from "@/lib/change-notifications";
 
 export const ORG_QUERY_ROOT = "organizations";
+export const ORG_META_QUERY_ROOT = "organizations-meta";
 
 export function orgMetaOptions() {
   return queryOptions({
-    queryKey: [ORG_QUERY_ROOT, "doctype-meta"],
+    queryKey: [ORG_META_QUERY_ROOT],
     queryFn: () => api.getDocTypeMeta(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -88,8 +89,8 @@ export function useSaveOrganization() {
       }
       return api.createOrganization(values);
     },
-    onSuccess: async (doc, variables) => {
-      await invalidate();
+    onSuccess: (doc, variables) => {
+      void invalidate();
       toast.success(variables.name ? "Organization updated" : "Organization created");
       const orgName = String(variables.values["organization_name"] || doc?.["organization_name"] || variables.name || "Organization");
       void notifyEntityChange({
@@ -117,8 +118,8 @@ export function useDeleteOrganization() {
   const invalidate = useInvalidateOrganizations();
   return useMutation({
     mutationFn: (name: string) => api.deleteOrganization(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       toast.success("Organization deleted");
       void notifyEntityChange({
         doctype: api.ORG_DOCTYPE,

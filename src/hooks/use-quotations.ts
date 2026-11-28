@@ -79,13 +79,15 @@ export function useSaveQuotation() {
       }
       return api.createQuotation(values);
     },
-    onSuccess: async (doc, variables) => {
-      await invalidate();
-      await queryClient.invalidateQueries({ queryKey: ["deals"] });
-      await queryClient.invalidateQueries({ queryKey: ["deal"] });
+    onSuccess: (doc, variables) => {
+      void invalidate();
+      void queryClient.invalidateQueries({ queryKey: ["deals"] });
       const qName =
         variables.name ||
         (doc && typeof doc === "object" ? String((doc as Record<string, unknown>)["name"] || "") : "");
+      if (doc && typeof doc === "object" && qName) {
+        queryClient.setQueryData([QUOTATION_QUERY_ROOT, "detail", qName], doc);
+      }
       const itemsList = Array.isArray(variables.values["items"])
         ? (variables.values["items"] as Array<Record<string, unknown>>)
         : [];
@@ -122,10 +124,14 @@ export function useSaveQuotation() {
 
 export function useSubmitQuotation() {
   const invalidate = useInvalidateQuotations();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) => api.submitQuotation(name),
-    onSuccess: async (data, name) => {
-      await invalidate();
+    onSuccess: (data, name) => {
+      if (data && typeof data === "object") {
+        queryClient.setQueryData([QUOTATION_QUERY_ROOT, "detail", name], data);
+      }
+      void invalidate();
       const party = (data && typeof data === "object" ? (data as any)["party_name"] : "") || "";
       const grandTotal = (data && typeof data === "object" ? (data as any)["grand_total"] : 0) || 0;
       void notifyEntityChange({
@@ -152,8 +158,8 @@ export function useCancelQuotation() {
   const invalidate = useInvalidateQuotations();
   return useMutation({
     mutationFn: (name: string) => api.cancelQuotation(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       void notifyEntityChange({
         doctype: api.QUOTATION_DOCTYPE,
         docname: name,
@@ -176,8 +182,8 @@ export function useDeleteQuotation() {
   const invalidate = useInvalidateQuotations();
   return useMutation({
     mutationFn: (name: string) => api.deleteQuotation(name),
-    onSuccess: async (_data, name) => {
-      await invalidate();
+    onSuccess: (_data, name) => {
+      void invalidate();
       void notifyEntityChange({
         doctype: api.QUOTATION_DOCTYPE,
         docname: name,
